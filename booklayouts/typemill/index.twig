@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="{{ settings.langattr | default('en') }}">
+	<head>
+		<meta charset="UTF-8">
+
+		<title>{% block title %}{% endblock %}</title>
+		<script>
+	        var Hyphenopoly = {
+	            require: {
+	                "la": "honorificabilitudinitas",
+	                "de": "Silbentrennungsalgorithmus",
+	                "en-us": "Supercalifragilisticexpialidocious"
+	            },
+	            paths: {
+	                patterndir: "{{ base_url }}/plugins/ebooks/booklayouts/typemill/hyphens/patterns/",
+	                maindir: "{{ base_url }}/plugins/ebooks/booklayouts/typemill/hyphens/"
+	            },
+	            setup: {
+	                hide: "none",
+	                selectors: {
+	                    ".container": {}
+	                }
+	            },
+		       handleEvent: {
+		            hyphenopolyEnd: function (e) {
+		              let previewer = new Paged.Previewer();
+		              previewer.preview();
+		            }
+		        }	            
+	        };
+        </script>
+        <script src="{{ base_url }}/plugins/ebooks/booklayouts/typemill/hyphens/Hyphenopoly_Loader.js"></script>
+        <style>
+            .container {
+                display: flex;
+                hyphens: auto;
+                -ms-hyphens: auto;
+                -moz-hyphens: auto;
+                -webkit-hyphens: auto;
+            }
+        </style>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="description" content="{{ metatabs.meta.description }}" />
+		<meta name="author" content="{{ metatabs.meta.author }}" />
+		<meta name="generator" content="Typemill" />
+
+		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/typemill/layout-digital.css" />
+		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/typemill/layout.css" />
+<!--		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/public/previewprintbook.css" />  -->
+		
+		<style>
+			:root {
+			  --primary-bg-color: {{ ebookdata.primarycolor ? ebookdata.primarycolor : 'cadetblue' }};
+			  --secondary-bg-color: {{ ebookdata.primarycolor ? ebookdata.primarycolor : 'cadetblue' }};
+			}
+			{% if ebookdata.coverimage %}
+				.cover{
+					background-image: url( {{ base_url }}/{{ ebookdata.coverimage }} );
+				}
+			{% endif %}
+		</style>
+
+	</head>
+	<body class="hyphenate" lang="en-US" id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
+
+		<div class="cover">
+			{% if not ebookdata.coverimageonly %}
+				<div class="cover-top">
+					<h1 class="cover-title">{{ ebookdata.title }}</h1>		
+				</div>
+				<div class="cover-bottom">
+					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
+					<p class="cover-author">{{ ebookdata.author }}</p>
+					<p class="cover-edition">{{ ebookdata.edition }}</p>		
+				</div>
+			{% endif %}
+		</div>
+
+		<div class="imprint">
+			{% set booklayout = ebookdata.booklayouts[ebookdata.layout] %}
+			<div class="imprint-top">
+				<p>Book layout: © {{ booklayout.Name }} ({{ booklayout.Link }}) Licence: {{ booklayout.Licence }}<br/>
+				Created with https://typemill.net</p>
+			</div>
+			<div class="imprint-bottom">
+				{{ markdown(ebookdata.imprint) }}
+			</div>
+		</div>
+		
+		{% if ebookdata.toc %}
+			<div class="tableofcontents">
+				<h1>{{ ebookdata.toctitle }}</h1>
+				<div id="toc"></div>
+			</div>
+		{% endif %}
+
+		<div class="bookcontent">
+			{% for chapter in book %}
+		
+				{% if chapter.level == 1 %}
+					
+					<section class="chapter">
+						{{ chapter.content }}
+					</section>
+
+				{% else %}
+				
+					{{ chapter.content }}
+
+				{% endif %}
+		
+			{% endfor %}
+		</div>
+
+        <div class="container">
+            <p lang="la">Qua de causa Helvetii quoque reliquos Gallos virtute praecedunt, quod fere cotidianis proeliis cum Germanis contendunt, cum aut suis finibus eos prohibent aut ipsi in eorum finibus bellum gerunt.</p>
+            <p lang="en-us">For which reason the Helvetii also surpass the rest of the Gauls in valor, as they contend with the Germans in almost daily battles, when they either repel them from their own territories, or themselves wage war on their frontiers.</p>
+            <p lang="de">Aus diesem Grund übertreffen auch die Helvetier die übrigen Gallier an Tapferkeit, weil sie sich in fast täglichen Gefechten mit den Germanen messen, wobei sie diese entweder von ihrem Gebiet fernhalten oder selbst in deren Gebiet kämpfen.</p>
+        </div>
+
+		{% if ebookdata.endnotes %}
+
+			<div id="endnotes">
+				<h1>{{ebookdata.endnotestitle}}</h1>
+			</div>
+		
+		{% endif %}
+
+		{% block javascripts %}
+
+			{{ assets.renderJS() }}
+		
+		{% endblock %}
+
+		<script>
+			let ebookconfig = document.querySelector('#ebook');
+			ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
+		</script>
+
+		{% if ebookdata.endnotes %}
+			<script src="{{ base_url }}/plugins/ebooks/public/endnotes.js"></script>
+			<script>
+				endnotes('#endnotes');
+			</script>
+		{% endif %}
+
+		<script src="{{ base_url }}/plugins/ebooks/public/paged.js"></script>
+		<script>
+			class handlers extends Paged.Handler {
+				constructor(chunker, polisher, caller) {
+				    super(chunker, polisher, caller);
+				}
+
+				beforeParsed(content){
+
+					if(ebookdata.toc){
+						createToc({
+						    content: content,
+						    tocElement: '#toc',
+							titleElements: tocHeadlines
+						});
+					}
+				}
+			}
+			Paged.registerHandlers(handlers);
+			
+		</script>
+		{% if ebookdata.toc %}
+			<script src="{{ base_url }}/plugins/ebooks/public/paged-toc.js"></script>
+			<script>
+			 
+				 var tocHeadlines = [];
+				 var tocLevels = ebookdata.toclevel;
+				 for(var i = 1; i <= tocLevels; i++)
+				 {
+				 	tocHeadlines.push('.bookcontent h'+i);
+				 }
+
+			</script>
+		{% endif %}
+	</body>
+</html>

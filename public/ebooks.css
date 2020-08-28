@@ -1,0 +1,193 @@
+fieldset{
+	width: auto;
+}
+fieldset.subfield{
+	padding: 20px;
+	border: 1px solid #ddd;
+	margin: 20px;
+}
+fieldset.subfield legend{
+	float: none;
+	font-weight: bold;
+	font-size: 1.2em;
+}
+.progressnav,.ebookform{
+	padding: 20px;
+}
+button.progressbutton{
+	box-shadow: none;
+	background: gray;
+	color: #fff;
+	position: relative;
+	height:40px;
+	margin-right:25px;
+	width: 16%;
+	box-sizing:border-box;
+}
+button.progressbutton:hover,button.progressbutton:focus,button.progressbutton:active,button.progressbutton.active{
+	background: #66b0a3;
+	box-shadow: none;
+}
+button.progressbutton:hover:before,button.progressbutton:focus:before,button.progressbutton:active:before,button.progressbutton.active:before{
+	border-bottom: 20px solid #66b0a3;
+	border-top: 20px solid #66b0a3;
+}
+button.progressbutton:hover:after,button.progressbutton:focus:after,button.progressbutton:active:after,button.progressbutton.active:after{
+	border-left: 20px solid #66b0a3;
+}
+button.progressbutton:before,button.progressbutton:after{
+	content: '';
+	display: block;  
+	position: absolute;
+	bottom: 0;
+	width: 0;
+	height: 0;
+}
+button.progressbutton:before{
+	left: -20px;
+	border-bottom: 20px solid gray;
+	border-top: 20px solid gray;
+	border-left: 20px solid transparent;
+	border-right: 0px solid transparent;	
+}
+button.progressbutton.front:before{
+	border-bottom: 0;
+	border-top:0;
+	border-left: 0;
+	left: 0;
+}
+button.progressbutton:after{
+	right: -20px;
+	border-bottom: 20px solid transparent;
+	border-top: 20px solid transparent;
+	border-left: 20px solid gray;
+	border-right: 0px solid transparent;
+}
+
+button.progressbutton.error{
+	background: #e0474c;
+}
+button.progressbutton.error:before{
+	border-bottom: 20px solid #e0474c;
+	border-top: 20px solid #e0474c;
+}
+button.progressbutton.error:after{
+	border-left: 20px solid #e0474c;
+}
+.tabalert{
+	position: absolute;
+	width: 15px;
+	height: 15px;
+	font-weight: 300;
+	border-radius: 50%;
+	border: 1px solid white;
+	color: white;
+	right: 10px;
+	line-height: 15px;
+	font-size: .8em;
+}
+
+.tableofcontents{
+	border: 1px solid #eee;
+	background: #f9f8f6;
+	padding: 40px;
+}
+.tableofcontents ul{
+	list-style: none;
+	margin: 0 0 0 0;
+	padding-left:30px;
+}
+.tableofcontents > ul{
+	padding: 0 0 0 0;
+}
+.tableofcontents .checkmark {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 16px;
+	width: 16px;
+	border: 2px solid #ccc; 
+	background-color: #fff;	
+	border-radius: 2px;
+}
+.tableofcontents .checkmark:after {
+  content: "";
+  position: absolute;
+  display: block;
+}
+.tableofcontents .control-group .checkmark:after {
+	left: 5px;
+	top: 0px;
+	width: 5px;
+	height: 10px;
+	border: solid #fff; 
+	border-width: 0 2px 2px 0;
+ 	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+.tableofcontents .control-group input ~ .checkmark{ 
+	background-color: #ccc;
+	border: 2px solid #ccc;
+}
+/*.tableofcontents .control-group:hover input ~ .checkmark{ 
+	background-color: #ccc;
+	border: 2px solid #ccc;
+}*/
+.tableofcontents .control-group input:checked ~ .checkmark{	
+	border: 2px solid #cc4146;
+	background-color: #cc4146;
+}
+.tableofcontents .control-group input:checked ~ .checkmark:after{
+  	display: block;
+  	height: 0;
+  	top: 7px;
+ 	-webkit-transform: rotate(0deg);
+	-ms-transform: rotate(0deg);
+	transform: rotate(0deg);  	
+}
+.tableofcontents .control-group input:disabled ~ .checkmark{
+	border: 2px solid #eee; 
+	background-color: #eee; 
+}
+.tableofcontents .unselected ul{
+	display: none;
+}
+.ebookcover .half{
+	width: 49.5%;
+	float: left;
+	margin-right: 0.5%;
+}
+.coverpreview img{
+	max-width: 300px;
+}
+.large img{
+	width: auto;
+}
+.description{
+	font-size: .8em;
+	font-style: italic;
+}
+.layoutinfo{
+	border-top: 1px solid lightgray;
+	padding: 1.5em 0;
+	margin: 1.5em 0 0;
+}
+.layoutinfo a{
+	color: #66b0a3;
+}
+.layoutinfo ul{
+	list-style: none;
+	margin: .5em 0;
+	padding: .5em 0;
+	font-size: .8em;
+}
+.layoutinfo li{
+	display: table;
+	padding: .3em;
+}
+.infokey{
+	min-width: 100px;
+	font-weight: 800;
+	display: table-cell;
+}

@@ -1,0 +1,28 @@
+<header class="headline">
+	<h1>Create an ebook</h1>
+</header>
+
+<div id="ebooks">
+
+	<div class="progressnav">
+	    <button
+	    	class="progressbutton"
+	        v-for="tab in tabs"
+	        v-bind:key="tab"
+	        v-bind:class="getTabClass(tab)"
+	        v-on:click="triggersubmit(tab)"
+	      >
+	        ${ tab } <span v-if="tabErrors[tab]" class="tabalert">!</span>
+	    </button>
+	</div>
+
+	<div class="large" v-if="message"><div class="w-100 tc pv2 mv2 white" :class="messagecolor">${ message }</div></div>
+
+	<component 
+		v-bind:is="currentTabComponent"
+	    v-bind:errors="formErrors"
+	    v-bind:data="formData"
+	    v-bind:navigation="navigation"
+	></component>
+
+</div>

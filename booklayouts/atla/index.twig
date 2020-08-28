@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="{{ settings.langattr | default('en') }}">
+	<head>
+		<meta charset="UTF-8">
+		<title>{% block title %}{% endblock %}</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta content="IE=edge" http-equiv="X-UA-Compatible">
+
+		<meta name="description" content="{{ metatabs.meta.description }}" />
+		<meta name="author" content="{{ metatabs.meta.author }}" />
+		<meta name="generator" content="TYPEMILL" />
+		<meta name="msapplication-TileColor" content="#F9F8F6" />
+		
+		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/atla/css/atla-template.css" />
+		
+		<style>
+			{% if ebookdata.coverimage != '' %}
+				.cover{
+					background-image: url( {{ base_url }}/{{ ebookdata.coverimage }} );
+				}
+			{% endif %}
+			{% if ebookdata.primarycolor != '' %}
+				.cover{
+					background-color: {{ ebookdata.primarycolor }};
+				}
+			{% endif %}
+			{% if ebookdata.secondarycolor != '' %}
+				.cover-bottom{
+					background-color: {{ ebookdata.secondarycolor }};
+				}
+			{% endif %}
+		</style>
+
+	</head>
+	<body>
+
+		<div class="cover">
+			<header>
+				<h1 class="booktitle">Booktitle</h1>
+			</header>
+			<figure></figure>
+		</div>
+
+		<div class="title">
+			<h2>My Title</h2>
+			<div class="author"><p>Author</p></div>
+			<div class="pub">Pub</div>
+		</div>
+		<div class="copyright">
+			<h1>Copyright</h1>
+			<p>copyright</p>
+		</div>
+
+		<div class="dedication">
+			<h1>Dedication</h1>
+			<p>dedication text</p>
+		</div>
+
+		<div class="component-front">
+			<h1 class="booktitle">Booktitle</h1>
+			<p>Add front stuff here</p>
+		</div> 
+		<div class="component-body">
+			{% for chapter in book %}
+				<section class="body-chapter">
+					{{ chapter.content }}
+				</section>
+			{% endfor %}			
+		</div> 
+		<div class="component-back">
+			<p>probably for notes and other stuff</p>
+		</div>
+
+		<div class="block-appendix">
+			<p>block-appendix</p>
+		</div>
+		<div class="appendix">
+			<p>appendix</p>
+		</div>
+
+<!--
+		<div class="cover">
+			{% if not ebookdata.coverimageonly %}
+				<div class="cover-top">
+					<h1 class="cover-title">{{ ebookdata.title }}</h1>		
+				</div>
+				<div class="cover-bottom">
+					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
+					<p class="cover-author">{{ ebookdata.author }}</p>
+					<p class="cover-edition">{{ ebookdata.edition }}</p>		
+				</div>
+			{% endif %}
+		</div>
+
+		<div class="imprint">
+			{% set booklayout = ebookdata.booklayouts[ebookdata.layout] %}
+			<div class="imprint-top">
+				<p>Book layout: © {{ booklayout.Name }} ({{ booklayout.Link }}) Licence: {{ booklayout.Licence }}<br/>
+				Created with https://typemill.net</p>
+			</div>
+			<div class="imprint-bottom">
+				{{ markdown(ebookdata.imprint) }}
+			</div>
+		</div>
+-->
+
+		{% block javascripts %}
+
+			{{ assets.renderJS() }}
+		
+		{% endblock %}
+
+		<script src="{{ base_url }}/plugins/ebooks/public/paged.js"></script>
+	</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="{{ settings.langattr | default('en') }}">
+	<head>
+		<meta charset="UTF-8">
+		<title>{% block title %}{% endblock %}</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="description" content="{{ metatabs.meta.description }}" />
+		<meta name="author" content="{{ metatabs.meta.author }}" />
+		<meta name="generator" content="TYPEMILL" />
+
+		<base href="{{ base_url }}/">
+
+		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/electric/style.css" />
+		
+		<style>
+			{% if ebookdata.coverimage != '' %}
+				.cover{
+					background-image: url( {{ base_url }}/{{ ebookdata.coverimage }} );
+				}
+			{% endif %}			
+			{% if ebookdata.primarycolor != '' %}
+				.cover{
+					background-color: {{ ebookdata.primarycolor }};
+				}
+			{% endif %}
+		</style>
+
+	</head>
+	<body>
+
+	{% if ebookdata.coverimageonly %}
+
+		<div class="samples cover" data-header="Cover" data-header-left="Cover" data-header-right="Cover" data-page-info="Samples: Cover • 00-00-cover • 30 Nov 2018, 16:35">
+		
+		        <div>
+		            <div>
+		                <p class="cover"><img src="{{ base_url }}/{{ ebookdata.coverimage }}" alt="Samples" class="cover" /></p>
+		            </div>
+		            <!--#content-->
+		        </div>
+		        <!--#wrapper-->
+	    </div>
+
+	{% else %}
+
+		<div class="samples cover title-page" data-header="Title page" data-header-left="Title page" data-header-right="Title page" data-page-info="Samples: Title page • 00-03-title-page • 30 Nov 2018, 16:35">
+			<div>
+			    <div>
+	                <p class="title-page-title" id="title-page-title">{{ ebookdata.title }}</p>
+	                <p class="title-page-subtitle">{{ ebookdata.subtitle }}</p>
+	                <p class="title-page-author">{{ ebookdata.author }}</p>
+	                <p class="title-page-publisher">{{ ebookdata.edition }}</p>
+			    </div>
+			    <!--#content-->
+			</div>
+			<!--#wrapper-->
+		</div>
+	
+	{% endif %}
+
+    <div class="samples title-page" data-header="Title page" data-header-left="Title page" data-header-right="Title page" data-page-info="Samples: Title page • 00-03-title-page • 30 Nov 2018, 16:35">
+        <div>
+            <div>
+                <p class="title-page-title" id="title-page-title">{{ ebookdata.title }}</p>
+                <p class="title-page-subtitle">{{ ebookdata.subtitle }}</p>
+                <p class="title-page-author">{{ ebookdata.author }}</p>
+                <p class="title-page-publisher">{{ ebookdata.edition }}</p>
+            </div>
+            <!--#content-->
+        </div>
+        <!--#wrapper-->
+    </div>
+
+    <div class="samples copyright-page" data-header="Copyright" data-header-left="Copyright" data-header-right="Copyright" data-page-info="Samples: Copyright • 00-04-copyright-page • 30 Nov 2018, 16:35">
+        <div>
+            <div>
+				{% set booklayout = ebookdata.booklayouts[ebookdata.layout] %}
+                <h1 class="non-printing" id="copyright">Copyright</h1>
+				<p>Book layout: © {{ booklayout.Name }} ({{ booklayout.Link }}) Licence: {{ booklayout.Licence }}<br/>
+				Created with https://typemill.net</p>
+
+				{{ markdown(ebookdata.imprint) }}
+            </div>
+            <!--#content-->
+        </div>
+        <!--#wrapper-->
+    </div>
+
+
+	{% if ebookdata.dedication != '' %}
+	    <div class="samples dedication-page" data-header="Dedication" data-header-left="Dedication" data-header-right="Dedication" data-page-info="Samples: Dedication • 00-06-dedication-page • 30 Nov 2018, 16:35">
+	        <div>
+	            <div>
+	                <p class="dedication" id="dedication">{{ ebookdata.dedication }}</p>
+	            </div>
+	            <!--#content-->
+	        </div>
+	        <!--#wrapper-->
+	    </div>
+	{% endif %}
+
+	{% for chapter in book %}
+	    <div class="samples chapter" data-header="Plain text" data-header-left="Plain text" data-header-right="Plain text" data-page-info="Samples: Plain text • 01-01-plain-text • 30 Nov 2018, 16:35">
+	        <div>
+	            <div>
+
+					{{ chapter.content }}
+
+				</div>
+			</div>
+		</div>
+
+	{% endfor %}
+
+	<script src="{{ base_url }}/plugins/ebooks/public/paged.js"></script>
+	</body>
+</html>
