@@ -1,46 +1,10 @@
+{% set language = ebookdata.language ? ebookdata.language : settings.langattr %}
 <!DOCTYPE html>
-<html lang="{{ settings.langattr | default('en') }}">
+<html lang="{{ language | default('en-gb') }}">
 	<head>
 		<meta charset="UTF-8">
 
 		<title>{% block title %}{% endblock %}</title>
-		<script>
-			/*
-	        var Hyphenopoly = {
-	            require: {
-	                "la": "honorificabilitudinitas",
-	                "de": "Silbentrennungsalgorithmus",
-	                "en-us": "Supercalifragilisticexpialidocious"
-	            },
-	            paths: {
-	                patterndir: "{{ base_url }}/plugins/ebooks/booklayouts/typemill/hyphens/patterns/",
-	                maindir: "{{ base_url }}/plugins/ebooks/booklayouts/typemill/hyphens/"
-	            },
-	            setup: {
-	                hide: "none",
-	                selectors: {
-	                    ".container": {}
-	                }
-	            },
-		       handleEvent: {
-		            hyphenopolyEnd: function (e) {
-		              let previewer = new Paged.Previewer();
-		              previewer.preview();
-		            }
-		        }	            
-	        };
-	        */
-        </script>
-        <script src="{{ base_url }}/plugins/ebooks/booklayouts/typemill/hyphens/Hyphenopoly_Loader.js"></script>
-        <style>
-            .container {
-                display: flex;
-                hyphens: auto;
-                -ms-hyphens: auto;
-                -moz-hyphens: auto;
-                -webkit-hyphens: auto;
-            }
-        </style>
 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -50,12 +14,11 @@
 
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/typemill/layout-digital.css" />
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/typemill/layout.css" />
-<!--		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/public/previewprintbook.css" />  -->
 		
 		<style>
 			:root {
 			  --primary-bg-color: {{ ebookdata.primarycolor ? ebookdata.primarycolor : 'cadetblue' }};
-			  --secondary-bg-color: {{ ebookdata.primarycolor ? ebookdata.primarycolor : 'cadetblue' }};
+			  --secondary-bg-color: {{ ebookdata.secondarycolor ? ebookdata.secondarycolor : 'cadetblue' }};
 			}
 			{% if ebookdata.coverimage %}
 				.cover{
@@ -64,8 +27,112 @@
 			{% endif %}
 		</style>
 
+		{% if ebookdata.toccounter %}
+			<style>
+
+				/* add chapter/headline counters before headline text */
+				#list-toc-generated{ 
+				    counter-reset: counterTocLevel1; 
+				}
+				#list-toc-generated .toc-element-level-1{ 
+				    counter-increment: counterTocLevel1; 
+				    counter-reset: counterTocLevel2; 
+				}
+				#list-toc-generated .toc-element-level-2{ 
+				    counter-reset: counterTocLevel3; 
+				}
+				#list-toc-generated .toc-element-level-1::before{ 
+				    content: counter(counterTocLevel1) ".";
+				    padding-right: 5px;
+				}
+				#list-toc-generated .toc-element-level-2{ 
+				    counter-increment: counterTocLevel2; 
+				}
+				#list-toc-generated .toc-element-level-2::before{ 
+				    content: counter(counterTocLevel1) "." counter(counterTocLevel2);
+				    padding-right: 5px;
+				}
+				#list-toc-generated .toc-element-level-3{ 
+				    counter-increment: counterTocLevel3; 
+				}
+				#list-toc-generated .toc-element-level-3::before{ 
+				    content: counter(counterTocLevel1) "." counter(counterTocLevel2) "." counter(counterTocLevel3);
+				    padding-right: 5px;
+				}
+				#list-toc-generated .toc-element-level-4{ 
+				    counter-increment: counterTocLevel4; 
+				}
+				#list-toc-generated .toc-element-level-4::before{ 
+				    content: counter(counterTocLevel1) "." counter(counterTocLevel2) "." counter(counterTocLevel3) "." counter(counterTocLevel4);
+				    padding-right: 5px;
+				}
+			</style>
+		{% endif %}
+
+		{% if ebookdata.hyphens %}
+			<script>
+
+		        var Hyphenopoly = {
+		            require: {
+		                "{{ language }}": "{{ ebookdata.hyphentest }}"
+		            },
+		            paths: {
+		                patterndir: "{{ base_url }}/plugins/ebooks/public/hyphens/patterns/",
+		                maindir: "{{ base_url }}/plugins/ebooks/public/hyphens/"
+		            },
+		            setup: {
+		                defaultLanguage: "en-gb",
+		              	dontHyphenate: {
+		              		h1: true,
+		              		h2: true,
+		              		h3: true,
+		              		h4: true,
+		              		h5: true,
+		              		h6: true,
+	           	 			video: true,
+	            			audio: true,
+	            			script: true,
+	            			code: true,
+	            			pre: true,
+	            			img: true,
+	            			br: true,
+	            			samp: true,
+	            			kbd: true,
+	            			var: true,
+	            			abbr: true,
+	            			acronym: true,
+	            			sub: true,
+	            			sup: true,
+	            			button: true,
+	            			option: true,
+	            			label: true,
+	            			textarea: true,
+	            			input: true,
+	            			math: true,
+	            			svg: true,
+	            			style: true
+	        			},
+		                selectors: {
+		                    ".bookcontent": {}
+		                }
+		            },
+			       	handleEvent: {
+			            hyphenopolyEnd: function (e) {
+			              let previewer = new Paged.Previewer();
+			              previewer.preview();
+			            }
+			        }
+		        };
+
+				window.PagedConfig = {
+					auto: false
+				}
+			</script>
+	        <script src="{{ base_url }}/plugins/ebooks/public/hyphens/Hyphenopoly_Loader.js"></script>
+		{% endif %}
+
 	</head>
-	<body class="hyphenate" lang="en-US" id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
+	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
 
 		<div class="cover">
 			{% if not ebookdata.coverimageonly %}
@@ -114,13 +181,7 @@
 				{% endif %}
 		
 			{% endfor %}
-		</div>
-
-        <div class="container">
-            <p lang="la">Qua de causa Helvetii quoque reliquos Gallos virtute praecedunt, quod fere cotidianis proeliis cum Germanis contendunt, cum aut suis finibus eos prohibent aut ipsi in eorum finibus bellum gerunt.</p>
-            <p lang="en-us">For which reason the Helvetii also surpass the rest of the Gauls in valor, as they contend with the Germans in almost daily battles, when they either repel them from their own territories, or themselves wage war on their frontiers.</p>
-            <p lang="de">Aus diesem Grund übertreffen auch die Helvetier die übrigen Gallier an Tapferkeit, weil sie sich in fast täglichen Gefechten mit den Germanen messen, wobei sie diese entweder von ihrem Gebiet fernhalten oder selbst in deren Gebiet kämpfen.</p>
-        </div>
+		</div>		
 
 		{% if ebookdata.endnotes %}
 
@@ -136,18 +197,16 @@
 		
 		{% endblock %}
 
-		<script>
-			let ebookconfig = document.querySelector('#ebook');
-			ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
-		</script>
-
 		{% if ebookdata.endnotes %}
 			<script src="{{ base_url }}/plugins/ebooks/public/endnotes.js"></script>
 			<script>
 				endnotes('#endnotes');
 			</script>
 		{% endif %}
-
+		<script>
+			let ebookconfig = document.querySelector('#ebook');
+			ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
+		</script>
 		<script src="{{ base_url }}/plugins/ebooks/public/paged.js"></script>
 		<script>
 			class handlers extends Paged.Handler {
@@ -169,6 +228,7 @@
 			Paged.registerHandlers(handlers);
 			
 		</script>
+
 		{% if ebookdata.toc %}
 			<script src="{{ base_url }}/plugins/ebooks/public/paged-toc.js"></script>
 			<script>
@@ -182,5 +242,6 @@
 
 			</script>
 		{% endif %}
+
 	</body>
 </html>

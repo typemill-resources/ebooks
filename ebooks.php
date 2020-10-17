@@ -50,15 +50,16 @@ class Ebooks extends Plugin
 
 	public function onPageReady($data)
 	{
-		if($this->getPath() == 'tm/ebooks')
+		if(strpos($this->getPath(), 'tm/ebooks') !== false)
 		{
 
 			# add the css and vue application
 		    $this->addCSS('/ebooks/public/ebooks.css');
 		    $this->addJS('/ebooks/public/ebooks.js');
-
+			
 			$pagedata = $data->getData();
 
+			
 			$twig 	= $this->getTwig();
 			$loader = $twig->getLoader();
 			$loader->addPath(__DIR__ . '/templates');
@@ -185,7 +186,7 @@ class Ebooks extends Plugin
 		
 		if($ebookstored AND $navistored)
 		{
-			return $response->withJson(array(), 200);
+			return $response->withJson(array("ebookdata" => $ebookstored, "navidata" => $navistored), 200);
 		}
 
 		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
@@ -227,52 +228,57 @@ class Ebooks extends Plugin
 	{
 		foreach($navigation as $item)
 		{
-			# if page or folder is excluded from book content
-			if(isset($item['exclude']) && $item['exclude'] == true)
-			{
-				continue;
-			}
 
-			# set the filepath
-			$filePath 	= $pathToContent . $item['path'];
-			
-			# check if url is a folder and add index.md 
-			if($item['elementType'] == 'folder')
-			{
-				$filePath 	= $filePath . DIRECTORY_SEPARATOR . 'index.md';
-			}
-
-			# read the content of the file
-			$chapter 			= file_exists($filePath) ? file_get_contents($filePath) : false;
-
-			# turn into an array
-			$chapterArray 		= $parsedown->text($chapter, $itemUrl = false);
-
-			# correct the headline hierarchy according to its position  on the website
-			$chapterlevel = count($item['keyPathArray']);
-			if($chapterlevel > 1)
-			{
-				# go through each content element
-				foreach($chapterArray as $key => $element)
+			if($item['status'] == "published")
+			{				
+				# if page or folder is excluded from book content
+				if(isset($item['exclude']) && $item['exclude'] == true)
 				{
-					# lower the levels of headlines
-					if(isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+					continue;
+				}
+
+				# set the filepath
+				$filePath 	= $pathToContent . $item['path'];
+				
+				# check if url is a folder and add index.md 
+				if($item['elementType'] == 'folder')
+				{
+					$filePath 	= $filePath . DIRECTORY_SEPARATOR . 'index.md';
+				}
+
+				# read the content of the file
+				$chapter 			= file_exists($filePath) ? file_get_contents($filePath) : false;
+
+				# turn into an array
+				$chapterArray 		= $parsedown->text($chapter, $itemUrl = false);
+
+				# correct the headline hierarchy according to its position  on the website
+				$chapterlevel = count($item['keyPathArray']);
+				if($chapterlevel > 1)
+				{
+					# go through each content element
+					foreach($chapterArray as $key => $element)
 					{
-						$headlinelevel = $element['name'][1] + ($chapterlevel -1);
-						$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
-						$chapterArray[$key]['name'] = 'h' . $headlinelevel;
+						# lower the levels of headlines
+						if(isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						{
+							$headlinelevel = $element['name'][1] + ($chapterlevel -1);
+							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
+							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
+						}
 					}
 				}
-			}
 
-			# turn into html
-			$chapterHTML		= $parsedown->markup($chapterArray, $itemUrl = false);
+				# turn into html
+				$chapterHTML		= $parsedown->markup($chapterArray, $itemUrl = false);
 
-			$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML];
+				$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML];
 
-			if($item['elementType'] == 'folder')
-			{
-				$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown);
+				if($item['elementType'] == 'folder')
+				{
+					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown);
+				}
+
 			}
 		}
 

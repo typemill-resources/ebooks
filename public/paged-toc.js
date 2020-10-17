@@ -10,7 +10,7 @@ function createToc(config){
 
     // add class to all title elements
     let tocElementNbr = 0;
-    for(var i= 0; i < titleElements.length; i++){
+    for(var i = 0; i < titleElements.length; i++){
         
         let titleHierarchy = i + 1;
         let titleElement = content.querySelectorAll(titleElements[i]);    
@@ -43,7 +43,7 @@ function createToc(config){
         tocNewLi.classList.add("toc-element");
         tocNewLi.classList.add("toc-element-level-" + tocElement.dataset.titleLevel);
         tocNewLi.innerHTML = '<a href="#' + tocElement.id + '">' + tocElement.innerHTML + '</a>';
-        tocUl.appendChild(tocNewLi);  
+        tocUl.appendChild(tocNewLi);
     }
 
 }

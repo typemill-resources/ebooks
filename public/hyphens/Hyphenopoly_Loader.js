@@ -9,7 +9,6 @@
 /* globals Hyphenopoly:readonly */
 ((w, d, H, o) => {
     "use strict";
-
     /**
      * Shortcut for new Map
      * @param {any} init - initialiser for new Map

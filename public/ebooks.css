@@ -50,7 +50,7 @@ button.progressbutton:before{
 	border-left: 20px solid transparent;
 	border-right: 0px solid transparent;	
 }
-button.progressbutton.front:before{
+button.progressbutton.layout:before{
 	border-bottom: 0;
 	border-top:0;
 	border-left: 0;
@@ -127,8 +127,8 @@ button.progressbutton.error:after{
 	transform: rotate(45deg);
 }
 .tableofcontents .control-group input ~ .checkmark{ 
-	background-color: #ccc;
-	border: 2px solid #ccc;
+	background-color: #66b0a3;
+	border: 2px solid #66b0a3;
 }
 /*.tableofcontents .control-group:hover input ~ .checkmark{ 
 	background-color: #ccc;

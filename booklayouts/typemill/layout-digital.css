@@ -142,7 +142,7 @@
 }
 
 /* add page breaks */
-.title-page, .imprint, .chapter, #endnotes {
+.title-page, .imprint, .tableofcontents, .bookcontent, .chapter, #endnotes {
     break-before: right; /* page, left, recto, verso */
 }
 

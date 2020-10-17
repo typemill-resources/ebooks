@@ -678,7 +678,7 @@
             } else {
                 event.fire(
                     "error",
-                    Error(`Engine for language '${lang}' loaded, but no elements found.`)
+                    Error(`Engine for language '${lang}' loaded, but no elements '${JSON.stringify(elements)}' found.`)
                 );
             }
             if (elements.counter[0] === 0) {

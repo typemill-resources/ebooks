@@ -18,7 +18,7 @@
 
 	<div class="large" v-if="message"><div class="w-100 tc pv2 mv2 white" :class="messagecolor">${ message }</div></div>
 
-	<component 
+	<component v-if="dataLoaded"
 		v-bind:is="currentTabComponent"
 	    v-bind:errors="formErrors"
 	    v-bind:data="formData"
