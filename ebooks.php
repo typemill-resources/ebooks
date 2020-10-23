@@ -126,6 +126,16 @@ class Ebooks extends Plugin
 
 		$navigation = $writeCache->getCache($folderName, 'navigation.txt');
 
+		if(!$navigation)
+		{
+			$navigation = $writeCache->getCache('cache', 'structure.txt');
+		}
+
+		if(!$navigation)
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find a content tree. Please reload the page.']), 422);
+		}
+
 		return $response->withJson(array('data' => $navigation, 'errors' => false), 200);
 	}
 
@@ -147,7 +157,7 @@ class Ebooks extends Plugin
 		# validate here
 		$v = new Validator($params['data']);
 
-		$v->rule('required', ['title', 'author']);
+#		$v->rule('required', ['title', 'author']);
 		$v->rule('lengthMax', 'title', 80);
 		$v->rule('lengthMax', 'subtitle', 80);
 		$v->rule('lengthMax', 'author', 80);
@@ -195,6 +205,8 @@ class Ebooks extends Plugin
 	public function ebookPreview($request, $response, $args)
 	{
 		$settings 		= $this->getSettings();
+		$uri 			= $request->getUri()->withUserInfo('');
+		$base_url		= $uri->getBaseUrl();
 
 		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
 		$folder 		= $settings['rootPath'] . $folderName;
@@ -209,7 +221,7 @@ class Ebooks extends Plugin
 
 		$settings		= $this->getSettings();
 		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
-		$parsedown 		= new ParsedownExtension();
+		$parsedown 		= new ParsedownExtension($base_url);
 
 		$book = $this->generateContent([], $navigation, $pathToContent, $parsedown);
 

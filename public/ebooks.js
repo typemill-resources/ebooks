@@ -407,9 +407,8 @@ let ebooks = new Vue({
         })
         .catch(function (error)
         {
-           	if(error.response)
-            {
-            }
+	        self.message = error.response.data.errors.message;
+        	self.messagecolor = 'bg-tm-red';
         });
 
 		/* always get the latest navigation (not the stored book navigation, because website navigation might have changed) */
@@ -427,9 +426,8 @@ let ebooks = new Vue({
         })
         .catch(function (error)
         {
-           	if(error.response)
-            {
-            }
+	        self.message = error.response.data.errors.message;
+        	self.messagecolor = 'bg-tm-red';
         });
 
 		FormBus.$on('forminput', formdata => {
