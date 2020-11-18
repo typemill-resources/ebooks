@@ -21,7 +21,8 @@
 	<component v-if="dataLoaded"
 		v-bind:is="currentTabComponent"
 	    v-bind:errors="formErrors"
-	    v-bind:data="formData"
+	    v-bind:formdata="formData"
+	    v-bind:layouts="layoutData"
 	    v-bind:navigation="navigation"
 	></component>
 

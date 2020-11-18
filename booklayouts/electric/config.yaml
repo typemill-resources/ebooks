@@ -2,3 +2,13 @@ Name: Electric
 Copyright: Arthur Attwell, Electric Book Works
 Licence: Creative Commons Attribution 4.0 (CC0)
 Link: https://electricbookworks.com
+
+standardforms:
+  coverbackground: true
+  toc: false
+  hyphens: false 
+  endnotes: false
+  titlepage: true 
+  imprint: true 
+  dedication: false 
+  blurb: false 

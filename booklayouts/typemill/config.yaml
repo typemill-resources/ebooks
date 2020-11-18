@@ -4,3 +4,22 @@ Licence: Creative Commons BY 3.0
 Link: https://trendschau.net
 Sizes: A5 (148mm 210mm)
 Photo: Photo by Markus Winkler on Unsplash
+
+standardforms:
+  coverbackground: true
+  toc: true
+  hyphens: true 
+  endnotes: true 
+  titlepage: true 
+  imprint: true 
+  dedication: false 
+  blurb: false 
+
+customforms:
+  fields:
+    myfield:
+      type: text
+      label: Add some text
+    yourfield:
+      type: customfields
+      label: Add some text

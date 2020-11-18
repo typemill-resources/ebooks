@@ -1,8 +1,20 @@
 ﻿name: ebooks
-version: 1.0.1
-description: Create an ebook design from your website and print it as PDF
+version: 1.1.0
+description: Transform your typemill installation into a micropublishing hub.
 author: Sebastian Schürmanns
 homepage: https://trendschau.net
 licence: MIT
 paypal: https://paypal.me/typemill
-amount: 10
+amount: 30
+
+forms:
+  fields:
+
+    ebooksinsettings:
+      type: checkbox
+      label: eBook feature in settings
+      checkboxlabel: Admin can generate eBooks in a new navi-item on the settings page.
+    ebooksinpages:
+      type: checkbox
+      label: eBook feature in pages
+      checkboxlabel: Authors can generate ebooks in a new tab on every content page.

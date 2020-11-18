@@ -50,7 +50,7 @@ button.progressbutton:before{
 	border-left: 20px solid transparent;
 	border-right: 0px solid transparent;	
 }
-button.progressbutton.layout:before{
+button.progressbutton.general:before{
 	border-bottom: 0;
 	border-top:0;
 	border-left: 0;
