@@ -127,6 +127,9 @@ class Ebooks extends Plugin
 		# get the stored ebook-data
 		$formdata = $writeYaml->getYaml($folderName, 'ebookdata.yaml');
 
+		# check formdata for customfields
+		
+
 		# get the ebook layout
 		$booklayouts = $this->scanEbooklayouts();
 
@@ -366,6 +369,7 @@ class Ebooks extends Plugin
 			'blurb',
 			'primarycolor',
 			'secondarycolor',
+			'content'
 		];
 
 		# delete the standardfields from formdata
@@ -405,6 +409,7 @@ class Ebooks extends Plugin
 						$errors[$fieldName] = $result[$fieldName][0];
 					}
 
+					/*
 					# special treatment for customfields 
 					if($fieldDefinition && isset($fieldDefinition['type']) && ($fieldDefinition['type'] == 'customfields' ) )
 					{
@@ -416,6 +421,7 @@ class Ebooks extends Plugin
 
 						$params['data'][$fieldName] = $this->customfieldsPrepareForSave($formdata[$fieldName], $arrayFeatureOn);
 					}
+					*/
 				}
 			}
 		}
@@ -549,6 +555,7 @@ class Ebooks extends Plugin
 		return true;
 	}
 
+/*
 	# taken from metaApiController
 	private function customfieldsPrepareForEdit($customfields)
 	{
@@ -616,5 +623,5 @@ class Ebooks extends Plugin
 
 		return $customfieldsForSave;
 	}
-
+*/
 }

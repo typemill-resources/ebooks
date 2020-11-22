@@ -253,6 +253,33 @@ Vue.component("ebook-front", {
 	},
 });
 
+Vue.component("ebook-content", {
+	props: ['navigation'],
+   	template: '<div class="large">' +
+	   				'<label>Select content from navigation</label>'+
+	   				'<div class="tableofcontents">'+
+	   					'<button @click.prevent="reset()" class="button bg-tm-green white bn br2 mb3 pointer">Load Latest Content Tree</button>'+
+	   					'<list :navigation="navigation"></list>'+
+	   				'</div>'+
+	   				'<p>* All pages are included by default. You can exclude pages from the ebook by deselecting them. If you deselect a folder, all sub-items will be excluded, too. If you want to change the structure or the order, then please change it in the navigation of the webside.</p>'+					
+
+					'<div><button @click="submitstep" class="button bn br2 bg-tm-green white" type="submit">Next step</button></div>' +
+   			'</div>',
+	mounted: function(){
+		this.$parent.storeEbookData();
+	},
+	methods: {
+		reset: function()
+		{
+			this.$parent.resetNavigation();
+		},
+		submitstep: function()
+		{
+			this.$parent.submit('back');
+		},
+	}
+});
+
 Vue.component("list", {
 	props: ['navigation'],
 	data: function(){
@@ -295,33 +322,6 @@ Vue.component("list", {
 			}
 		},
 	},
-});
-
-Vue.component("ebook-content", {
-	props: ['navigation'],
-   	template: '<div class="large">' +
-	   				'<label>Select content from navigation</label>'+
-	   				'<div class="tableofcontents">'+
-	   					'<button @click.prevent="reset()" class="button bg-tm-green white bn br2 mb3 pointer">Load Latest Content Tree</button>'+
-	   					'<list :navigation="navigation"></list>'+
-	   				'</div>'+
-	   				'<p>* All pages are included by default. You can exclude pages from the ebook by deselecting them. If you deselect a folder, all sub-items will be excluded, too. If you want to change the structure or the order, then please change it in the navigation of the webside.</p>'+					
-
-					'<div><button @click="submitstep" class="button bn br2 bg-tm-green white" type="submit">Next step</button></div>' +
-   			'</div>',
-	mounted: function(){
-		this.$parent.storeEbookData();
-	},
-	methods: {
-		reset: function()
-		{
-			this.$parent.resetNavigation();
-		},
-		submitstep: function()
-		{
-			this.$parent.submit('back');
-		},
-	}
 });
 
 Vue.component("ebook-back", {

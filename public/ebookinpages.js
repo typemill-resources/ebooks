@@ -19,11 +19,6 @@ Vue.component('tab-ebooks', {
 				    'v-bind:navigation="navigation">' +
 				'</component>' +
     		'</section>',
-/*    template: '<section> 
-                '<div v-if="saved" class="metaLarge"><div class="metaSuccess">Saved successfully</div></div>' +
-                '<div v-if="errors" class="metaLarge"><div class="metaErrors">Please correct the errors above</div></div>' +
-                '<div class="large"><input type="submit" @click.prevent="saveInput" value="save"></input></div>' +
-              '</form></section>',	*/
 	data: function () {
 		return {
 			root: document.getElementById("main").dataset.url, /* get url of current page */
@@ -46,6 +41,9 @@ Vue.component('tab-ebooks', {
 		}
 	},
 	mounted: function(){
+
+		/* use item of page as default navigation */
+		this.navigation = [this.item];
 
 		var self = this;
 
@@ -73,36 +71,20 @@ Vue.component('tab-ebooks', {
         		/* use the first layout in folder as the default layout and store it in formData */
 				var defaultlayout = Object.keys(self.layoutData)[0];
         		self.formData = { 'layout': defaultlayout };
+
+        		/* use the default item for content tree */
+        		self.navigation = [self.item];
+
+        	}
+        	else if(self.formData.content && Object.keys(self.formData.content).length > 0)
+        	{
+        		/* use original item and mark all content as excluded that is not insode of stored formData */        		
+        		var markedNavigation = self.markSelectedPages(self.navigation, self.formData.content, []);
+
+        		self.navigation = markedNavigation;
         	}
 
         	self.dataLoaded = true;
-        })
-        .catch(function (error)
-        {
-	        self.message = error.response.data.errors.message;
-        	self.messagecolor = 'bg-tm-red';
-        });
-
-
-        /* get the metayaml here and use as input data */
-
-
-        /* get the item here and use as ebooknavi */
-
-
-
-		/* always get the latest navigation (not the stored book navigation, because website navigation might have changed) */
-        myaxios.get('/api/v1/ebooknavi',{
-        	params: {
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-        	}
-		})
-        .then(function (response) {
-
-        	self.navigation = response.data.data;
-
         })
         .catch(function (error)
         {
@@ -137,6 +119,9 @@ Vue.component('tab-ebooks', {
 		{
 			this.message = false;
 			this.messagecolor = '';
+			
+			/* we only want to store a simple (and readable) tree of selected page names in the yaml file, not the whole item object */
+			this.formData.content = this.extractSelectedContent(this.navigation,[]);
 
 			var self = this;
 
@@ -167,6 +152,74 @@ Vue.component('tab-ebooks', {
 	            }
 	        });
 		},
+		markSelectedPages: function(navigation, selectedPages, markedNavigation)
+		{
+			for(let i = 0; i < navigation.length; i++)
+			{
+				if(navigation[i].status == 'published')
+				{
+					/* find the item name in the selected pages */
+					var selectIndex = this.findInObject(navigation[i].name, selectedPages);
+
+					/* if page name is not in the selecte pages */					
+					if(selectIndex === false)
+					{
+						/* then exclude the page */
+						navigation[i].exclude = "true";
+					}
+
+					/* check if published, check if something in folder */
+					if(navigation[i].elementType == "folder")
+					{
+						/* use empty array by default, so all sub-pages will be excluded */
+						var selectedFolder = [];
+
+						/* if the page has been found in selectedPages */
+						if(selectIndex !== false && selectedPages[selectIndex].folderContent !== 'undefined')
+						{
+							/* then use the folder content */
+							selectedFolder = selectedPages[selectIndex].folderContent;
+						}
+
+						navigation[i].folderContent = this.markSelectedPages( navigation[i].folderContent, selectedFolder, [] );
+					}
+				}
+			}
+			return navigation;
+		},
+		extractSelectedContent: function(navigation, selectedPages)
+		{
+			for(let i = 0; i < navigation.length; i++)
+			{
+				/* check if published and if not excluded */
+				if(navigation[i].status == 'published' && (typeof navigation[i].exclude === 'undefined' || navigation[i].exclude === false ))
+				{
+					var item = {  };
+					item.name = navigation[i].name; 
+
+					/* check if something in folder */
+					if(navigation[i].elementType == "folder")
+					{
+						item.folderContent = this.extractSelectedContent(navigation[i].folderContent,[]);
+					}
+
+					selectedPages.push(item);
+				}
+			}
+
+			return selectedPages; 
+		},
+		findInObject: function(name, myArray)
+		{
+		 	for (var i = 0; i < myArray.length; i++)
+		 	{
+		    	if (myArray[i].name === name)
+		    	{
+		    		return i;
+		    	}
+			}
+			return false;
+		},
 		getTabClass: function(tab)
 		{
 			active = (this.currentTab === tab) ? ' active' : '';
@@ -194,8 +247,7 @@ Vue.component('tab-ebooks', {
 		{
 			var self = this;
 
-			/* always get the latest navigation (not the stored book navigation, because website navigation might have changed) */
-	        myaxios.get('/api/v1/navigation',{
+	        myaxios.get('/api/v1/article/metaobject',{
 	        	params: {
 					'url':			document.getElementById("path").value,        		
 					'csrf_name': 	document.getElementById("csrf_name").value,
@@ -204,7 +256,8 @@ Vue.component('tab-ebooks', {
 			})
 	        .then(function (response) {
 
-	        	self.navigation = response.data.data;
+				self.item = response.data.item;
+	        	self.navigation = [self.item];
 
 	        })
 	        .catch(function (error)
