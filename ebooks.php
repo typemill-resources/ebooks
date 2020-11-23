@@ -29,6 +29,7 @@ class Ebooks extends Plugin
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooklayouts', 'name' => 'ebooklayouts.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookLayouts', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'system', 'privilege' => 'view'],
+			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabitem', 'name' => 'ebooktabitem.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooknavi', 'name' => 'ebooknavi.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookNavi', 'resource' => 'system', 'privilege' => 'view'],
@@ -109,6 +110,7 @@ class Ebooks extends Plugin
 		}
 	}
 
+	# gets the centrally stored ebook-data for ebook-plugin in settings-area
 	public function getEbookData($request, $response, $args)
 	{
 		$settings 		= $this->getSettings();
@@ -136,7 +138,7 @@ class Ebooks extends Plugin
 		return $response->withJson(array('formdata' => $formdata, 'layoutdata' => $booklayouts, 'errors' => false), 200);
 	}
 
-	# get ebooktabdata
+	# gets the stored ebook-data from page yaml for the ebook-plugin in page tab. We have to do it separately because fields are stripped out in tab.
 	public function getEbookTabData($request, $response, $args)
 	{
 		$params 		= $request->getParams();
@@ -150,71 +152,13 @@ class Ebooks extends Plugin
 
 		$formdata = isset($meta['ebooks']) ? $meta['ebooks'] : false;
 
-		# here we have to add the navigationdata ??
-		# some sort of 
-
 		# get the ebook layouts
 		$booklayouts = $this->scanEbooklayouts();
 
 		return $response->withJson(array('formdata' => $formdata, 'layoutdata' => $booklayouts, 'errors' => false), 200);
 	}
 
-	# single endpoint to get only the layouts. Not in use right now
-	public function getEbookLayouts($request, $response, $args)
-	{
-		$booklayouts = $this->scanEbookLayouts();
-
-		return $response->withJson(array('layoutdata' => $booklayouts, 'errors' => false), 200);
-	}
-
-	public function scanEbooklayouts()
-	{
-		# write params
-		$writeYaml 	= new WriteYaml();
-
-		# scan the ebooklayouts folder
-		$layoutfolders = array_diff(scandir(__DIR__ . '/booklayouts'), array('..', '.'));
-		$booklayouts = [];
-
-		foreach($layoutfolders as $layout)
-		{
-			$configfolder = 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $layout;
-			$bookconfig = $writeYaml->getYaml($configfolder, 'config.yaml');
-			$booklayouts[$layout] = $bookconfig;
-		}
-
-		return $booklayouts;
-	}
-
-	public function getEbookNavi($request, $response, $args)
-	{
-		$settings 		= $this->getSettings();
-
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
-
-		if(!$this->checkEbookFolder($folder))
-		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
-		}
-
-		# write params
-		$writeCache 	= new WriteCache();
-		$navigation 	= $writeCache->getCache($folderName, 'navigation.txt');
-
-		if(!$navigation)
-		{
-			$navigation = $writeCache->getCache('cache', 'structure.txt');
-		}
-
-		if(!$navigation)
-		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find a content tree. Please reload the page.']), 422);
-		}
-
-		return $response->withJson(array('data' => $navigation, 'errors' => false), 200);
-	}
-
+	# stores the ebook-data (book-details and navigation) from central ebook in settings-area into the data-folder 
 	public function storeEbookData($request, $response, $args)
 	{
 		$params 		= $request->getParams();
@@ -253,6 +197,7 @@ class Ebooks extends Plugin
 		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
 	}
 
+	# stores the ebook data from a page tab into the page-yaml
 	public function storeEbookTabData($request, $response, $args)
 	{
 		$params 		= $request->getParams();
@@ -282,6 +227,88 @@ class Ebooks extends Plugin
 		return $response->withJson(array("ebookdata" => $meta['ebooks']), 200);
 	}
 
+	# stores the ebook data from a page tab into the page-yaml
+	public function storeEbookTabItem($request, $response, $args)
+	{
+		$params 		= $request->getParams();
+		$item 			= $params['item'];
+		$settings 		= $this->getSettings();
+
+		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		$folder 		= $settings['rootPath'] . $folderName;
+
+		# create object to read and write cache-data
+		$writeCache 	= new WriteCache();
+
+		$tmpitem 		= $writeCache->updateCache($folderName, 'tmpitem.txt', false, $item);
+		
+		if($tmpitem)
+		{
+			return $response->withJson(array("tmpitem" => $tmpitem), 200);
+		}
+
+		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
+	}
+
+	# single endpoint to get only the layouts. Not in use right now
+	public function getEbookLayouts($request, $response, $args)
+	{
+		$booklayouts = $this->scanEbookLayouts();
+
+		return $response->withJson(array('layoutdata' => $booklayouts, 'errors' => false), 200);
+	}
+
+	# scans the folder with the ebooklayouts and returns layout-names as array
+	public function scanEbooklayouts()
+	{
+		# write params
+		$writeYaml 	= new WriteYaml();
+
+		# scan the ebooklayouts folder
+		$layoutfolders = array_diff(scandir(__DIR__ . '/booklayouts'), array('..', '.'));
+		$booklayouts = [];
+
+		foreach($layoutfolders as $layout)
+		{
+			$configfolder = 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $layout;
+			$bookconfig = $writeYaml->getYaml($configfolder, 'config.yaml');
+			$booklayouts[$layout] = $bookconfig;
+		}
+
+		return $booklayouts;
+	}
+
+	# gets the ebook navigation from data folder or the general page navigation
+	public function getEbookNavi($request, $response, $args)
+	{
+		$settings 		= $this->getSettings();
+
+		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		$folder 		= $settings['rootPath'] . $folderName;
+
+		if(!$this->checkEbookFolder($folder))
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
+		}
+
+		# write params
+		$writeCache 	= new WriteCache();
+		$navigation 	= $writeCache->getCache($folderName, 'navigation.txt');
+
+		if(!$navigation)
+		{
+			$navigation = $writeCache->getCache('cache', 'structure.txt');
+		}
+
+		if(!$navigation)
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find a content tree. Please reload the page.']), 422);
+		}
+
+		return $response->withJson(array('data' => $navigation, 'errors' => false), 200);
+	}
+
+	# validates the ebook-input data from both, the tab and the centrally used ebook-feature
 	private function validateEbookData($params, $writeYaml)
 	{
 		$formdata		= isset($params['data']) ? $params['data'] : false;
@@ -435,38 +462,58 @@ class Ebooks extends Plugin
 		return $params;
 	}
 
+	# generates the ebook-preview
 	public function ebookPreview($request, $response, $args)
 	{
+		$params 		= $request->getParams();
 		$settings 		= $this->getSettings();
 		$uri 			= $request->getUri()->withUserInfo('');
 		$base_url		= $uri->getBaseUrl();
 
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
+		$writeYaml 		= new WriteYaml();
+		$writeCache 	= new WriteCache();
 
-		# get bookdata
-		$writeYaml 	= new WriteYaml();
-		$ebookdata 	= $writeYaml->getYaml($folderName, 'ebookdata.yaml');
+		$ebookFolderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		# $ebookFolderPath 	= $settings['rootPath'] . $folderName;
 
-		# get navigationdata
-		$writeCache = new WriteCache();
-		$navigation = $writeCache->getCache($folderName, 'navigation.txt');
+		# check if call comes from a tab
+		if(!empty($params) && isset($params['itempath']))
+		{
+			# wait for a second to make super sure that the temporary item has been stored by vue-script
+			usleep(200000);
 
-		$settings		= $this->getSettings();
-		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
+			# get bookdata from the page
+			$meta 		= $writeYaml->getYaml($settings['contentFolder'], $params['itempath'] . '.yaml');
+			$ebookdata 	= isset($meta['ebooks']) ? $meta['ebooks'] : false;
+
+			$navigation = $writeCache->getCache($ebookFolderName, 'tmpitem.txt');
+
+			# should we delete the old tmpitem.txt here or simply let next overwrite it?
+		}
+		# otherwise it is from the settings
+		else
+		{
+			# get bookdata
+			$ebookdata 	= $writeYaml->getYaml($ebookFolderName, 'ebookdata.yaml');
+
+			# get navigationdata
+			$navigation = $writeCache->getCache($ebookFolderName, 'navigation.txt');
+		}
+
+		# generate the book content from ebook-navigation
 		$parsedown 		= new ParsedownExtension($base_url);
+		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
+		$book 			= $this->generateContent([], $navigation, $pathToContent, $parsedown);
 
-		$book = $this->generateContent([], $navigation, $pathToContent, $parsedown);
-
-		$twig   = $this->getTwig();
-		$loader = $twig->getLoader();
+		$twig   		= $this->getTwig();
+		$loader 		= $twig->getLoader();
 		$loader->addPath(__DIR__ . '/templates', 'ebooks');
 		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
 	
 		return $twig->render($response, '@booklayouts/index.twig', [
-			'settings' => $settings, 
-			'ebookdata' => $ebookdata, 
-			'book' => $book]);
+			'settings' 		=> $settings, 
+			'ebookdata' 	=> $ebookdata, 
+			'book' 			=> $book]);
 	}
 
 	public function generateContent($book, $navigation, $pathToContent, $parsedown)
@@ -555,73 +602,4 @@ class Ebooks extends Plugin
 		return true;
 	}
 
-/*
-	# taken from metaApiController
-	private function customfieldsPrepareForEdit($customfields)
-	{
-		# to edit fields in vue we have to transform the arrays in yaml into an array of objects like [{key: abc, value: xyz}{...}]
-
-		$customfieldsForEdit = [];
-
-		foreach($customfields as $key => $value)
-		{
-			$valuestring = $value;
-
-			# and make sure that arrays are transformed back into strings
-			if(isset($value) && is_array($value))
-			{
-				$valuestring = '- ' . implode(PHP_EOL . '- ', $value);
-			}
-
-			$customfieldsForEdit[] = ['key' => $key, 'value' => $valuestring];
-		}
-
-		return $customfieldsForEdit;
-	}
-
-	# taken from metaApiController
-	private function customfieldsPrepareForSave($customfields, $arrayFeatureOn)
-	{
-		# we have to convert the incoming array of objects from vue [{key: abc, value: xyz}{...}] into key-value arrays for yaml. 
-
-		$customfieldsForSave = [];
-
-		foreach($customfields as $valuePair)
-		{
-			# doupbe check, not really needed because it is validated already
-			if(!isset($valuePair['key']) OR ($valuePair['key'] == ''))
-			{
-				# do not use data without valid keys
-				continue;
-			}
-
-			$key 	= $valuePair['key'];
-			$value 	= '';
-
-			if(isset($valuePair['value']))
-			{
-				$value = $valuePair['value'];
-
-				# check if value is formatted as a list, then transform it into an array
-				if($arrayFeatureOn)
-				{
-					# normalize line breaks, php-eol does not work here
-					$cleanvalue = str_replace(array("\r\n", "\r"), "\n", $valuePair['value']);
-					$cleanvalue = trim($cleanvalue, "\n");
-
-					$arrayValues = explode("\n- ",$cleanvalue);
-					
-					if(count($arrayValues) > 1)
-					{
-						$value = array_map(function($item) { return trim($item, '- '); }, $arrayValues);
-					}
-				}
-			}
-
-			$customfieldsForSave[$key] = $value;
-		}
-
-		return $customfieldsForSave;
-	}
-*/
 }

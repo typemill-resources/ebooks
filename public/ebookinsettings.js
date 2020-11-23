@@ -25,7 +25,6 @@ let ebooks = new Vue({
 			initialize: true,
 		}
 	},
-
 	mounted: function(){
 
 		var self = this;
@@ -151,6 +150,14 @@ let ebooks = new Vue({
 				if(generaltab.indexOf(error) > -1){ this.tabErrors.general = true; }
 			}
 		},
+		getPreviewUrl: function()
+		{
+			return this.root + '/tm/ebooks/preview';
+		},
+		tmpStoreItem: function()
+		{
+			return true;
+		},		
 		resetNavigation: function()
 		{
 			var self = this;

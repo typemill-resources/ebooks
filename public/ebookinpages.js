@@ -243,6 +243,41 @@ Vue.component('tab-ebooks', {
 				if(designtab.indexOf(error) > -1){ this.tabErrors.design = true; }
 			}
 		},
+		getPreviewUrl: function()
+		{
+			return this.root + '/tm/ebooks/preview?itempath=' + this.item.pathWithoutType;
+		},
+		tmpStoreItem: function()
+		{
+			/* store the item inside array for compatibility with navigation structure */
+			var storeitem = [this.item];
+
+			/* temporary store the item here */
+	        myaxios.post('/api/v1/ebooktabitem',{
+				'url':			document.getElementById("path").value,        		
+				'csrf_name': 	document.getElementById("csrf_name").value,
+				'csrf_value':	document.getElementById("csrf_value").value,
+				'item': 		storeitem
+			})
+	        .then(function (response) {
+
+	        })
+	        .catch(function (error)
+	        {
+	        	if(error.response.status == 400)
+	        	{
+	        		self.message = 'You are probably logged out, please login again.';
+        			self.messagecolor = 'bg-tm-red';
+	        	}
+	           	if(error.response.data.errors)
+	            {
+	        		self.message = 'We could not store the temporary content file for the ebook.';
+        			self.messagecolor = 'bg-tm-red';
+	        		self.formErrors = error.response.data.errors;
+	        		self.checkTabStatus();
+	            }
+	        });			
+		},
 		resetNavigation: function()
 		{
 			var self = this;

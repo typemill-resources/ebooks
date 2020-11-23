@@ -373,11 +373,16 @@ Vue.component("ebook-back", {
 
 Vue.component("ebook-create", {
 	props: ['errors', 'formdata', 'navigation', 'root'],
+	data: function(){
+		return {
+			previewUrl: false,
+		}
+	},	
     template: '<div class="large">' + 
     			'<h2>Create the ebook</h2>' +
     			'<p>Right now you can only create a pdf. Formats like ePub will follow.</p>' +  
     			'<p>The button below will open a html-preview of the ebook in a separate page. You can download and save the ebook as pdf with your printer driver. Please upload the pdf to the folder "data/ebooks".</p>' + 
-    			'<a :href="getUrl()" target="_blank" class="link button bn bg-tm-green dim dib mt3">Create ebook (HTML/PDF)</a>' +
+    			'<a :href="previewUrl" @click="storeItem()" target="_blank" class="link button bn bg-tm-green dim dib mt3">Create ebook (HTML/PDF)</a>' +
     			'<h2>Limitations</h2>' +
     			'<p>Please use a recent version of the following browsers:</p>' + 
     			'<ul>' +
@@ -394,12 +399,15 @@ Vue.component("ebook-create", {
     			'</ul>' +
     		  '</div>',
 	mounted: function(){
+
+		this.previewUrl = this.$parent.getPreviewUrl();
+
 		this.$parent.storeEbookData();
 	},
 	methods: {
-		getUrl: function()
+		storeItem: function()
 		{
-			return this.$parent.root + '/tm/ebooks/preview'
+			this.$parent.tmpStoreItem();
 		},
-	}
+	},	
 });
