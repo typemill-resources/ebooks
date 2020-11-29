@@ -26,14 +26,14 @@ class Ebooks extends Plugin
 	{
 		return [
 			['httpMethod' => 'get', 'route' => '/tm/ebooks', 'name' => 'ebooks.show', 'class' => 'Typemill\Controllers\SettingsController:showBlank', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebooklayouts', 'name' => 'ebooklayouts.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookLayouts', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabitem', 'name' => 'ebooktabitem.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 'resource' => 'system', 'privilege' => 'view'],
+			['httpMethod' => 'get', 'route' => '/api/v1/ebooklayouts', 'name' => 'ebooklayouts.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookLayouts', 'resource' => 'content', 'privilege' => 'create'],
+			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
+			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
+			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabitem', 'name' => 'ebooktabitem.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooknavi', 'name' => 'ebooknavi.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookNavi', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'get', 'route' => '/tm/ebooks/preview', 'name' => 'ebook.preview', 'class' => 'Plugins\Ebooks\Ebooks:ebookPreview', 'resource' => 'system', 'privilege' => 'view'],
+			['httpMethod' => 'get', 'route' => '/tm/ebooks/preview', 'name' => 'ebook.preview', 'class' => 'Plugins\Ebooks\Ebooks:ebookPreview', 'resource' => 'content', 'privilege' => 'create'],
 		];
 	}
 
@@ -335,6 +335,8 @@ class Ebooks extends Plugin
 		$v->rule('boolean', 'coverimageonly');
 		$v->rule('boolean', 'toc');
 		$v->rule('boolean', 'toccounter');
+		$v->rule('boolean', 'originalimages');
+		$v->rule('boolean', 'originalheadlinelevels');
 		$v->rule('lengthMax', 'layout', 20);
 		$v->rule('lengthMax', 'hyphentest', 100);
 		$v->rule('lengthMax', 'language', 5);
@@ -396,7 +398,9 @@ class Ebooks extends Plugin
 			'blurb',
 			'primarycolor',
 			'secondarycolor',
-			'content'
+			'content',
+			'originalheadlinelevels',
+			'originalimages'
 		];
 
 		# delete the standardfields from formdata
@@ -503,21 +507,24 @@ class Ebooks extends Plugin
 		# generate the book content from ebook-navigation
 		$parsedown 		= new ParsedownExtension($base_url);
 		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
-		$book 			= $this->generateContent([], $navigation, $pathToContent, $parsedown);
+		$book 			= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
 
 		$twig   		= $this->getTwig();
 		$loader 		= $twig->getLoader();
 		$loader->addPath(__DIR__ . '/templates', 'ebooks');
 		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
-	
+		
 		return $twig->render($response, '@booklayouts/index.twig', [
 			'settings' 		=> $settings, 
 			'ebookdata' 	=> $ebookdata, 
 			'book' 			=> $book]);
 	}
 
-	public function generateContent($book, $navigation, $pathToContent, $parsedown)
+	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata)
 	{
+		$originalheadlinelevels 	= isset($ebookdata['originalheadlinelevels']) ? $ebookdata['originalheadlinelevels'] : false;
+		$originalimages 			= isset($ebookdata['originalimages']) ? $ebookdata['originalimages'] : false;
+
 		foreach($navigation as $item)
 		{
 
@@ -552,16 +559,28 @@ class Ebooks extends Plugin
 				# turn into an array
 				$chapterArray 		= $parsedown->text($chapter, $itemUrl = false);
 
-				# correct the headline hierarchy according to its position  on the website
+				# check the hierarchy of the current page within the navigation
 				$chapterlevel = count($item['keyPathArray']);
-				if($chapterlevel > 1)
+
+				# we have to overwrite headlines and/or image urls if user selected those options
+				if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
 				{
 					# go through each content element
 					foreach($chapterArray as $key => $element)
 					{
-						# lower the levels of headlines
-						if(isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						# if user wants to use original images instead of small once
+						if($originalimages && $element['name'] == 'figure')
 						{
+							# rewrite the image urls
+							$image = $element['elements'][0]['handler']['argument'];
+							$element['elements'][0]['handler']['argument'] = str_replace("media/live/", "media/original/", $image);
+							$chapterArray[$key] = $element;
+						}
+
+						# by default and if user did not contradict to automatically adjust the headline levels
+						if(!$originalheadlinelevels AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						{
+							# lower the levels of headlines
 							$headlinelevel = $element['name'][1] + ($chapterlevel -1);
 							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
 							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
@@ -576,9 +595,8 @@ class Ebooks extends Plugin
 
 				if($item['elementType'] == 'folder')
 				{
-					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown);
+					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata);
 				}
-
 			}
 		}
 		return $book;

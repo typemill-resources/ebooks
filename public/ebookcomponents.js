@@ -29,6 +29,21 @@ Vue.component("ebook-general", {
 						  	'<span class="error" v-if="errors.layout">{{ errors.layout[0] }}</span>' +
 						'</div>' +
 	 				'</fieldset>' +
+					'<fieldset class="subfield" v-if="booklayout.standardforms.generalsettings">' +
+						'<legend>General Settings</legend>' +
+						'<div v-if="booklayout.standardforms.generalsettings.originalheadlinelevels" class="large" :class="{ error : errors.adjustheadlines }">' +
+							'<label class="control-group">Use original headline levels (per default headline-levels of sub-pages are adjusted automatically)' +
+								'<input type="checkbox" name="originalheadlinelevels" v-model="formdata.originalheadlinelevels" />' +
+								 '<span class="checkmark"></span>' +
+							'</label>' +
+						'</div>' + 
+						'<div v-if="booklayout.standardforms.generalsettings.originalimages" class="large" :class="{ error : errors.originalimages }">' +
+							'<label class="control-group">Use the original images for better quality but also bigger file size' +
+								'<input type="checkbox" name="originalimages" v-model="formdata.originalimages" />' +
+								 '<span class="checkmark"></span>' +
+							'</label>' +
+						'</div>' + 
+					'</fieldset>' +
 					'<fieldset class="subfield" v-if="booklayout.standardforms.hyphens">' +
 						'<legend>Hyphens</legend>' +
 						'<div class="large" :class="{ error : errors.hyphens }">' +

@@ -12,8 +12,11 @@ standardforms:
   endnotes: true 
   titlepage: true 
   imprint: true 
-  dedication: false 
-  blurb: false 
+  dedication: true 
+  blurb: true
+  generalsettings: 
+    originalheadlinelevels: true
+    originalimages: true 
 
 customforms:
   fields:

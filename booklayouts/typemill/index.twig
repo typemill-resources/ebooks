@@ -4,7 +4,7 @@
 	<head>
 		<meta charset="UTF-8">
 
-		<title>{% block title %}{% endblock %}</title>
+		<title>eBook Preview</title>
 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -154,6 +154,13 @@
 				Created with https://typemill.net</p>
 			</div>
 			<div class="imprint-bottom">
+				<ul>
+					<li>test</li>
+					{% for chapter in book %}
+						<li>{{ chapter.metadata.meta.title }}</li>
+					{% endfor %}					
+				</ul>
+			
 				{{ markdown(ebookdata.imprint) }}
 			</div>
 		</div>
