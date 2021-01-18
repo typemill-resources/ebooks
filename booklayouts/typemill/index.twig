@@ -69,13 +69,163 @@
 			</style>
 		{% endif %}
 
+
+		<!-- add styles for thumb index -->
+
+		{% if book.thumbindex %}
+			<style>
+				.thumbindex {
+				  position: fixed;
+				  display: flex;
+				  visibility: hidden; /* hide the thumb index by default */
+				  right: 0;
+				  top: 0;
+				  writing-mode: vertical-rl;
+				  text-orientation: mixed;
+				  list-style-type: none;
+				  text-transform: uppercase;
+				  font-family: sans-serif;
+				  height: 100%;
+				  flex-grow: 0;
+				  align-items: flex-start;
+				  margin: 0;
+				  padding: 0;
+				  background: inherit;
+				}
+
+				.thumbindex li {
+				  padding: 0 0.5em;
+				  height: {{ 100 / book.thumbindex|length }}%; /* calculate depending on the number of languages */
+				  background: gainsboro;
+				  text-align: center;
+				  box-sizing: border-box;
+				  border-bottom: 1px solid white;
+				}
+
+				{% for thumbindex in book.thumbindex %}
+
+					/*  Bind the language to a page model, per lang. This will create a class `pagedjs_XX` where XX is the value of the page property: .french will create .pagedjs_french */
+					.{{ thumbindex.lang }} {
+						page: {{ thumbindex.lang }};
+					}
+		
+					/* Use the class created by pagedjs to target only the list element */
+					.pagedjs_{{ thumbindex.lang }}_page .i-{{ thumbindex.lang }} {
+						background: black;
+						color: white;
+					}
+
+					/* Make the thumb-index visible */
+					.pagedjs_{{ thumbindex.lang }}_page .thumbindex{
+						visibility: visible;
+					}
+				{% endfor %}
+			</style>
+		{% endif %}
+
+	</head>
+	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
+
+		<div class="cover">
+			{% if not ebookdata.coverimageonly %}
+				<div class="cover-top">
+					<h1 class="cover-title">{{ ebookdata.title }}</h1>		
+				</div>
+				<div class="cover-bottom">
+					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
+					<p class="cover-author">{{ ebookdata.author }}</p>
+					<p class="cover-edition">{{ ebookdata.edition }}</p>		
+				</div>
+			{% endif %}
+		</div>
+
+		<div class="imprint">
+			{% set booklayout = ebookdata.booklayouts[ebookdata.layout] %}
+			<div class="imprint-top">
+				<p>Book layout: © {{ booklayout.Name }} ({{ booklayout.Link }}) Licence: {{ booklayout.Licence }}<br/>
+				Created with https://typemill.net</p>
+			</div>
+			<div class="imprint-bottom">
+
+				{{ markdown(ebookdata.imprint) }}
+
+			</div>
+		</div>
+		
+		{% if ebookdata.toc %}
+			<div class="tableofcontents">
+				<h1>{{ ebookdata.toctitle }}</h1>
+				<div id="toc"></div>
+			</div>
+		{% endif %}
+
+		<div class="bookcontent">
+
+			<!-- add thumb index -->
+			{% if book.thumbindex %}
+				<ul class="thumbindex">
+					{% for thumbindex in book.thumbindex %}
+						<li class="i-{{ thumbindex.lang }}">{{ thumbindex.thumb }}</li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+
+			{% for chapter in book %}
+		
+				{% if chapter.level == 1 %}
+					
+					<section class="chapter">
+						{{ chapter.content }}
+					</section>
+
+				{% else %}
+				
+					<section class="subchapter {{ chapter.metadata.language.lang }}" lang="{{ chapter.metadata.language.lang|default(language) }}">
+						{{ chapter.content }}
+					</section>
+
+				{% endif %}
+		
+			{% endfor %}
+		</div>
+
+		{% if ebookdata.endnotes %}
+
+			<div id="endnotes">
+				<h1>{{ebookdata.endnotestitle}}</h1>
+			</div>
+		
+		{% endif %}
+
+		{% if ebookdata.blurb %}
+
+			<div class="blurb">
+				{{ markdown(ebookdata.blurb) }}
+			</div>
+		
+		{% endif %}
+
+		<script>
+			let ebookconfig = document.querySelector('#ebook');
+			ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
+		</script>
+
 		{% if ebookdata.hyphens %}
 			<script>
 
 		        var Hyphenopoly = {
-		            require: {
-		                "{{ language }}": "{{ ebookdata.hyphentest }}"
-		            },
+
+			        require: {
+		        	
+			        	{% if book.thumbindex %}
+							{% for thumbindex in book.thumbindex %}
+				                "{{ thumbindex.lang }}": "FORCEHYPHENOPOLY",								
+							{% endfor %}
+			        	{% else %}
+				                "{{ language }}": "{{ ebookdata.hyphentest }}"
+			        	{% endif %}
+			        
+			        },
 		            paths: {
 		                patterndir: "{{ base_url }}/plugins/ebooks/public/hyphens/patterns/",
 		                maindir: "{{ base_url }}/plugins/ebooks/public/hyphens/"
@@ -131,73 +281,6 @@
 	        <script src="{{ base_url }}/plugins/ebooks/public/hyphens/Hyphenopoly_Loader.js"></script>
 		{% endif %}
 
-	</head>
-	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
-
-		<div class="cover">
-			{% if not ebookdata.coverimageonly %}
-				<div class="cover-top">
-					<h1 class="cover-title">{{ ebookdata.title }}</h1>		
-				</div>
-				<div class="cover-bottom">
-					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
-					<p class="cover-author">{{ ebookdata.author }}</p>
-					<p class="cover-edition">{{ ebookdata.edition }}</p>		
-				</div>
-			{% endif %}
-		</div>
-
-		<div class="imprint">
-			{% set booklayout = ebookdata.booklayouts[ebookdata.layout] %}
-			<div class="imprint-top">
-				<p>Book layout: © {{ booklayout.Name }} ({{ booklayout.Link }}) Licence: {{ booklayout.Licence }}<br/>
-				Created with https://typemill.net</p>
-			</div>
-			<div class="imprint-bottom">
-				<ul>
-					<li>test</li>
-					{% for chapter in book %}
-						<li>{{ chapter.metadata.meta.title }}</li>
-					{% endfor %}					
-				</ul>
-			
-				{{ markdown(ebookdata.imprint) }}
-			</div>
-		</div>
-		
-		{% if ebookdata.toc %}
-			<div class="tableofcontents">
-				<h1>{{ ebookdata.toctitle }}</h1>
-				<div id="toc"></div>
-			</div>
-		{% endif %}
-
-		<div class="bookcontent">
-			{% for chapter in book %}
-		
-				{% if chapter.level == 1 %}
-					
-					<section class="chapter">
-						{{ chapter.content }}
-					</section>
-
-				{% else %}
-				
-					{{ chapter.content }}
-
-				{% endif %}
-		
-			{% endfor %}
-		</div>
-
-		{% if ebookdata.endnotes %}
-
-			<div id="endnotes">
-				<h1>{{ebookdata.endnotestitle}}</h1>
-			</div>
-		
-		{% endif %}
-
 		{% block javascripts %}
 
 			{{ assets.renderJS() }}
@@ -210,11 +293,7 @@
 				endnotes('#endnotes');
 			</script>
 		{% endif %}
-		<script>
-			let ebookconfig = document.querySelector('#ebook');
-			ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
-		</script>
-		<script src="{{ base_url }}/plugins/ebooks/public/paged.js"></script>
+		<script src="{{ base_url }}/plugins/ebooks/public/paged.polyfill.js"></script>
 		<script>
 			class handlers extends Paged.Handler {
 				constructor(chunker, polisher, caller) {
@@ -233,7 +312,7 @@
 				}
 			}
 			Paged.registerHandlers(handlers);
-			
+
 		</script>
 
 		{% if ebookdata.toc %}

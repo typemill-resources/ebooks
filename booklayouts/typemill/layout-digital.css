@@ -141,8 +141,16 @@
     @bottom-right { content: none; } 
 }
 
+@page blurb {
+    margin-top: 0mm;
+    margin-right: 0mm;
+    margin-bottom: 0mm;
+    margin-left: 0mm;
+}
+
+
 /* add page breaks */
-.title-page, .imprint, .tableofcontents, .bookcontent, .chapter, #endnotes {
+.title-page, .imprint, .tableofcontents, .bookcontent, .chapter, #endnotes, .blurb {
     break-before: right; /* page, left, recto, verso */
 }
 

@@ -69,6 +69,7 @@ textarea{
 .pagedjs_page_content div ul:first-child,
 .pagedjs_page_content div figure:first-child,
 .pagedjs_page_content div blockquote:first-child,
+.pagedjs_page_content div table:first-child,
 .pagedjs_page_content div pre:first-child{
   margin-top: 0;
 }
@@ -320,22 +321,28 @@ pre code{
 /*
 ** TABLES
 */
-
 table{
+/*  page-break-inside: auto; */
   border-collapse:collapse;
-  font-size:0.85em;
-  line-height:1.2;
-  width:100%;
+  font-size: 0.8em;
+  line-height: 1.2;
+  width: 100%;
   margin: 1em 0;
 }
 tr{
-  break-inside:avoid;
+  page-break-before:avoid;
+  page-break-inside:avoid; 
+  page-break-after:auto;
+}
+thead{
+   display:table-header-group;
 }
 thead th{
   font-weight: bold;
   text-align:left;
 }
 thead tr{
+  page-break-before:auto;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
 }
@@ -346,7 +353,7 @@ tbody tr:last-child{
   border-bottom: 1px solid #ccc;
 }
 th, td{
-  padding: 0.8em;
+  padding: 0.6em;
 }
 
 
@@ -578,6 +585,11 @@ sup:after{
     right: 0;
 }
 
+/* Hide the table of contents within chapters */
+
+ul.TOC{
+  display: none;
+}
 
 /*
 ** COVER  
@@ -660,6 +672,19 @@ sup:after{
 }
 .imprint p + p {
   text-indent: 0pt; 
+}
+
+.blurb{
+  page: blurb;
+  background-color: var(--secondary-bg-color);
+  background-size: cover;
+  position: absolute;
+  text-align: left;
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  color: #f7f7f7;
+  font-size: 1.2em;
 }
 
 

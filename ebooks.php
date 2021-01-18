@@ -509,6 +509,17 @@ class Ebooks extends Plugin
 		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
 		$book 			= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
 
+		# let us add the thumb index:
+		$book['thumbindex'] = false;
+
+		foreach($book as $chapter)
+		{
+			if( isset($chapter['metadata']['language']['lang']) && ($chapter['metadata']['language']['lang'] != '') && isset($chapter['metadata']['language']['thumb']) && ($chapter['metadata']['language']['thumb'] != '') )
+			{
+				$book['thumbindex'][] = ['lang' => $chapter['metadata']['language']['lang'], 'thumb' =>  $chapter['metadata']['language']['thumb'] ];
+			}
+		}
+
 		$twig   		= $this->getTwig();
 		$loader 		= $twig->getLoader();
 		$loader->addPath(__DIR__ . '/templates', 'ebooks');
@@ -517,7 +528,8 @@ class Ebooks extends Plugin
 		return $twig->render($response, '@booklayouts/index.twig', [
 			'settings' 		=> $settings, 
 			'ebookdata' 	=> $ebookdata, 
-			'book' 			=> $book]);
+			'book' 			=> $book
+		]);
 	}
 
 	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata)

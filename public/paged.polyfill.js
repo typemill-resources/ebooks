@@ -1,5 +1,5 @@
 /**
- * @license Paged.js v0.1.42 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ * @license Paged.js v0.1.43 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
  */
 
 (function (global, factory) {
@@ -841,6 +841,9 @@
 		if (typeof node === "undefined" || !previousSignificantNode || isIgnorable(node)) {
 			return false;
 		}
+		if (node.dataset && node.dataset.undisplayed) {
+			return false;
+		}
 		const previousSignificantNodePage = previousSignificantNode.dataset ? previousSignificantNode.dataset.page : undefined;
 		const currentNodePage = node.dataset ? node.dataset.page : undefined;
 		return currentNodePage !== previousSignificantNodePage;
@@ -1108,6 +1111,40 @@
 			if (!isIgnorable(sib)) return sib;
 		}
 		return null;
+	}
+
+	function breakInsideAvoidParentNode(node) {
+		while ((node = node.parentNode)) {
+			if (node && node.dataset && node.dataset.breakInside === "avoid") {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Find a parent with a given node name.
+	 * @param {Node} node - initial Node
+	 * @param {string} nodeName - node name (eg. "TD", "TABLE", "STRONG"...)
+	 * @param {Node} limiter - go up to the parent until there's no more parent or the current node is equals to the limiter
+	 * @returns {Node|undefined} - Either:
+	 *  1) The closest parent for a the given node name, or
+	 *  2) undefined if no such node exists.
+	 */
+	function parentOf(node, nodeName, limiter) {
+		if (limiter && node === limiter) {
+			return;
+		}
+		if (node.parentNode) {
+			while ((node = node.parentNode)) {
+				if (limiter && node === limiter) {
+					return;
+				}
+				if (node.nodeName === nodeName) {
+					return node;
+				}
+			}
+		}
 	}
 
 	/**
@@ -1626,7 +1663,12 @@
 						// Check if it is a float
 						let isFloat = false;
 
-						if (isElement(node)) {
+						// Check if the node is inside a break-inside: avoid table cell
+						const insideTableCell = parentOf(node, "TD", rendered);
+						if (insideTableCell && window.getComputedStyle(insideTableCell)["break-inside"] === "avoid") {
+							// breaking inside a table cell produces unexpected result, as a workaround, we forcibly avoid break inside in a cell.
+							prev = insideTableCell;
+						} else if (isElement(node)) {
 							let styles = window.getComputedStyle(node);
 							isFloat = styles.getPropertyValue("float") !== "none";
 							skip = styles.getPropertyValue("break-inside") === "avoid";
@@ -1657,7 +1699,7 @@
 
 					if (!range && isText(node) &&
 						node.textContent.trim().length &&
-						window.getComputedStyle(node.parentNode)["break-inside"] !== "avoid") {
+						!breakInsideAvoidParentNode(node.parentNode)) {
 
 						let rects = getClientRects(node);
 						let rect;
@@ -25749,6 +25791,7 @@
 	display: var(--pagedjs-mark-crop-display);
 	flex-grow: 0;
 	flex-shrink: 0;
+	z-index: 9999999999;
 }
 
 .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(1),
@@ -26203,10 +26246,6 @@
 
 .pagedjs_clear-after::after {
 	content: none !important;
-}
-
-img {
-	height: auto;
 }
 
 [data-align-last-split-element='justify'] {
@@ -27195,48 +27234,41 @@ img {
 
 		addPageClasses(pages, ast, sheet) {
 			// First add * page
-			if ("*" in pages && !pages["*"].added) {
+			if ("*" in pages) {
 				let p = this.createPage(pages["*"], ast.children, sheet);
 				sheet.insertRule(p);
-				pages["*"].added = true;
 			}
 			// Add :left & :right
-			if (":left" in pages && !pages[":left"].added) {
+			if (":left" in pages) {
 				let left = this.createPage(pages[":left"], ast.children, sheet);
 				sheet.insertRule(left);
-				pages[":left"].added = true;
 			}
-			if (":right" in pages && !pages[":right"].added) {
+			if (":right" in pages) {
 				let right = this.createPage(pages[":right"], ast.children, sheet);
 				sheet.insertRule(right);
-				pages[":right"].added = true;
 			}
 			// Add :first & :blank
-			if (":first" in pages && !pages[":first"].first) {
+			if (":first" in pages) {
 				let first = this.createPage(pages[":first"], ast.children, sheet);
 				sheet.insertRule(first);
-				pages[":first"].added = true;
 			}
-			if (":blank" in pages && !pages[":blank"].added) {
+			if (":blank" in pages) {
 				let blank = this.createPage(pages[":blank"], ast.children, sheet);
 				sheet.insertRule(blank);
-				pages[":blank"].added = true;
 			}
 			// Add nth pages
 			for (let pg in pages) {
-				if (pages[pg].nth && !pages[pg].added) {
+				if (pages[pg].nth) {
 					let nth = this.createPage(pages[pg], ast.children, sheet);
 					sheet.insertRule(nth);
-					pages[pg].added = true;
 				}
 			}
 
 			// Add named pages
 			for (let pg in pages) {
-				if (pages[pg].name && !pages[pg].added) {
+				if (pages[pg].name) {
 					let named = this.createPage(pages[pg], ast.children, sheet);
 					sheet.insertRule(named);
-					pages[pg].added = true;
 				}
 			}
 
@@ -27325,7 +27357,7 @@ img {
 						}
 					});
 					list.append(bVar, item);
-				}	
+				}
 
 			}
 		}
@@ -28797,9 +28829,15 @@ img {
 						} else if (prop.property === "break-before") {
 							let nodeBefore = displayedElementBefore(elements[i], parsed);
 
-							elements[i].setAttribute("data-break-before", prop.value);
-
+							// Breaks are only allowed between siblings, not between a box and its container.
+							// If we cannot find a node before we should not break!
+							// https://drafts.csswg.org/css-break-3/#break-propagation
 							if (nodeBefore) {
+								if (prop.value === "page" && needsPageBreak(elements[i], nodeBefore)) {
+									// we ignore this explicit page break because an implicit page break is already needed
+									continue;
+								}
+								elements[i].setAttribute("data-break-before", prop.value);
 								nodeBefore.setAttribute("data-next-break-before", prop.value);
 							}
 						} else if (prop.property === "page") {
@@ -28964,6 +29002,7 @@ img {
 
 			this.styleSheet = polisher.styleSheet;
 			this.counters = {};
+			this.resetCountersMap = new Map();
 		}
 
 		onDeclaration(declaration, dItem, dList, rule) {
@@ -29174,8 +29213,14 @@ img {
 		afterPageLayout(pageElement, page) {
 			let pgreset = pageElement.querySelectorAll("[data-counter-page-reset]");
 			pgreset.forEach((reset) => {
-				let value = reset.dataset.counterPageReset;
-				this.styleSheet.insertRule(`[data-page-number="${pageElement.dataset.pageNumber}"] { counter-increment: none; counter-reset: page ${value}; }`, this.styleSheet.cssRules.length);
+				const ref = reset.dataset && reset.dataset.ref;
+				if (ref && this.resetCountersMap.has(ref)) ; else {
+					if (ref) {
+						this.resetCountersMap.set(ref, "");
+					}
+					let value = reset.dataset.counterPageReset;
+					this.styleSheet.insertRule(`[data-page-number="${pageElement.dataset.pageNumber}"] { counter-increment: none; counter-reset: page ${value}; }`, this.styleSheet.cssRules.length);
+				}
 			});
 		}
 
@@ -29719,13 +29764,24 @@ img {
 				funcNode.name = "var";
 				funcNode.children = new lib.List();
 
-				funcNode.children.append(
-					funcNode.children.createItem({
-						type: "Identifier",
-						loc: null,
-						name: "--pagedjs-string-" + identifier
-					})
-				);
+	 
+				if(this.type === "first" || this.type === "last" || this.type === "start" || this.type === "first-except"){
+					funcNode.children.append(
+						funcNode.children.createItem({
+							type: "Identifier",
+							loc: null,
+							name: "--pagedjs-string-" + this.type + "-" + identifier
+						})
+					);
+				}else {
+					funcNode.children.append(
+						funcNode.children.createItem({
+							type: "Identifier",
+							loc: null,
+							name: "--pagedjs-string-first-" + identifier
+						})
+					);
+				}
 			}
 		}
 
@@ -29737,59 +29793,65 @@ img {
 				this.pageLastString = {};
 			}
 		
-			// get the value of the previous last string
+			
 			for (let name of Object.keys(this.stringSetSelectors)) {
 		
 				let set = this.stringSetSelectors[name];
 				let selected = fragment.querySelectorAll(set.selector);
-		
-				// let cssVar = previousPageLastString;
+
 				// Get the last found string for the current identifier
-				let cssVar = ( name in this.pageLastString ) ? this.pageLastString[name] : "";
-		
-				selected.forEach((sel) => {
-					// push each content into the array to define in the variable the first and the last element of the page.
-		
-		
-					//this.pageLastString = selected[selected.length - 1].textContent;
-					// Index by identifier
-					this.pageLastString[name] = selected[selected.length - 1].textContent;
-		
+				let stringPrevPage = ( name in this.pageLastString ) ? this.pageLastString[name] : "";
+
+				let varFirst, varLast, varStart, varFirstExcept;
+
+				if(selected.length == 0){
+					// if there is no sel. on the page
+					varFirst = stringPrevPage;
+					varLast = stringPrevPage;
+					varStart = stringPrevPage;
+					varFirstExcept = stringPrevPage;
+				}else {
+
+					selected.forEach((sel) => {
+						// push each content into the array to define in the variable the first and the last element of the page.
+						this.pageLastString[name] = selected[selected.length - 1].textContent;
 					
-					if (this.type === "first") {
-						cssVar = selected[0].textContent;
-					} 
-					
-					else if (this.type === "last") {
-						cssVar = selected[selected.length - 1].textContent;
-					} 
-					
-					else if (this.type === "start") {
-					
-						if (sel.parentElement.firstChild === sel) {
-							cssVar = sel.textContent;
-						}
+					});	
+
+					/* FIRST */
+		
+					varFirst = selected[0].textContent;
+
+
+					/* LAST */
+
+					varLast = selected[selected.length - 1].textContent;
+
+
+					/* START */
+
+					// Hack to find if the sel. is the first elem of the page / find a better way 
+					let selTop = selected[0].getBoundingClientRect().top;
+					let pageContent = selected[0].closest(".pagedjs_page_content");
+					let pageContentTop = pageContent.getBoundingClientRect().top;
+
+					if(selTop == pageContentTop){
+						varStart = varFirst;
+					}else {
+						varStart = stringPrevPage;
 					}
-		
-					else if (this.type === "first-except") {
-						cssVar = "";
-					}
-		
-					else {
-						cssVar = selected[0].textContent;
-					} 
-				});	
-		
-				fragment.setAttribute("data-string", `string-type-${this.type}-${name}`);
-		
-		
-				// fragment.style.setProperty(`--pagedjs-string-${name}`, `"${cssVar.replace(/\\([\s\S])|(["|'])/g, "\\$1$2")}"`);
-				fragment.style.setProperty(`--pagedjs-string-${name}`, `"${cleanPseudoContent(cssVar)}`);
-			
-				// if there is no new string on the page
-				if (!fragment.hasAttribute("data-string")) {
-					fragment.style.setProperty(`--pagedjs-string-${name}`, `"${this.pageLastString}"`);
-				}	
+
+					/* FIRST EXCEPT */
+
+					varFirstExcept = "";
+					
+				}
+
+				fragment.style.setProperty(`--pagedjs-string-first-${name}`, `"${cleanPseudoContent(varFirst)}`);
+				fragment.style.setProperty(`--pagedjs-string-last-${name}`, `"${cleanPseudoContent(varLast)}`);
+				fragment.style.setProperty(`--pagedjs-string-start-${name}`, `"${cleanPseudoContent(varStart)}`);
+				fragment.style.setProperty(`--pagedjs-string-first-except-${name}`, `"${cleanPseudoContent(varFirstExcept)}`);
+				
 		
 			}
 		}
