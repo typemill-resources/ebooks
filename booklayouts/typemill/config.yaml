@@ -8,7 +8,6 @@ Photo: Photo by Markus Winkler on Unsplash
 standardforms:
   coverbackground: true
   toc: true
-  hyphens: true 
   endnotes: true 
   titlepage: true 
   imprint: true 

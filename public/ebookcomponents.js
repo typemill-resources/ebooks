@@ -44,27 +44,6 @@ Vue.component("ebook-general", {
 							'</label>' +
 						'</div>' + 
 					'</fieldset>' +
-					'<fieldset class="subfield" v-if="booklayout.standardforms.hyphens">' +
-						'<legend>Hyphens</legend>' +
-						'<div class="large" :class="{ error : errors.hyphens }">' +
-							'<label class="control-group">Activate hyphens for content' +
-								'<input type="checkbox" name="hyphens" v-model="formdata.hyphens" />' +
-								 '<span class="checkmark"></span>' +
-							'</label>' +
-						'</div>' + 
-						'<div class="large" :class="{ error : errors.language }">' +
-							'<label for="language">Language code</label>' +
-							'<input id="language" name="language" type="text" v-model="formdata.language" maxlength="5" placeholder="en-gb" />' +
-							'<div class="description">For english use the extended language code like "en-gb" or "en-us". For other languages use the simple code like "de" or "es".</div>' +
-							'<span class="error" v-if="errors.language">{{ errors.language[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.hyphentest }">' +
-							'<label for="hyphentest">Very long word for hyphen-initialization</label>' +
-							'<input id="hyphentest" name="hyphentest" type="text" v-model="formdata.hyphentest" placeholder="incomprehensibilities" />' +
-							'<div class="description">Enter a very long word in the choosen language like "incomprehensibilities" or "Silbentrennungsalgorithmus".</div>' +
-							'<span class="error" v-if="errors.hyphentest">{{ errors.hyphentest[0] }}</span>' +
-						'</div>' +
-					'</fieldset>' +
 					'<fieldset class="subfield" v-if="booklayout.standardforms.endnotes">' +
 						'<legend>Endnotes</legend>' +
 						'<div class="large" :class="{ error : errors.endnotes }">' +

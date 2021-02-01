@@ -178,11 +178,15 @@
 						{{ chapter.content }}
 					</section>
 
-				{% else %}
+				{% elseif book.thumbindex %}
 				
 					<section class="subchapter {{ chapter.metadata.language.lang }}" lang="{{ chapter.metadata.language.lang|default(language) }}">
 						{{ chapter.content }}
 					</section>
+
+				{% else %}
+						
+					{{ chapter.content }}
 
 				{% endif %}
 		
@@ -209,77 +213,6 @@
 			let ebookconfig = document.querySelector('#ebook');
 			ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
 		</script>
-
-		{% if ebookdata.hyphens %}
-			<script>
-
-		        var Hyphenopoly = {
-
-			        require: {
-		        	
-			        	{% if book.thumbindex %}
-							{% for thumbindex in book.thumbindex %}
-				                "{{ thumbindex.lang }}": "FORCEHYPHENOPOLY",								
-							{% endfor %}
-			        	{% else %}
-				                "{{ language }}": "{{ ebookdata.hyphentest }}"
-			        	{% endif %}
-			        
-			        },
-		            paths: {
-		                patterndir: "{{ base_url }}/plugins/ebooks/public/hyphens/patterns/",
-		                maindir: "{{ base_url }}/plugins/ebooks/public/hyphens/"
-		            },
-		            setup: {
-		                defaultLanguage: "en-gb",
-		              	dontHyphenate: {
-		              		h1: true,
-		              		h2: true,
-		              		h3: true,
-		              		h4: true,
-		              		h5: true,
-		              		h6: true,
-	           	 			video: true,
-	            			audio: true,
-	            			script: true,
-	            			code: true,
-	            			pre: true,
-	            			img: true,
-	            			br: true,
-	            			samp: true,
-	            			kbd: true,
-	            			var: true,
-	            			abbr: true,
-	            			acronym: true,
-	            			sub: true,
-	            			sup: true,
-	            			button: true,
-	            			option: true,
-	            			label: true,
-	            			textarea: true,
-	            			input: true,
-	            			math: true,
-	            			svg: true,
-	            			style: true
-	        			},
-		                selectors: {
-		                    ".bookcontent": {}
-		                }
-		            },
-			       	handleEvent: {
-			            hyphenopolyEnd: function (e) {
-			              let previewer = new Paged.Previewer();
-			              previewer.preview();
-			            }
-			        }
-		        };
-
-				window.PagedConfig = {
-					auto: false
-				}
-			</script>
-	        <script src="{{ base_url }}/plugins/ebooks/public/hyphens/Hyphenopoly_Loader.js"></script>
-		{% endif %}
 
 		{% block javascripts %}
 
