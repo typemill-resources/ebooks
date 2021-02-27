@@ -337,6 +337,7 @@ class Ebooks extends Plugin
 		$v->rule('boolean', 'toccounter');
 		$v->rule('boolean', 'originalimages');
 		$v->rule('boolean', 'originalheadlinelevels');
+		$v->rule('boolean', 'flytitle');
 		$v->rule('lengthMax', 'layout', 20);
 		$v->rule('lengthMax', 'hyphentest', 100);
 		$v->rule('lengthMax', 'language', 5);
@@ -400,7 +401,9 @@ class Ebooks extends Plugin
 			'secondarycolor',
 			'content',
 			'originalheadlinelevels',
-			'originalimages'
+			'originalimages',
+			'downgradeheadlines',
+			'flytitle'
 		];
 
 		# delete the standardfields from formdata
@@ -428,7 +431,10 @@ class Ebooks extends Plugin
 
 				if(!$fieldDefinition)
 				{
-					$errors[$fieldName] = 'This field is not defined';
+#					$errors[$fieldName] = 'This field is not defined';
+
+					# we simply delete the params that are not defined to avoid errors. For example, if field-definitions have been changed in a new version
+					unset($params['data'][$fieldName]);
 				}
 				else
 				{
@@ -524,24 +530,32 @@ class Ebooks extends Plugin
 		$loader 		= $twig->getLoader();
 		$loader->addPath(__DIR__ . '/templates', 'ebooks');
 		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
-		
+	
+		$booklayouts = $this->scanEbooklayouts();
+
 		return $twig->render($response, '@booklayouts/index.twig', [
 			'settings' 		=> $settings, 
 			'ebookdata' 	=> $ebookdata, 
+			'booklayout'	=> $booklayouts[$ebookdata['layout']],
 			'book' 			=> $book
 		]);
 	}
 
-	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata)
+	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL)
 	{
-		$originalheadlinelevels 	= isset($ebookdata['originalheadlinelevels']) ? $ebookdata['originalheadlinelevels'] : false;
+		# before we use this logic, we have to check if the current layout supports that feature.
+		# please check here
+		# or we should delete everything that is not related to the layout in the ebook-data first.
+
 		$originalimages 			= isset($ebookdata['originalimages']) ? $ebookdata['originalimages'] : false;
+		$downgradeheadlines 		= isset($ebookdata['downgradeheadlines']) ? $ebookdata['downgradeheadlines'] : 0;
+		$chapterlevel				= $chapterlevel ? $chapterlevel : 1;
 
 		foreach($navigation as $item)
 		{
 
 			if($item['status'] == "published")
-			{				
+			{
 				# if page or folder is excluded from book content
 				if(isset($item['exclude']) && $item['exclude'] == true)
 				{
@@ -572,10 +586,11 @@ class Ebooks extends Plugin
 				$chapterArray 		= $parsedown->text($chapter, $itemUrl = false);
 
 				# check the hierarchy of the current page within the navigation
-				$chapterlevel = count($item['keyPathArray']);
+				# $chapterlevel = count($item['keyPathArray']);
 
 				# we have to overwrite headlines and/or image urls if user selected those options
-				if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
+				# if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
+				if( $originalimages OR $chapterlevel >= ($downgradeheadlines+1)  )
 				{
 					# go through each content element
 					foreach($chapterArray as $key => $element)
@@ -589,11 +604,26 @@ class Ebooks extends Plugin
 							$chapterArray[$key] = $element;
 						}
 
+						/*
 						# by default and if user did not contradict to automatically adjust the headline levels
 						if(!$originalheadlinelevels AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
 						{
 							# lower the levels of headlines
 							$headlinelevel = $element['name'][1] + ($chapterlevel -1);
+							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
+							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
+						}
+						*/
+						if($downgradeheadlines == 0)
+						{
+							continue;
+						}
+
+						# adjust the headline levels
+						if( ($chapterlevel >= ($downgradeheadlines+1) ) AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						{
+							# lower the levels of headlines
+							$headlinelevel = $element['name'][1] + ($chapterlevel - $downgradeheadlines);
 							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
 							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
 						}
@@ -607,7 +637,7 @@ class Ebooks extends Plugin
 
 				if($item['elementType'] == 'folder')
 				{
-					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata);
+					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1 );
 				}
 			}
 		}

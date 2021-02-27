@@ -31,17 +31,32 @@ Vue.component("ebook-general", {
 	 				'</fieldset>' +
 					'<fieldset class="subfield" v-if="booklayout.standardforms.generalsettings">' +
 						'<legend>General Settings</legend>' +
-						'<div v-if="booklayout.standardforms.generalsettings.originalheadlinelevels" class="large" :class="{ error : errors.adjustheadlines }">' +
-							'<label class="control-group">Use original headline levels (per default headline-levels of sub-pages are adjusted automatically)' +
-								'<input type="checkbox" name="originalheadlinelevels" v-model="formdata.originalheadlinelevels" />' +
-								 '<span class="checkmark"></span>' +
-							'</label>' +
-						'</div>' + 
 						'<div v-if="booklayout.standardforms.generalsettings.originalimages" class="large" :class="{ error : errors.originalimages }">' +
+							'<label>Image Quality</label>'+
 							'<label class="control-group">Use the original images for better quality but also bigger file size' +
 								'<input type="checkbox" name="originalimages" v-model="formdata.originalimages" />' +
 								 '<span class="checkmark"></span>' +
 							'</label>' +
+						'</div>' + 
+						'<div v-if="booklayout.standardforms.generalsettings.downgradeheadlines" class="large" :class="{ error : errors.downgradeheadlines }">' +
+							'<label for="">Downgrade Headlines</label>' +
+							'<label class="control-group">Downgrade Headlines starting with the first sub-page-level.' +
+								'<input type="radio" id="first" value="1" v-model="formdata.downgradeheadlines" checked/>' +
+								'<span class="radiomark"></span>' +
+							'</label>' +
+							'<label class="control-group">Downgrade Headlines starting with the second sub-page-level.' +
+								'<input type="radio" id="second" value="2" v-model="formdata.downgradeheadlines" />' +
+								'<span class="radiomark"></span>' +
+							'</label>' +
+							'<label class="control-group">Downgrade Headlines starting with the third sub-page-level.' +
+								'<input type="radio" id="third" value="3" v-model="formdata.downgradeheadlines" />' +
+								'<span class="radiomark"></span>' +
+							'</label>' +
+							'<label class="control-group">Do not downgrade headlines at all.' +
+								'<input type="radio" id="none" value="0" v-model="formdata.downgradeheadlines" />' +
+								'<span class="radiomark"></span>' +
+							'</label>' +
+							'<div class="description">To keep the chapter structure in the eBook consinstent, Typemill will downgrade the headlines of sub-pages according to the position in the navigation hierarchy. To understand the logic, you can experiment with this setting and check the result in the eBook.</div>' +
 						'</div>' + 
 					'</fieldset>' +
 					'<fieldset class="subfield" v-if="booklayout.standardforms.endnotes">' +
@@ -88,6 +103,19 @@ Vue.component("ebook-general", {
 		{
 			this.cover = this.src + this.formdata.layout + '/cover.png';
 			this.booklayout = this.layouts[this.formdata.layout];
+
+			if(this.booklayout.hasOwnProperty('standardforms') && this.booklayout.standardforms.hasOwnProperty('generalsettings') && this.booklayout.standardforms.generalsettings.hasOwnProperty('downgradeheadlines'))
+			{
+				if(!this.formdata.hasOwnProperty('downgradeheadlines'))
+				{
+					this.formdata.downgradeheadlines = 1;
+				}
+			}
+/*			else
+			{
+				delete this.formdata.downgradeheadlines;
+			}
+*/
 		},
 /*		getCover: function(layout)
 		{
@@ -120,29 +148,6 @@ Vue.component("ebook-front", {
 	},
  	template: '<div>' +
  				'<form id="front" @submit.prevent="submitstep">' +
-		 			'<fieldset class="subfield" v-if="booklayout.standardforms.titlepage">' +
-		 				'<legend>Cover & Titlepage</legend>' +
-						'<div class="large" :class="{ error : errors.title }">' +
-							'<label for="title">Title*</label>' +
-							'<input id="title" name="title" type="text" v-model="formdata.title" maxlength="80" required />' +
-							'<span class="error" v-if="errors.title">{{ errors.title[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.subtitle }">' +
-							'<label for="subtitle">Subtitle</label>' +
-							'<input id="subtitle" name="subtitle" type="text" v-model="formdata.subtitle" maxlength="80" />' +
-							'<span class="error" v-if="errors.subtitle">{{ errors.subtitle[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.author }">' +
-							'<label for="author">Author*</label>' +
-							'<input id="title" name="author" type="text" v-model="formdata.author" maxlength="80" required />' +
-							'<span class="error" v-if="errors.author">{{ errors.author[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.edition }">' +
-							'<label for="edition">Edition</label>' +
-							'<input id="edition" name="edition" type="text" v-model="formdata.edition" maxlength="80" />' +
-							'<span class="error" v-if="errors.edition">{{ errors.edition[0] }}</span>' +
-						'</div>' +
-					'</fieldset>' +
 		 			'<fieldset class="subfield" v-if="booklayout.standardforms.coverbackground">' +
 		 				'<legend>Background for Cover</legend>' +
 						'<component-image :value="getCoverImage(formdata.coverimage)" name="coverimage" label="Background image for the cover" description="Maximum size 5 MB. Background images are not supported by all book designs." errors="errors.coverimage"></component-image>' +
@@ -165,6 +170,36 @@ Vue.component("ebook-front", {
 							'<span class="error" v-if="errors.secondarycolor">{{ errors.secondarycolor[0] }}</span>' +
 						'</div>' +
 					'</fieldset>' + 
+		 			'<fieldset class="subfield" v-if="booklayout.standardforms.titlepage">' +
+		 				'<legend>Cover & Titlepage</legend>' +
+						'<div class="large" :class="{ error : errors.title }">' +
+							'<label for="title">Title*</label>' +
+							'<input id="title" name="title" type="text" v-model="formdata.title" maxlength="80" required />' +
+							'<span class="error" v-if="errors.title">{{ errors.title[0] }}</span>' +
+						'</div>' +
+						'<div class="large" :class="{ error : errors.subtitle }">' +
+							'<label for="subtitle">Subtitle</label>' +
+							'<input id="subtitle" name="subtitle" type="text" v-model="formdata.subtitle" maxlength="80" />' +
+							'<span class="error" v-if="errors.subtitle">{{ errors.subtitle[0] }}</span>' +
+						'</div>' +
+						'<div class="large" :class="{ error : errors.author }">' +
+							'<label for="author">Author*</label>' +
+							'<input id="title" name="author" type="text" v-model="formdata.author" maxlength="80" required />' +
+							'<span class="error" v-if="errors.author">{{ errors.author[0] }}</span>' +
+						'</div>' +
+						'<div class="large" :class="{ error : errors.edition }">' +
+							'<label for="edition">Edition</label>' +
+							'<input id="edition" name="edition" type="text" v-model="formdata.edition" maxlength="80" />' +
+							'<span class="error" v-if="errors.edition">{{ errors.edition[0] }}</span>' +
+						'</div>' +
+						'<div class="large" :class="{ error : errors.flytitle }">' +
+							'<label>Fly Title</label>' +
+							'<label class="control-group">Add a fly title after the cover' +
+								'<input type="checkbox" name="flytitle" v-model="formdata.flytitle" />' +
+								 '<span class="checkmark"></span>' +
+							'</label>' +
+						'</div>' + 
+					'</fieldset>' +
 					'<fieldset class="subfield" v-if="booklayout.standardforms.imprint">' + 
 						'<legend>Imprint</legend>' +
 						'<div class="large" :class="{ error : errors.imprint}">' +

@@ -70,9 +70,9 @@
 		{% endif %}
 
 
-		<!-- add styles for thumb index -->
+<!-- add styles for thumb index
 
-		{% if book.thumbindex %}
+		{# % if book.thumbindex %}
 			<style>
 				.thumbindex {
 				  position: fixed;
@@ -121,7 +121,9 @@
 					}
 				{% endfor %}
 			</style>
-		{% endif %}
+		{% endif % #}
+
+-->
 
 	</head>
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
@@ -139,8 +141,20 @@
 			{% endif %}
 		</div>
 
+		{% if ebookdata.flytitle %}
+			<div class="flytitle">
+				<div class="flytitle-top">
+					<h1 class="cover-title">{{ ebookdata.title }}</h1>		
+				</div>
+				<div class="flytitle-bottom">
+					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
+					<p class="cover-author">{{ ebookdata.author }}</p>
+					<p class="cover-edition">{{ ebookdata.edition }}</p>		
+				</div>
+			</div>
+		{% endif %}
+
 		<div class="imprint">
-			{% set booklayout = ebookdata.booklayouts[ebookdata.layout] %}
 			<div class="imprint-top">
 				<p>Book layout: © {{ booklayout.Name }} ({{ booklayout.Link }}) Licence: {{ booklayout.Licence }}<br/>
 				Created with https://typemill.net</p>
@@ -152,6 +166,12 @@
 			</div>
 		</div>
 		
+		{% if ebookdata.dedication %}
+			<div class="dedication">
+				{{ markdown(ebookdata.dedication) }}
+			</div>
+		{% endif %}
+
 		{% if ebookdata.toc %}
 			<div class="tableofcontents">
 				<h1>{{ ebookdata.toctitle }}</h1>
@@ -161,34 +181,39 @@
 
 		<div class="bookcontent">
 
-			<!-- add thumb index -->
-			{% if book.thumbindex %}
+<!-- add thumb index
+			{# % if book.thumbindex % }
 				<ul class="thumbindex">
 					{% for thumbindex in book.thumbindex %}
 						<li class="i-{{ thumbindex.lang }}">{{ thumbindex.thumb }}</li>
 					{% endfor %}
 				</ul>
-			{% endif %}
+			{ % endif % #}
+
+-->
 
 			{% for chapter in book %}
 		
-				{% if chapter.level == 1 %}
+
+<!--		
+				{# % if chapter.level == 1 % #}
 					
 					<section class="chapter">
 						{{ chapter.content }}
 					</section>
 
-				{% elseif book.thumbindex %}
-				
+				{# % elseif book.thumbindex % #}
 					<section class="subchapter {{ chapter.metadata.language.lang }}" lang="{{ chapter.metadata.language.lang|default(language) }}">
 						{{ chapter.content }}
 					</section>
-
-				{% else %}
+				{# % else % #}
 						
 					{{ chapter.content }}
 
-				{% endif %}
+				{# % endif % #}
+-->
+
+				{{ chapter.content }}
 		
 			{% endfor %}
 		</div>
@@ -261,6 +286,5 @@
 
 			</script>
 		{% endif %}
-
 	</body>
 </html>

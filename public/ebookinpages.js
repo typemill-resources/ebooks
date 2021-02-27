@@ -107,11 +107,21 @@ Vue.component('tab-ebooks', {
         },
 		triggersubmit: function(tab)
 		{
+			window.scrollTo({
+				top: 0,
+				left: 0, 
+				behavior: 'smooth'
+			});
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
 		},
 		submit: function(tab)
 		{
+			window.scrollTo({
+				top: 0,
+				left: 0, 
+				behavior: 'smooth'
+			});
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
 		},

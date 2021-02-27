@@ -35,7 +35,7 @@ function createToc(config){
     }
 
     // create toc list
-    let tocElements = content.querySelectorAll(".title-element");  
+    let tocElements = content.querySelectorAll(".title-element");
 
     for(var i= 0; i < tocElements.length; i++){
         let tocElement = tocElements[i];
@@ -45,5 +45,5 @@ function createToc(config){
         tocNewLi.innerHTML = '<a href="#' + tocElement.id + '">' + tocElement.innerHTML + '</a>';
         tocUl.appendChild(tocNewLi);
     }
-
+    console.info(tocUl);
 }

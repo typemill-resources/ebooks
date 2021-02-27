@@ -69,7 +69,6 @@ textarea{
 .pagedjs_page_content div ul:first-child,
 .pagedjs_page_content div figure:first-child,
 .pagedjs_page_content div blockquote:first-child,
-.pagedjs_page_content div table:first-child,
 .pagedjs_page_content div pre:first-child{
   margin-top: 0;
 }
@@ -597,11 +596,11 @@ ul.TOC{
 
 .cover{
   page: coverlayout;
-  background-color: var(--primary-bg-color);
-  background-size: cover;
   position: absolute;
   width: 100%;
   height: 100%;
+  background-color: var(--primary-bg-color);  
+  background-size: cover;
 }
 .cover-top{
   position: absolute;
@@ -609,7 +608,7 @@ ul.TOC{
   height: 50%;
   top: 0;
 }
-.cover-title{
+.cover .cover-title{
   position: absolute;
   width: 70%;
   bottom: -60px;
@@ -626,9 +625,9 @@ ul.TOC{
   width: 100%;
   height: 50%;
   bottom: 0;
+  padding: 40px;
   background-color: var(--secondary-bg-color);
   color: #f7f7f7;
-  padding: 40px;
 }
 .cover-subtitle{
   margin-top: 60px;
@@ -637,13 +636,11 @@ ul.TOC{
   position: absolute;
   bottom: 40px;
 }
-
 .cover h1 {
   font-size: 27.5pt;
   line-height: 30pt;
   margin: 30pt 0 15pt 0; 
 }
-
 .cover .cover-bottom h2.cover-subtitle {
   font-size: 15.4pt;
   line-height: 18pt;
@@ -651,6 +648,44 @@ ul.TOC{
 }
 .cover p + p {
     text-indent: 0pt; 
+}
+
+
+.flytitle{
+  page: flytitlelayout;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.flytitle-top{
+  position: absolute;
+  width: 100%;
+  height: 50%;
+  top: 0;  
+}
+.flytitle .cover-title{
+  position: absolute;
+  width: 100%;
+  bottom: -60px;
+  left: 0;
+  padding: 40px 0;
+  font-weight: 800;
+  z-index: 1;
+}
+.flytitle-bottom{
+  position:absolute;
+  width: 100%;
+  height: 50%;
+  bottom: 0;
+  padding: 40px 0;
+}
+.flytitle .flytitle-bottom h2.cover-subtitle {
+  font-size: 15.4pt;
+  line-height: 18pt;
+  margin: 25pt 0 15pt; 
+}
+.flytitle .cover-edition{
+  text-indent: 0;
 }
 
 /*
@@ -672,6 +707,16 @@ ul.TOC{
 }
 .imprint p + p {
   text-indent: 0pt; 
+}
+
+.dedication{
+  page: dedication;
+}
+.dedication p{
+  text-align: right;
+  font-size: 1.2em;
+  font-style: italic;
+  margin-top: 6rem;
 }
 
 .blurb{

@@ -14,7 +14,7 @@ standardforms:
   dedication: true 
   blurb: true
   generalsettings: 
-    originalheadlinelevels: true
+    downgradeheadlines: true
     originalimages: true 
 
 customforms:
