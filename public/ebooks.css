@@ -63,7 +63,10 @@ button.progressbutton:after{
 	border-left: 20px solid gray;
 	border-right: 0px solid transparent;
 }
-
+button.progressbutton:disabled, button[disabled].progressbutton{
+	opacity: .5;
+	border: 0px;
+}
 button.progressbutton.error{
 	background: #e0474c;
 }

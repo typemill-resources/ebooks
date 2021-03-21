@@ -23,6 +23,7 @@ let ebooks = new Vue({
 			message: '',
 			messagecolor: '',
 			initialize: true,
+			disabled: false,
 		}
 	},
 	mounted: function(){
@@ -53,6 +54,7 @@ let ebooks = new Vue({
         	}
 
         	self.dataLoaded = true;
+        	self.disabeld = false;
         })
         .catch(function (error)
         {
@@ -77,6 +79,11 @@ let ebooks = new Vue({
         {
 	        self.message = error.response.data.errors.message;
         	self.messagecolor = 'bg-tm-red';
+        	self.disabled = false;
+        	if(typeof error.response.data.errors.disable !== 'undefined')
+        	{
+	        	self.disabled = true;
+        	}        	
         });
 
 		FormBus.$on('forminput', formdata => {

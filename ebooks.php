@@ -145,6 +145,11 @@ class Ebooks extends Plugin
 		$itempath 		= $params['itempath'];
 		$settings 		= $this->getSettings();
 
+		if($params['url'] == '/')
+		{
+			return $response->withJson(array('home' => true, 'errors' => ['message' => 'The homepage does not support an ebook generation. Please choose another page.']), 422);
+		}
+
 		# get the metadata from page
 		$writeYaml 		= new WriteYaml();
 
@@ -302,7 +307,7 @@ class Ebooks extends Plugin
 
 		if(!$navigation)
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find a content tree. Please reload the page.']), 422);
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.', 'disable' => true]), 422);
 		}
 
 		return $response->withJson(array('data' => $navigation, 'errors' => false), 200);

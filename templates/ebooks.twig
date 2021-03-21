@@ -11,6 +11,7 @@
 	        v-bind:key="tab"
 	        v-bind:class="getTabClass(tab)"
 	        v-on:click="triggersubmit(tab)"
+	        :disabled="disabled"
 	      >
 	        ${ tab } <span v-if="tabErrors[tab]" class="tabalert">!</span>
 	    </button>
