@@ -22,10 +22,10 @@ Vue.component('tab-ebooks', {
 	data: function () {
 		return {
 			root: document.getElementById("main").dataset.url, /* get url of current page */
-			currentTabComponent: "ebook-general",
-	       	currentTab: "general",
+			currentTabComponent: "ebook-layout",
+	       	currentTab: "layout",
 	       	nextStep: false,
-    	   	tabs: ["general", "front", "content", "back", "create"],
+    	   	tabs: ["layout", "settings", "content", "epub", "create"],
 			dataLoaded: false,
 			navigation: {}, 
 			standardForms: {}, /* holds the standard forms from layout that user has choosen from layoutData */
@@ -107,24 +107,27 @@ Vue.component('tab-ebooks', {
         },
 		triggersubmit: function(tab)
 		{
-			window.scrollTo({
-				top: 0,
-				left: 0, 
-				behavior: 'smooth'
-			});
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
+			this.moveUp();
 		},
 		submit: function(tab)
 		{
-			window.scrollTo({
-				top: 0,
-				left: 0, 
-				behavior: 'smooth'
-			});
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
+			this.moveUp();
 		},
+		moveUp()
+		{
+			setTimeout(function(){ 
+	       		window.scrollTo({
+				  top: 0,
+				  left: 0,
+				  behavior: 'smooth'
+				});
+
+			}, 100);
+      	},
 		storeEbookData: function()
 		{
 			this.message = false;
@@ -257,10 +260,16 @@ Vue.component('tab-ebooks', {
 		{
 			return this.root + '/tm/ebooks/preview?itempath=' + this.item.pathWithoutType;
 		},
-		tmpStoreItem: function()
+		getEpubUrl: function()
+		{
+			return this.root + '/tm/ebooks/epub?itempath=' + this.item.pathWithoutType;
+		},
+		tmpStoreItem: function(format)
 		{
 			/* store the item inside array for compatibility with navigation structure */
 			var storeitem = [this.item];
+
+			self = this;
 
 			/* temporary store the item here */
 	        myaxios.post('/api/v1/ebooktabitem',{
@@ -286,7 +295,35 @@ Vue.component('tab-ebooks', {
 	        		self.formErrors = error.response.data.errors;
 	        		self.checkTabStatus();
 	            }
-	        });			
+	        });
+		},
+		setUuid: function()
+		{
+			self = this;
+
+	        myaxios.get('/api/v1/epubuuid',{
+				'url':			document.getElementById("path").value,        		
+				'csrf_name': 	document.getElementById("csrf_name").value,
+				'csrf_value':	document.getElementById("csrf_value").value,
+			})
+	        .then(function (response) {
+				self.$set(self.formData, 'epubidentifieruuid', response.data.uuid);
+	        })
+	        .catch(function (error)
+	        {
+	        	if(error.response.status == 400)
+	        	{
+	        		self.message = 'You are probably logged out, please login again.';
+        			self.messagecolor = 'bg-tm-red';
+	        	}
+	           	if(error.response.data.errors)
+	            {
+	        		self.message = 'We did not safe the book-data. Please correct the errors.';
+        			self.messagecolor = 'bg-tm-red';
+	        		self.formErrors = error.response.data.errors;
+	        		self.checkTabStatus();
+	            }
+	        });
 		},
 		resetNavigation: function()
 		{

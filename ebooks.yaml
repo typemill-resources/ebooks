@@ -1,5 +1,5 @@
 ﻿name: ebooks
-version: 1.2.3
+version: 1.3.0
 description: Transform your typemill installation into a micro-publishing studio.
 author: Sebastian Schürmanns
 homepage: https://trendschau.net
@@ -10,11 +10,49 @@ amount: 30
 forms:
   fields:
 
-    ebooksinsettings:
-      type: checkbox
-      label: eBook feature in settings
-      checkboxlabel: Admin can generate eBooks in a new navi-item on the settings page.
-    ebooksinpages:
-      type: checkbox
-      label: eBook feature in pages
-      checkboxlabel: Authors can generate ebooks in a new tab on every content page.
+    general:
+      type: fieldset
+      legend: General Settings
+      fields:
+        ebooksinsettings:
+          type: checkbox
+          label: eBook feature in settings
+          checkboxlabel: Admin can generate eBooks in a new navi-item on the settings page.
+        ebooksinpages:
+          type: checkbox
+          label: eBook feature in pages
+          checkboxlabel: Authors can generate ebooks in a new tab on every content page.
+
+    multilanguage:
+      type: fieldset
+      legend: Multilanguage Thumb Index
+      fields:
+        thumbindex:
+          type: checkbox
+          label: Thumb Index
+          checkboxlabel: Activate language settings in pages for a thumb index.
+        languages:
+          type: textarea
+          label: Add language definitions
+          placeholder: "en: english\nde: deutsch"
+          description: Please use a separate line for each language with the format "lang-attr:language-name"
+
+metatabs:
+  thumbindex:
+    fields:
+      language: 
+        type: select
+        label: Select a language
+        description: Please select the language of this chapter. The language is used for the thumb index.
+        class: large
+        options:
+      lang:
+        type: text
+        label: Language Code
+        readonly: true
+        class: medium
+      thumb:
+        type: text
+        label: Thumb Index
+        readonly: true
+        class: medium

@@ -7,10 +7,10 @@ let ebooks = new Vue({
 	data: function () {
 		return {
 			root: document.getElementById("main").dataset.url, /* get url of current page */
-			currentTabComponent: "ebook-general",
-	       	currentTab: "general",
+			currentTabComponent: "ebook-layout",
+	       	currentTab: "layout",
 	       	nextStep: false,
-    	   	tabs: ["general", "front", "content", "back", "create"],
+    	   	tabs: ["layout", "settings", "content", "epub", "create"],
 			dataLoaded: false,
 			navigation: {}, 
 			standardForms: {}, /* holds the standard forms from layout that user has choosen from layoutData */

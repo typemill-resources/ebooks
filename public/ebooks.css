@@ -50,7 +50,7 @@ button.progressbutton:before{
 	border-left: 20px solid transparent;
 	border-right: 0px solid transparent;	
 }
-button.progressbutton.general:before{
+button.progressbutton.layout:before{
 	border-bottom: 0;
 	border-top:0;
 	border-left: 0;
@@ -76,6 +76,15 @@ button.progressbutton.error:before{
 }
 button.progressbutton.error:after{
 	border-left: 20px solid #e0474c;
+}
+button.progressbutton.tab-button{
+    font-size: 0.9em;
+    min-width: 80px;
+}
+button.uuid-button{
+	right:  40px;
+	height: 52px;
+	width:  150px;
 }
 .tabalert{
 	position: absolute;

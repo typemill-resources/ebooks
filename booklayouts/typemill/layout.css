@@ -138,10 +138,13 @@ p{
 }
 
 /* indent all paragraphs except the first paragraph */
-p + p {
+.bookcontent p + p {
   text-indent: 1.3em;
 }
 
+.blurb p{
+  margin-bottom: 1em;
+}
 
 /*
 ** STRONG, ITALIC, SMALL
@@ -499,6 +502,22 @@ sup:after{
   text-decoration: none;
 }
 
+/* style footnotes */
+span.footnote { 
+    float: footnote;
+    border-top: solid black thin;
+    padding-top: 8pt;
+    font-size: 0.8em;
+    line-height:  1.1em;
+}
+.footnote::footnote-call{
+  color:  var(--primary-bg-color);
+}
+.footnote::footnote-marker{
+  color:  black;
+}
+
+
 /* 
 ** TABLE OF CONTENTS
 */
@@ -615,8 +634,8 @@ ul.TOC{
   left: 0;
   padding: 40px;
   background: #f7f7f7;
+  color: var(--primary-ft-color);
   box-shadow: 70px -70px 0px -60px rgba(0,0,0,.1);
-  color: black;
   font-weight: 800;
   z-index: 1;
 }
@@ -627,7 +646,7 @@ ul.TOC{
   bottom: 0;
   padding: 40px;
   background-color: var(--secondary-bg-color);
-  color: #f7f7f7;
+  color: var(--secondary-ft-color);
 }
 .cover-subtitle{
   margin-top: 60px;

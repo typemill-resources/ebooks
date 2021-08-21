@@ -1,7 +1,7 @@
-function endnotes(endnotesId)
+function endnotes(config)
 {
-	let fnsups 			= document.querySelectorAll("[id^='fnref']");
-	let enplaceholder	= document.querySelector(endnotesId);
+	let fnsups 			= config.content.querySelectorAll("[id^='fnref']");
+	let enplaceholder	= config.content.querySelector(config.enElement);
 	let endnotes 		= document.createElement("ol");
 		    	
 	fnLength = fnsups.length;
@@ -21,7 +21,7 @@ function endnotes(endnotesId)
 		/* rewrite footnote reference */
 		fnref.href = "#fn-" + numNote;
 
-		let fn = document.getElementById(fnid);
+		let fn = config.content.getElementById(fnid);
 		fn.id = "fn-"+numNote;
 
 		let backref = fn.querySelector(".footnote-backref");
@@ -31,7 +31,7 @@ function endnotes(endnotesId)
 
 	}
 	enplaceholder.append(endnotes);
-	document.querySelectorAll('.footnotes').forEach(function(fnelement){
+	config.content.querySelectorAll('.footnotes').forEach(function(fnelement){
 		fnelement.remove()
 	})
 }

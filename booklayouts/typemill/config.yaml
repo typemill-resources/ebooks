@@ -5,23 +5,120 @@ Link: https://trendschau.net
 Sizes: A5 (148mm 210mm)
 Photo: Photo by Markus Winkler on Unsplash
 
-standardforms:
-  coverbackground: true
-  toc: true
-  endnotes: true 
-  titlepage: true 
-  imprint: true 
-  dedication: true 
-  blurb: true
-  generalsettings: 
-    downgradeheadlines: true
-    originalimages: true 
-
 customforms:
   fields:
-    myfield:
-      type: text
-      label: Add some text
-    yourfield:
-      type: customfields
-      label: Add some text
+    fieldsettitlepage:
+      type: fieldset
+      legend: Covertext and Fly Title
+      fields:
+        title:
+          type: text
+          label: Title of your eBook
+          description: Appears in the white box
+        subtitle:
+          type: text
+          label: Subtitle of your eBook
+        author:
+          type: text
+          label: Author
+        edition:
+          type: text
+          label: Edition
+        flytitle:
+          type: checkbox
+          label: Fly title
+          checkboxlabel: Add a fly title after the cover. 
+    fieldsetcoverimage:
+      type: fieldset
+      legend: Cover Image
+      fields:
+        coverimage:
+          type: image
+          label: Upload a cover image
+          description: only jpg or png accepted. 
+        coverimageonly:
+          type: checkbox
+          checkboxlabel: Use only the coverimage without background-colors and text.
+    fieldsetcovercolors:
+      type: fieldset
+      legend: Cover Colors
+      fields:
+        primarycolor:
+          type: text 
+          label: Primary Background Color (top area)
+          placeholder: cadetblue
+          description: Use color name like 'black' or hex code like '#000000'.
+        primaryfontcolor:
+          type: text
+          label: Primary Font Color (in white box)
+          placeholder: black
+          description: Use color name like 'black' or hex code like '#000000'.
+        secondarycolor:
+          type: text
+          label: Secondary Background Color (bottom area)
+          placeholder: cadetblue
+          description: Use color name like 'black' or hex code like '#000000'.
+        secondaryfontcolor:
+          type: text
+          label: Secondary Font Color (bottom area)
+          placeholder: white
+          description: Use color name like 'black' or hex code like '#000000'.
+    fieldsetimprint:
+      type: fieldset
+      legend: Imprint
+      fields:
+        imprint:
+          type: textarea
+          label: Text for imprint (use markdown)
+          description: Keep empty to skip the imprint.
+    fieldsetdedication:
+      type: fieldset
+      legend: Dedication
+      fields:
+        dedication:
+          type: textarea
+          label: Text for dedication (use markdown)
+          description: Keep empty to skip the dedication.
+    fieldsettoc:
+      type: fieldset
+      legend: Table of Contents
+      fields:
+        toc:
+          type: checkbox
+          label: Table of contents
+          checkboxlabel: Add an automatically generated table of contents.
+        toctitle:
+          type: text
+          label: Title for the table of contents page
+        toclevel:
+          type: number
+          label: How many headline-levels (1-6) should be included?
+        toccounter:
+          type: checkbox
+          label: ToC Counter
+          checkboxlabel: Add a counter before the headlines.
+    fieldsetendnotes:
+      type: fieldset
+      legend: Endnotes
+      fields:
+        endnotes:
+          type: checkbox
+          checkboxlabel: Transform footnotes into endnotes
+        endnotestitle:
+          type: text
+          label: Title for the endnotes page
+    fieldsetblurb:
+      type: fieldset
+      legend: Blurb
+      fields:
+        blurb:
+          type: textarea
+          label: Text for the blurb (use markdown)
+          description: Keep empty to skip the blurb.
+    fieldsetimagequality:
+      type: fieldset
+      legend: Image Quality
+      fields:
+        originalimages:
+          type: checkbox
+          checkboxlabel: Use original images and do not resize them (use this for print only).

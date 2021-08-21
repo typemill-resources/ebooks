@@ -10,11 +10,11 @@ function createToc(config){
 
     // add class to all title elements
     let tocElementNbr = 0;
+
     for(var i = 0; i < titleElements.length; i++){
         
         let titleHierarchy = i + 1;
         let titleElement = content.querySelectorAll(titleElements[i]);    
-        
 
         titleElement.forEach(function(element) {
 
@@ -25,13 +25,16 @@ function createToc(config){
             // add id if doesn't exist
             tocElementNbr++;
             idElement = element.id;
+/*            
             if(idElement == ''){
                 element.id = 'title-element-' + tocElementNbr;
-            } 
+            }
+*/
+            // we will overwrite all ids to avoid duplicated ids
+            element.id = 'title-element-' + tocElementNbr;
+
             let newIdElement = element.id;
-
         });
-
     }
 
     // create toc list
@@ -45,5 +48,4 @@ function createToc(config){
         tocNewLi.innerHTML = '<a href="#' + tocElement.id + '">' + tocElement.innerHTML + '</a>';
         tocUl.appendChild(tocNewLi);
     }
-    console.info(tocUl);
 }

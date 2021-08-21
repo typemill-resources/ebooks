@@ -120,6 +120,10 @@
         content: counter(page);
         font-size: 0.8em;
     }
+    @footnote {
+        float: bottom;
+    }
+
 }
 
 @page coverlayout {
