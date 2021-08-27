@@ -36,8 +36,8 @@ Vue.component("ebook-layout", {
 				'<div class="large tc">' +
 					'<h2>Tutorial: How to create an ebook?</h2>' +
 					'<p>A short video-tutorial (just 10 minutes) on how to create an eBook with Typemill.<br/>'+
-					'Click to view on <a href="" target="_blank">YouTube</a></p>' +
-					'<a href="" target="_blank"><img :src="getVideoImgUrl()" /></a>' +
+					'Click to view on <a href="https://www.youtube.com/watch?v=g5ntN4Z5pyE" target="_blank">YouTube</a></p>' +
+					'<a href="https://www.youtube.com/watch?v=g5ntN4Z5pyE" target="_blank"><img :src="getVideoImgUrl()" /></a>' +
 				'</div>'+
 			  '</div>',
 	mounted: function(){

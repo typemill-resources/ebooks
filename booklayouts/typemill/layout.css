@@ -502,11 +502,16 @@ sup:after{
   text-decoration: none;
 }
 
+
 /* style footnotes */
+
+/* span style footnotes */
+span.footnote:first-child{
+    border-top: solid black thin;  
+}
 span.footnote { 
     float: footnote;
-    border-top: solid black thin;
-    padding-top: 8pt;
+    padding-top: 4pt;
     font-size: 0.8em;
     line-height:  1.1em;
 }

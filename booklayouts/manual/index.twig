@@ -131,7 +131,7 @@
 				<div class="cover-title">
 					<h1 class="cover-headline">{{ ebookdata.title }}</h1>
 					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
-					<img src="{{ base_url }}/{{ ebookdata.coverimage }} ">
+					{% if ebookdata.coverimage %} <img src="{{ base_url }}/{{ ebookdata.coverimage }} ">{% endif %}
 				</div>
 				<div class="cover-bottom">
 					{% if ebookdata.logo != '' %}
