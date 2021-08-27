@@ -59,7 +59,7 @@ Vue.component("ebook-layout", {
 		},
 		getVideoImgUrl: function()
 		{
-			return this.$parent.root + '/media/live/youtube-h2n-kqmoitc.jpeg';
+			return this.$parent.root + '/plugins/ebooks/public/youtube-g5ntn4z5pye.jpeg';
 		},
 		showinfo: function(name)
 		{
