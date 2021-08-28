@@ -1,0 +1,859 @@
+@font-face {
+    font-family: 'Open Sans';
+    src:  url('fonts/Open_Sans/OpenSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Jost';
+    src:  url('fonts/Jost/Jost-300-Light.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Noto Serif';
+    src:  url('fonts/noto-serif-v9-latin-regular.woff') format('woff'),
+          url('fonts/noto-serif-v9-latin-regular.tiff') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 
+** HTML & BODY
+*/
+
+html{
+  -ms-text-size-adjust:100%;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  font-size: 12px;
+  line-height: calc(2px + 4.5ex + 2px); /* https://hugogiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height */
+  line-height: 1.2em;
+  font-family: 'Jost', sans-serif;
+  margin: 0;
+  padding: 0;
+  text-rendering: optimizeLegibility;
+}
+
+h1,h2,h3,h4,h5,h6{
+  font-family: 'Jost', sans-serif; 
+}
+
+.bookcontent h1, .bookcontent h2, .bookcontent h3, .bookcontent h4, .bookcontent h5, .bookcontent h6{
+  color:  var(--primary-bg-color); 
+}
+
+/* 
+** MARGINS
+*/
+
+/* Remove default margins */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+li,
+figure,
+figcaption,
+blockquote,
+dl,
+dd,
+pre,
+button,
+input,
+optgroup,
+select,
+textarea{
+  margin: 0;
+}
+
+/* Make sure that the first element of a page has no margin-top at all, so content always starts at the top of the page */
+.pagedjs_page_content div h1:first-child,
+.pagedjs_page_content div h2:first-child,
+.pagedjs_page_content div h3:first-child,
+.pagedjs_page_content div h4:first-child,
+.pagedjs_page_content div h5:first-child,
+.pagedjs_page_content div h6:first-child,
+.pagedjs_page_content div ul:first-child,
+.pagedjs_page_content div figure:first-child,
+.pagedjs_page_content div blockquote:first-child,
+.pagedjs_page_content div pre:first-child{
+  margin-top: 0;
+}
+
+/* make sure no paragraph indent at top of a page */
+.pagedjs_page_content div p:first-child{
+  text-indent: 0;
+}
+
+/* 
+** HEADLINES 
+*/
+
+/* with fixed space bottom and variable top */
+h1,h2,h3,h4,h5,h6{
+  break-after: avoid;
+  break-inside: avoid;
+  margin-top: 1.6em;
+  margin-bottom: 6px; 
+  line-height: 1.1em;
+  font-weight: normal;
+}
+h1{
+/*  font-size: 3.125em; */
+  font-size: 1.6em;
+  font-weight:  bold;
+}
+.bookcontent h1{
+/*    margin-bottom: 3em; */
+}
+h2{
+/*  font-size: 2.618em; */
+  font-size: 1.2em;
+  font-weight: bold;
+}
+h3{
+/*  font-size: 1.931em; */
+  font-size: 1.1em;
+  font-weight: normal;
+}
+h4{
+/*  font-size: 1.618em; */
+  font-size: 1em;
+  font-weight: normal;
+  font-style: italic;
+}
+h5,h6{
+  font-size: 1em;
+  font-weight: normal;
+/*  font-size: 1.194em; */
+}
+
+/*
+** PARAGRAPHS 
+*/
+
+/* Paragraphs justified, with hyphens, paragraph must have at least 2 lines at start or end of page (widow/orphan) */
+p{
+  word-wrap: break-word;
+  hyphens: auto;
+  text-align: justify;
+  widows: 2;
+  orphans: 2;
+  margin-bottom: .8em;
+}
+
+/* indent all paragraphs except the first paragraph 
+p + p {
+  text-indent: 1.3em;
+}
+*/
+
+/*
+** STRONG, ITALIC, SMALL
+*/
+
+strong,
+b{
+  font-weight: bold;
+}
+i,em{
+  font-style: italic;
+}
+small{
+  font-size: .8em;
+}
+
+
+/*
+** LISTS (ordered and unordered) 
+*/
+
+/* align to left border */
+ol,ul {
+  margin: 1em 0;
+  padding-left: 1.3em;
+}
+
+/* no margins for nested elements */
+ol ol, ul ul{
+  margin: 0 0 0 0;
+}
+
+/* delete default list style */
+ul{
+  list-style: none;
+}
+
+/* words should break even if not justified */
+li{
+  hyphens: auto;
+  orphans: 2;
+  widows: 2;
+}
+
+/* add individual list style */
+.bookcontent ul li::before{
+  content:"\2794" " ";
+  display:block;
+  position:absolute;
+  margin-left:-1.3em;
+  color:  var(--primary-bg-color);
+}
+
+
+/*
+** DEFINITION LISTS 
+*/
+
+dl{
+  font-size: .8em;
+  border: 1px solid #ddd;
+  padding: 0.5em;
+  margin: 1em 0;
+}
+dt{
+  float: left;
+  clear: left;
+  width: 100px;
+  font-weight: bold;
+  color: var(--primary-bg-color);
+}
+dt::after {
+  content: ": ";
+}
+dd {
+  margin: 0 0 0 110px;
+  padding: 0 0 0.5em 0;
+}
+/*
+** MEDIA IMAGES AND VIDEOS
+*/
+
+figure{
+  display: table;     /* to keep captions in size with image */
+  margin:1em auto;
+  break-inside:avoid;
+}
+figure.left{
+  width: auto;
+  max-width: 70%;
+  float: left;
+  margin: 0 1em 1em 0;
+  break-inside: unset; /* avoid causes rendering errors */
+}
+figure.right {
+  width: auto;
+  max-width: 70%;
+  float: right;
+  margin: 0 0 1em 1em;
+  break-inside: unset; /* avoid causes rendering errors */
+}
+figcaption{
+  display: table-caption; /* to keep captions in size with image */
+  caption-side: bottom;
+  font-size: 0.8em;
+  margin-top: .5em;
+  line-height: 1.4em;
+}
+img{
+  display:block;
+  max-width: 100%;
+}
+audio,
+video{
+  display:inline-block;
+}
+audio:not([controls]){
+  display:none;
+  height:0;
+}
+
+
+/*
+** CODE
+*/
+pre,
+code,
+kbd,
+samp{
+  font-family:monospace, monospace;
+}
+pre,code{
+  background: #eee;
+  word-break: break-word;  /* long urls might overflow the page, alternative is break-all; */
+}
+pre{
+  margin: 1em 0;
+  padding: 1em;
+  white-space: pre-wrap;
+  font-size: 0.9em; /* makes font size of code blocks 0.8 pre + 0.8 code which is smaller than normal text */
+}
+code{
+  font-size: 0.8em; /* makes monospace font-size equal to normal text */
+  padding: 0 0.5em;
+}
+pre code{
+  padding: 0;
+}
+/* we use this to control page breaks */
+code.language-pagebreak{
+  break-after: page;
+}
+pre>code.language-pagebreak {
+    background: white;
+    position: absolute;
+    left: 0;
+    margin-top: -15px;
+    height: 30px;
+    right: 0;
+    content: " ";
+}
+/*
+** HORIZONTAL LINES
+*/
+
+.bookcontent hr{
+  position: relative;
+  height: 32px;
+  margin: 1em 0;
+  padding: 0;
+  border: 0;
+}
+.bookcontent hr::before{
+  position:absolute;
+  line-height:32px;   /* same height as hr */
+  top: 4px;           /* to keep the upper * in line vertically*/
+  display:block;
+  width:100%;
+  content:"* * *";
+  text-align:center;
+}
+
+/*
+** TABLES
+*/
+table{
+/*  page-break-inside: auto; */
+  border-collapse:collapse;
+  font-size: 0.8em;
+  line-height: 1.2;
+  width: 100%;
+  margin: 1em 0;
+}
+tr{
+  page-break-before:avoid;
+  page-break-inside:avoid; 
+  page-break-after:auto;
+}
+thead{
+   display:table-header-group;
+}
+thead th{
+  font-weight: bold;
+  text-align:left;
+}
+thead tr{
+  page-break-before:auto;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+tbody tr{
+  border-bottom: 1px solid #efefef;
+}
+tbody tr:last-child{
+  border-bottom: 1px solid #ccc;
+}
+th, td{
+  padding: 0.6em;
+}
+
+
+/*
+** BLOCKQUOTES
+*/
+
+/* pull first line with quotemark to left */
+blockquote {
+  page-break-before: avoid;
+  margin: 1em 0;
+  /*
+  border-left: .8em solid #eee;
+  padding-left: .3em;
+  */
+  font-style: italic;
+  line-height: 1.3em;
+  padding-left: 1.3em;
+}
+
+/* use the open quote of the current font */
+blockquote::before {
+  content: open-quote;
+  position: absolute;
+  left: .1em;
+}
+blockquote::after {
+  content: none;
+}
+
+/* "first open" "first closed" "second open" "second closed" */
+blockquote {
+  quotes: "“" "”" "‘" "’";
+}
+
+blockquote em,blockquote cite{
+  font-style:normal;
+}
+blockquote cite{
+  line-height:0;
+  margin-left:0.5em;
+  font-weight:400;
+}
+blockquote cite::before{
+  content:"[";
+  margin-right:0.5ch;
+}
+blockquote cite::after{
+  content:"]";
+  margin-left:0.5ch;
+}
+blockquote cite em{
+  font-style:italic;
+  line-height:0;
+}
+
+
+a {
+  text-decoration: underline;
+  color: var(--primary-bg-color); 
+  background-color:transparent;
+  -webkit-text-decoration-skip:objects;
+}
+/* mark links a[href*='//']:before 
+
+.bookcontent a[href*='//']:before{
+  content: "\2794";
+  margin-right: 3px;
+  display: inline-block; /* to avoid underlining 
+}
+*/
+
+
+/*
+** NOTICE
+*/
+
+.notice1, .notice2, .notice3, .notice4, .notice5, .notice6 {
+  margin: 1em 0;
+  padding: .5em;
+  border-left: 3em solid;
+  border-right: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  border-botton: 1px solid #ccc;
+  background-color: #ddd;
+  break-inside: avoid;
+}
+.notice1 p, .notice2 p, .notice3 p, .notice4 p, .notice5 p, .notice6 p{
+  text-align: left;
+}
+.notice1::before,.notice2::before,.notice3::before,.notice4::before{
+  position: absolute;
+  left: .3em;
+  font-size: 2em;
+}
+.notice1{
+  border-left-color: black;
+}
+.notice1::before{
+  content: '\26A0';
+  color: white;
+}
+.notice2{
+  border-left-color: #ccc;
+}
+.notice2::before{
+  content: '\26A0';
+  color: black;
+}
+.notice3{
+  border-left-color: #ddd;
+}
+.notice3::before{
+  content:  '\261E';
+  color: black;
+}
+.notice4{
+  border-left-color: #eee;
+}
+.notice4::before{
+  content:  '\2713';
+  color: black;
+}
+
+/*
+.notice1 {
+  background: #ffded4;
+  border-left-color: #f65a3c;
+}
+.notice2 {
+  background: #fff3d4;
+  border-left-color: #f6b73c;
+}
+.notice3, .notice4, .notice5, .notice6 {
+  background: #d4e0ff;
+  border-left-color: #3c7bf6;
+}
+*/
+.notice1 p, .notice2 p, .notice3 p, .notice4 p, .notice5 p, .notice6 p{
+  text-indent: 0;
+  margin-bottom: .2em;
+}
+
+
+/*
+** FOOTNOTES
+*/
+
+sup {
+    top: -.5em;
+}
+sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+sup:before{
+  content: '[';
+}
+sup:after{
+  content: ']';
+}
+.footnotes{
+  font-size: 0.8em;
+}
+.footnotes hr{
+
+}
+.footnotes hr:before{
+  content: unset;
+}
+
+.footnotes ol{
+
+}
+.footnotes ol li{
+
+}
+.footnotes ol li p{
+
+}
+.footnotes ol li p a{
+  text-decoration: none;
+}
+
+/* span style footnotes */
+span.footnote:first-child{
+    border-top: solid black thin;  
+}
+span.footnote { 
+    float: footnote;
+    padding-top: 4pt;
+    font-size: 0.8em;
+    line-height:  1.1em;
+}
+.footnote::footnote-call {
+  color:  var(--primary-bg-color);
+}
+.footnote::footnote-marker {
+  color:  var(--primary-bg-color);
+}
+
+/* 
+** TABLE OF CONTENTS
+*/
+
+#toc ul{
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+#toc ul li{
+  hyphens: none;
+}
+
+
+/* generate page numbers */
+#toc li a::after{
+  content: target-counter(attr(href), page);
+  float: right;
+  font-weight: normal;
+}
+
+/* set the style for the list numbering to none */
+#list-toc-generated{ 
+  list-style: none;
+}
+
+#list-toc-generated .toc-element:before{
+  min-width: 40px;
+}
+
+#list-toc-generated .toc-element{
+  padding-left: 0;
+}
+#list-toc-generated .toc-element a{
+  text-decoration: none;
+  color: black;
+}
+#list-toc-generated .toc-element-level-1{
+  margin-top: 25px;
+  font-weight: bold;
+}
+#list-toc-generated .toc-element-level-3{
+  margin-left: 12px;
+}
+#list-toc-generated .toc-element-level-4{
+  margin-left: 24px;
+  font-style: italic;
+  font-size: .9em;
+}
+
+/* fake leading */
+#list-toc-generated .toc-element::after{
+    content: 
+        ".............................................."
+        ".............................................."
+        ".............................................."  
+        "........";
+    float: left;
+    width: 0;
+    padding-left: 5px;
+    letter-spacing: 2px;
+    font-weight: normal;
+}
+
+/* delete leaders after page number */
+#list-toc-generated{
+    overflow-x: hidden;
+}
+
+/* fix page number before page breaks */
+#list-toc-generated .toc-element[data-split-to]{
+  display: none;
+}
+
+#list-toc-generated .toc-element{
+    display: flex; 
+}
+
+#list-toc-generated .toc-element a::after{
+    position: absolute;
+    right: 0;
+    background-color: white;
+    padding-left: 6px;
+}
+
+#list-toc-generated .toc-element a{
+    right: 0;
+}
+
+/* Hide the table of contents within chapters */
+
+ul.TOC{
+  display: none;
+}
+
+/*
+** COVER  
+*/
+
+.cover{
+  font-family: arial;
+  page: coverlayout;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary-bg-color);  
+  background-size: cover;
+}
+.cover-top{
+  position: absolute;
+  height: 50px;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--primary-bg-color);
+  color:  var(--primary-ft-color);
+  text-align: right;
+}
+.cover-title{
+  position: absolute;
+  width: 100%;
+  top: 50px;
+  bottom: 80px;
+  left: 0;
+  padding: 0px;
+  background-color: var(--primary-bg-color);  
+  color:  var(--primary-ft-color);
+}
+.cover-bottom{
+  position:absolute;
+  width: 100%;
+  height: 80px;
+  bottom: 0;
+  left:  0;
+  padding: 20px;
+  background-color: var(--secondary-bg-color);
+  color: var(--secondary-ft-color);
+}
+.cover-headline, .cover-subtitle{
+  padding:  0 20px;
+}
+h1.cover-headline{
+  font-size: 22.5pt;
+  line-height: 25pt;
+  padding-top: 30pt;
+  margin-bottom: 8pt; 
+}
+h2.cover-subtitle {
+  font-size: 14pt;
+  line-height: 16pt;
+  font-weight:  300;
+  margin-top: 0pt;
+  margin-bottm: 15pt; 
+}
+img.logo{
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  max-height: 20px;
+  max-width: 100px;
+}
+.cover-author{
+  position: absolute;
+  bottom: 40px;
+  left: 20px;
+}
+.cover-edition{
+  position: absolute;
+  bottom: 40px;
+  right: 20px;
+}
+.cover p + p {
+    text-indent: 0pt; 
+}
+
+
+.flytitle{
+  page: flytitlelayout;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.flytitle-top{
+  position: absolute;
+  width: 100%;
+  height: 50%;
+  top: 0;  
+}
+.flytitle .cover-title{
+  position: absolute;
+  width: 100%;
+  bottom: -60px;
+  left: 0;
+  padding: 40px 0;
+  font-weight: 800;
+  z-index: 1;
+}
+.flytitle-bottom{
+  position:absolute;
+  width: 100%;
+  height: 50%;
+  bottom: 0;
+  padding: 40px 0;
+}
+.flytitle .flytitle-bottom h2.cover-subtitle {
+  font-size: 15.4pt;
+  line-height: 18pt;
+  margin: 25pt 0 15pt; 
+}
+.flytitle .cover-edition{
+  text-indent: 0;
+}
+
+/*
+** IMPRINT
+*/
+
+.imprint {
+  page: imprint; 
+}
+.imprint-bottom {
+  position: absolute;
+  bottom: 0;
+  overflow: hidden; 
+}
+.imprint p {
+  font-size: .8em;
+  margin: 15pt 0;
+  text-align: left; 
+}
+.imprint p + p {
+  text-indent: 0pt; 
+}
+
+.dedication{
+  page: dedication;
+}
+.dedication p{
+  text-align: right;
+  font-size: 1.2em;
+  font-style: italic;
+  margin-top: 6rem;
+}
+
+.blurb{
+  page: blurb;
+  background-color: var(--secondary-bg-color);
+  background-size: cover;
+  position: absolute;
+  text-align: left;
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  color: #f7f7f7;
+  font-size: 1.2em;
+}
+.blurb-text{
+    font-size: 0.5em;
+    width: 70%;
+    float: right;
+    font-weight: bold;
+    line-height: 1.5em;
+}
+
+article,
+aside,
+footer,
+header,
+nav,
+section,
+main{
+  display:block;
+}
+input,
+button,
+textarea,
+select {
+  font-family:sans-serif;
+  font-size:100%;
+  line-height:1.15;
+}

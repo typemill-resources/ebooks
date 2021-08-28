@@ -385,6 +385,7 @@ class Ebooks extends Plugin
 		$standardfields	= [
 			'layout',
 			'downgradeheadlines',
+			'excludebasefolder',
 			'epubidentifierisbn',
 			'epubidentifieruuid',
 			'epubidentifieruri',
@@ -514,6 +515,12 @@ class Ebooks extends Plugin
 			$parsedown->withSpanFootnotes();
 		}
 		
+		# skip the base folder if activated
+		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
+		{
+			$navigation = $navigation[0]['folderContent'];
+		}
+
 		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
 		$book 			= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
 
@@ -676,6 +683,12 @@ class Ebooks extends Plugin
 
 			# get navigationdata
 			$navigation = $writeCache->getCache($ebookFolderName, 'navigation.txt');
+		}
+
+		# skip the base folder if activated
+		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
+		{
+			$navigation = $navigation[0]['folderContent'];
 		}
 
 		# generate the book content from ebook-navigation

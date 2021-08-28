@@ -1,0 +1,116 @@
+Name: Manual
+Copyright: Sebastian Schürmanns, trendschau.net
+Licence: Creative Commons BY 3.0
+Link: https://trendschau.net
+Sizes: A5 (148mm 210mm)
+Graphic: Camera by Martin Chapman, Noun Project
+
+customforms:
+  fields:
+    fieldsettitlepage:
+      type: fieldset
+      legend: Covertext and Fly Title
+      fields:
+        title:
+          type: text
+          label: Title of your eBook
+        subtitle:
+          type: text
+          label: Subtitle of your eBook
+        author:
+          type: text
+          label: Author
+        edition:
+          type: text
+          label: Edition
+        flytitle:
+          type: checkbox
+          label: Fly title
+          checkboxlabel: Add a fly title after the cover. 
+    fieldsetcoverimage:
+      type: fieldset
+      legend: Cover Image
+      fields:
+        coverimage:
+          type: image
+          label: Upload a cover image
+          description: only jpg or png accepted. The image will be integrated on the cover below the text.
+    fieldsetcovercolors:
+      type: fieldset
+      legend: Cover Colors
+      fields:
+        primarycolor:
+          type: text 
+          label: Primary Background Color
+          description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
+        primaryfontcolor:
+          type: text
+          label: Primary Font Color
+          description: The font color of the top area. Will also be used for the active thumb register.
+        secondarycolor:
+          type: text
+          label: Secondary Background Color
+          description: The background color of the bottom area. Will also be used of the inactive thumb register.
+        secondaryfontcolor:
+          type: text
+          label: Secondary Font Color
+          description: The font color of the bottom area. Will also be used for the inactive thumb register.
+    fieldsetlogo:
+      type: fieldset
+      legend: Logo
+      fields:
+        logo:
+          type: image
+          label: Upload your LOGO
+          description: only jpg or png accepted. Will be added to the cover bottom area
+    fieldsetimprint:
+      type: fieldset
+      legend: Imprint
+      fields:
+        imprint:
+          type: textarea
+          label: Text for imprint (use markdown)
+          description: Keep empty to skip the imprint.
+    fieldsettoc:
+      type: fieldset
+      legend: Table of Contents
+      fields:
+        toc:
+          type: checkbox
+          label: Table of contents
+          checkboxlabel: Add an automatically generated table of contents.
+        toctitle:
+          type: text
+          label: Title for the table of contents page
+        toclevel:
+          type: number
+          label: How many headline-levels (1-6) should be included?
+        toccounter:
+          type: checkbox
+          label: ToC Counter
+          checkboxlabel: Add a counter before the headlines.
+    fieldsetendnotes:
+      type: fieldset
+      legend: Endnotes
+      fields:
+        endnotes:
+          type: checkbox
+          checkboxlabel: Transform footnotes into endnotes
+        endnotestitle:
+          type: text
+          label: Title for the endnotes page
+    fieldsetblurb:
+      type: fieldset
+      legend: Blurb
+      fields:
+        blurb:
+          type: textarea
+          label: Text for the blurb (use markdown)
+          description: Text will be displayed at the bottom with small font. Keep empty to skip the blurb.
+    fieldsetimagequality:
+      type: fieldset
+      legend: Image Quality
+      fields:
+        originalimages:
+          type: checkbox
+          checkboxlabel: Use original images and do not resize them (use this for print only).

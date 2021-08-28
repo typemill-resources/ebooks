@@ -138,19 +138,31 @@ button.uuid-button{
 	-ms-transform: rotate(45deg);
 	transform: rotate(45deg);
 }
+/* style of unchecked checkboxes */
 .tableofcontents .control-group input ~ .checkmark{ 
+	background-color: white;
+	border: 2px solid gray;
+}
+.contentselection .control-group input ~ .checkmark{ 
 	background-color: #66b0a3;
 	border: 2px solid #66b0a3;
 }
+/* style of hover checkboxes */
 /*.tableofcontents .control-group:hover input ~ .checkmark{ 
 	background-color: #ccc;
 	border: 2px solid #ccc;
 }*/
+/* style of checked checkboxes */
 .tableofcontents .control-group input:checked ~ .checkmark{	
+	border: 2px solid #66b0a3;
+	background-color: #66b0a3;
+}
+.contentselection .control-group input:checked ~ .checkmark{	
 	border: 2px solid #cc4146;
 	background-color: #cc4146;
 }
-.tableofcontents .control-group input:checked ~ .checkmark:after{
+/* style of select mark */
+.contentselection .control-group input:checked ~ .checkmark:after{
   	display: block;
   	height: 0;
   	top: 7px;

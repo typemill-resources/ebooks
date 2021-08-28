@@ -173,6 +173,10 @@ Vue.component("ebook-content", {
 			   			'<label>Select content from navigation</label>'+
 			   			'<div class="tableofcontents">'+
 			   				'<button @click.prevent="reset()" class="button bg-tm-green white bn br2 mb3 pointer">Load Latest Content Tree</button>'+
+							'<div v-if="basefolder()"><label class="control-group">Exclude the base folder from eBook' +
+								'<input type="checkbox" name="excludebasefolder" @change="toggleBaseFolder()" v-model="formdata.excludebasefolder" />' +
+								'<span class="checkmark"></span>' +
+							'</label><hr></div>' +
 			   				'<list :navigation="navigation"></list>'+
 			   			'</div>'+
 			   			'<p>* All pages are included by default. You can exclude pages from the ebook by deselecting them. If you deselect a folder, all sub-items will be excluded, too. If you want to change the structure or the order, then please change it in the navigation of the webside.</p>'+
@@ -218,6 +222,11 @@ Vue.component("ebook-content", {
 	mounted: function(){
 		this.booklayout = this.layouts[this.formdata.layout];
 
+		if(this.formdata.excludebasefolder)
+		{
+			this.$parent.excludeBaseFolder();			
+		}
+
 		this.$parent.storeEbookData();
 	},
 	methods: {
@@ -232,6 +241,17 @@ Vue.component("ebook-content", {
 		addLevelClass: function(level)
 		{
 			return 'level-' + level;
+		},
+		basefolder: function()
+		{
+			if(this.navigation.length == 1 && this.navigation[0].folderContent)
+			{
+				return true;
+			}
+		},
+		toggleBaseFolder: function()
+		{
+			this.$parent.excludeBaseFolder();
 		},
 		headlinepreview: function()
 		{
@@ -265,12 +285,13 @@ Vue.component("list", {
 			folder: 'folder'
 		}
 	},
-   	template: '<ul>' +
+   	template: '<ul class="contentselection">' +
    	 			'<li v-for="item in publishedItems" :class="item.class">' + 
 					'<label class="control-group">{{item.name}}' +
 					  '<input type="checkbox"' + 
 						' :id="item.keyPath"' +
 					    ' :name="item.name"' + 
+					    ' :disabled="checkDisabled(item)"' + 					    
 					    ' v-model="item.exclude"' +
 					    ' @change="selectedItem($event, item)">' +				
 				  	  '<span class="checkmark"></span>' +
@@ -299,6 +320,15 @@ Vue.component("list", {
 				item.class = 'unselected';
 			}
 		},
+		checkDisabled: function(item)
+		{
+			console.info(item);
+			if(item.disabled)
+			{
+				return "disabled";
+			}
+			return false;
+		}
 	},
 });
 

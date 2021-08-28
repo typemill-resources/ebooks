@@ -222,6 +222,17 @@ Vue.component('tab-ebooks', {
 
 			return selectedPages; 
 		},
+		excludeBaseFolder: function()
+		{
+			if(this.navigation[0].disabled)
+			{
+				this.$set(this.navigation[0], 'disabled', false)
+			}
+			else
+			{
+				this.$set(this.navigation[0], 'disabled', true)				
+			}
+		},
 		findInObject: function(name, myArray)
 		{
 		 	for (var i = 0; i < myArray.length; i++)
@@ -340,7 +351,6 @@ Vue.component('tab-ebooks', {
 
 				self.item = response.data.item;
 	        	self.navigation = [self.item];
-
 	        })
 	        .catch(function (error)
 	        {
