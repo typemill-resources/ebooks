@@ -1,15 +1,14 @@
-Name: Manual
+Name: Report
 Copyright: Sebastian Schürmanns, trendschau.net
 Licence: Creative Commons BY 3.0
 Link: https://trendschau.net
-Sizes: A5 (148mm 210mm)
-Graphic: Camera by Martin Chapman, Noun Project
+Sizes: A4 (210mm x 297mm)
 
 customforms:
   fields:
     fieldsettitlepage:
       type: fieldset
-      legend: Covertext and Fly Title
+      legend: Cover
       fields:
         title:
           type: text
@@ -17,52 +16,69 @@ customforms:
         subtitle:
           type: text
           label: Subtitle of your eBook
-        author:
-          type: text
-          label: Author
-        edition:
-          type: text
-          label: Edition
-        flytitle:
-          type: checkbox
-          label: Fly title
-          checkboxlabel: Add a fly title after the cover. 
-    fieldsetcoverimage:
-      type: fieldset
-      legend: Cover Image
-      fields:
+        coverlefttext:
+          type: textarea
+          label: Text in left botton corner (use markdown)
+        coverrighttext:
+          type: textarea
+          label: Text in right botton corner (use markdown)
         coverimage:
           type: image
           label: Upload a cover image
           description: only jpg or png accepted. The image will be integrated on the cover below the text.
-    fieldsetcovercolors:
-      type: fieldset
-      legend: Cover Colors
-      fields:
-        primarycolor:
-          type: text 
-          label: Primary Background Color
-          description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
-        primaryfontcolor:
-          type: text
-          label: Primary Font Color
-          description: The font color of the top area. Will also be used for the active thumb register.
-        secondarycolor:
-          type: text
-          label: Secondary Background Color
-          description: The background color of the bottom area. Will also be used of the inactive thumb register.
-        secondaryfontcolor:
-          type: text
-          label: Secondary Font Color
-          description: The font color of the bottom area. Will also be used for the inactive thumb register.
-    fieldsetlogo:
-      type: fieldset
-      legend: Logo
-      fields:
         logo:
           type: image
           label: Upload your LOGO
           description: only jpg or png accepted. Will be added to the cover bottom area
+        primarycolor:
+          type: text 
+          label: Color for cover background and headlines
+          description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
+        primaryfontcolor:
+          type: text
+          label: Font color for headlines on cover
+          description: The font color of the top area. Will also be used for the active thumb register.
+        secondarycolor:
+          type: text
+          label: Background color of bottom area of the cover
+          description: The background color of the bottom area. Will also be used of the inactive thumb register.
+        secondaryfontcolor:
+          type: text
+          label: Font color of bottom area of the cover
+          description: The font color of the bottom area. Will also be used for the inactive thumb register.
+    fieldsetfonts:
+      type: fieldset
+      legend: Text
+      fields:
+        fontsize:
+          type: number
+          label: General font size for body text
+        fontbody:
+          type: select
+          label: font for body text
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+            'Jost': Jost
+        fontheadline:
+          type: select
+          label: font for headlines
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+            'Jost': Jost
+        textalign:
+          type: select
+          label: text alignment 
+          options:
+            justify: justify
+            left: left
+        hyphens:
+          type: select
+          label: hyphens 
+          options:
+            auto: auto
+            none: none
     fieldsetimprint:
       type: fieldset
       legend: Imprint
@@ -88,7 +104,7 @@ customforms:
         toccounter:
           type: checkbox
           label: ToC Counter
-          checkboxlabel: Add a counter before the headlines.
+          checkboxlabel: Add a counter before the headlines in text and Table of Contents.
     fieldsetendnotes:
       type: fieldset
       legend: Endnotes

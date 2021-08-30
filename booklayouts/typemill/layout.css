@@ -560,11 +560,7 @@ span.footnote {
   margin-top: 25px;
   font-weight: bold;
 }
-#list-toc-generated .toc-element-level-3{
-  margin-left: 12px;
-}
 #list-toc-generated .toc-element-level-4{
-  margin-left: 24px;
   font-style: italic;
   font-size: .9em;
 }

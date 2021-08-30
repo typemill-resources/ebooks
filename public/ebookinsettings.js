@@ -171,9 +171,41 @@ let ebooks = new Vue({
 		{
 			return this.root + '/tm/ebooks/preview';
 		},
+		getEpubUrl: function()
+		{
+			return this.root + '/tm/ebooks/epub';
+		},		
 		tmpStoreItem: function()
 		{
 			return true;
+		},
+		setUuid: function()
+		{
+			self = this;
+
+	        myaxios.get('/api/v1/epubuuid',{
+				'url':			document.getElementById("path").value,        		
+				'csrf_name': 	document.getElementById("csrf_name").value,
+				'csrf_value':	document.getElementById("csrf_value").value,
+			})
+	        .then(function (response) {
+				self.$set(self.formData, 'epubidentifieruuid', response.data.uuid);
+	        })
+	        .catch(function (error)
+	        {
+	        	if(error.response.status == 400)
+	        	{
+	        		self.message = 'You are probably logged out, please login again.';
+        			self.messagecolor = 'bg-tm-red';
+	        	}
+	           	if(error.response.data.errors)
+	            {
+	        		self.message = 'We did not safe the book-data. Please correct the errors.';
+        			self.messagecolor = 'bg-tm-red';
+	        		self.formErrors = error.response.data.errors;
+	        		self.checkTabStatus();
+	            }
+	        });
 		},		
 		resetNavigation: function()
 		{

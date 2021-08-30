@@ -105,21 +105,49 @@
 /* Define the standard page layout */
 @page {
     
-    size: 105mm 148mm;            /* size of content area A6 */
-    margin-top: 10mm;
-    margin-right: 15mm;
-    margin-left: 10mm;
-    margin-bottom: 15mm;
+    size: 210mm 297mm;            /* size of content area A4 */
+    margin-top: 30mm;
+    margin-bottom: 35mm;
+    margin-left: 30mm;
+    margin-right: 30mm;
 
     @bottom-left  {
         content: string(title);
-        font-size: 0.8em;
+        font-size: 0.7em;
         width: 90%;
+        text-align: left;
+        text-transform: uppercase;
     }
     @bottom-right {
-        content: counter(page);
-        font-size: 0.8em;
+        content: counter(page) " / " counter(pages);
+        font-size: 0.7em;
+        font-weight: bold;
+        text-align: right;
     }
+
+/*
+    @bottom-right-corner {
+        content: counter(page);
+        font-size: 1em;
+        font-weight: bold;
+        text-align: center;
+        background: var(--paging-bg-color);
+        color: var(--paging-ft-color);
+    }
+
+/*
+    @bottom-right-corner {
+        content: counter(page);
+        font-size: 1.2em;
+        font-weight: bold;
+        text-align: left;
+        color:  white;
+        background: var(--primary-bg-color);
+        align-self: flex-end;
+        padding: 20px 40px 55px 20px;
+        margin: 40px 0 0 40px;        
+    }
+*/
     @footnote {
         float: bottom;
     }
@@ -138,11 +166,13 @@
 @page:blank {
     @bottom-left { content: none; }    
     @bottom-right { content: none; } 
+    @bottom-right-corner: { content: none; background:transparent; } 
 }
 
 @page imprint {
     @bottom-left { content: none; }    
     @bottom-right { content: none; } 
+    @bottom-right-corner: { content: none; background:transparent; } 
 }
 
 @page blurb {

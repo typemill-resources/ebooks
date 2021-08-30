@@ -12,8 +12,8 @@
 }
 @font-face {
     font-family: 'Noto Serif';
-    src:  url('fonts/noto-serif-v9-latin-regular.woff') format('woff'),
-          url('fonts/noto-serif-v9-latin-regular.tiff') format('truetype');
+    src:  url('fonts/Noto/noto-serif-v9-latin-regular.woff') format('woff'),
+          url('fonts/Noto/noto-serif-v9-latin-regular.tiff') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -27,17 +27,17 @@ html{
   -webkit-text-size-adjust:100%;
 }
 body{
-  font-size: 12px;
+  font-size: var(--font-size);
   line-height: calc(2px + 4.5ex + 2px); /* https://hugogiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height */
-  line-height: 1.2em;
-  font-family: 'Jost', sans-serif;
+  line-height: 1.4em;
+  font-family: var(--font-body);
   margin: 0;
   padding: 0;
   text-rendering: optimizeLegibility;
 }
 
 h1,h2,h3,h4,h5,h6{
-  font-family: 'Jost', sans-serif; 
+  font-family: var(--font-headlines); 
 }
 
 .bookcontent h1, .bookcontent h2, .bookcontent h3, .bookcontent h4, .bookcontent h5, .bookcontent h6{
@@ -102,8 +102,8 @@ h1,h2,h3,h4,h5,h6{
   break-after: avoid;
   break-inside: avoid;
   margin-top: 1.6em;
-  margin-bottom: 6px; 
-  line-height: 1.1em;
+  margin-bottom: 12px; 
+  line-height: 1.3em;
   font-weight: normal;
 }
 h1{
@@ -143,8 +143,8 @@ h5,h6{
 /* Paragraphs justified, with hyphens, paragraph must have at least 2 lines at start or end of page (widow/orphan) */
 p{
   word-wrap: break-word;
-  hyphens: auto;
-  text-align: justify;
+  hyphens: var(--hyphens);
+  text-align: var(--text-align);
   widows: 2;
   orphans: 2;
   margin-bottom: .8em;
@@ -201,11 +201,10 @@ li{
 
 /* add individual list style */
 .bookcontent ul li::before{
-  content:"\2794" " ";
+  content: "– ";
   display:block;
   position:absolute;
   margin-left:-1.3em;
-  color:  var(--primary-bg-color);
 }
 
 
@@ -244,16 +243,18 @@ figure{
 }
 figure.left{
   width: auto;
-  max-width: 70%;
+  max-width: 50%;
   float: left;
   margin: 0 1em 1em 0;
+/*  margin-left: -25mm; */
   break-inside: unset; /* avoid causes rendering errors */
 }
 figure.right {
   width: auto;
-  max-width: 70%;
+  max-width: 50%;
   float: right;
   margin: 0 0 1em 1em;
+/*  margin-right: -25mm; */
   break-inside: unset; /* avoid causes rendering errors */
 }
 figcaption{
@@ -346,7 +347,7 @@ table{
   font-size: 0.8em;
   line-height: 1.2;
   width: 100%;
-  margin: 1em 0;
+  margin: 2em 0;
 }
 tr{
   page-break-before:avoid;
@@ -617,11 +618,7 @@ span.footnote {
   margin-top: 25px;
   font-weight: bold;
 }
-#list-toc-generated .toc-element-level-3{
-  margin-left: 12px;
-}
 #list-toc-generated .toc-element-level-4{
-  margin-left: 24px;
   font-style: italic;
   font-size: .9em;
 }
@@ -686,56 +683,75 @@ ul.TOC{
 }
 .cover-top{
   position: absolute;
-  height: 50px;
+  height: 150px;
   top: 0;
   left: 0;
   right: 0;
-  background-color: var(--primary-bg-color);
-  color:  var(--primary-ft-color);
+  background-color: white;
+  color:  black;
   text-align: right;
 }
 .cover-title{
   position: absolute;
   width: 100%;
-  top: 50px;
-  bottom: 80px;
+  top: 150px;
+  bottom: 200px;
   left: 0;
+  right: 0;
   padding: 0px;
   background-color: var(--primary-bg-color);  
   color:  var(--primary-ft-color);
 }
 .cover-bottom{
   position:absolute;
+  display: flex;
   width: 100%;
-  height: 80px;
+  height: 200px;
   bottom: 0;
   left:  0;
-  padding: 20px;
+  padding: 0;
   background-color: var(--secondary-bg-color);
   color: var(--secondary-ft-color);
 }
-.cover-headline, .cover-subtitle{
-  padding:  0 20px;
+.bottomcorner{
+  padding-top: 40px;
+  padding-left: 60px;
+  padding-right: 60px; 
+  padding-bottom: 40px;
+  width: 100%;
+  border-top: 1px solid white;
 }
+.bottomcorner.cornerright{
+  border-left: 1px solid white;
+}
+.cover-title h1.cover-headline,
+.cover-title h2.cover-subtitle{
+  font-family: 'Noto sans',sans-serif;  
+}
+
 h1.cover-headline{
-  font-size: 22.5pt;
-  line-height: 25pt;
-  padding-top: 30pt;
-  margin-bottom: 8pt; 
+  font-size: 30pt;
+  line-height: 35pt;
+  margin-top: 60px!important;
+  margin-left: 60px;
+  margin-right: 60px;
+  margin-bottom: 10px;
 }
 h2.cover-subtitle {
-  font-size: 14pt;
-  line-height: 16pt;
+  font-size: 18pt;
+  line-height: 20pt;
   font-weight:  300;
-  margin-top: 0pt;
-  margin-bottm: 15pt; 
+  margin-top: 10px;
+  margin-left: 60px;
+  margin-right: 60px;
+  margin-bottom: 40px;
 }
 img.logo{
   position: absolute;
-  top: 20px;
-  left: 20px;
-  max-height: 20px;
-  max-width: 100px;
+  top: 40px;
+  right: 40px;
+  max-width: 210px;
+  max-height: 70px;
 }
 .cover-author{
   position: absolute;
@@ -830,14 +846,7 @@ img.logo{
   height: 100%;
   padding: 40px;
   color: #f7f7f7;
-  font-size: 1.2em;
-}
-.blurb-text{
-    font-size: 0.5em;
-    width: 70%;
-    float: right;
-    font-weight: bold;
-    line-height: 1.5em;
+  font-size: .8em;
 }
 
 article,

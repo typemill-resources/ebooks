@@ -1,10 +1,4 @@
 @font-face {
-    font-family: 'Open Sans';
-    src:  url('fonts/Open_Sans/OpenSans-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-@font-face {
     font-family: 'Jost';
     src:  url('fonts/Jost/Jost-300-Light.ttf') format('truetype');
     font-weight: normal;
@@ -617,11 +611,7 @@ span.footnote {
   margin-top: 25px;
   font-weight: bold;
 }
-#list-toc-generated .toc-element-level-3{
-  margin-left: 12px;
-}
 #list-toc-generated .toc-element-level-4{
-  margin-left: 24px;
   font-style: italic;
   font-size: .9em;
 }
@@ -676,7 +666,7 @@ ul.TOC{
 */
 
 .cover{
-  font-family: arial;
+  font-family: 'Jost', sans-serif;
   page: coverlayout;
   position: absolute;
   width: 100%;

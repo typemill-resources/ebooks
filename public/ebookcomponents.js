@@ -322,7 +322,6 @@ Vue.component("list", {
 		},
 		checkDisabled: function(item)
 		{
-			console.info(item);
 			if(item.disabled)
 			{
 				return "disabled";
