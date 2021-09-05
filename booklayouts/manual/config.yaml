@@ -89,16 +89,6 @@ customforms:
           type: checkbox
           label: ToC Counter
           checkboxlabel: Add a counter before the headlines.
-    fieldsetendnotes:
-      type: fieldset
-      legend: Endnotes
-      fields:
-        endnotes:
-          type: checkbox
-          checkboxlabel: Transform footnotes into endnotes
-        endnotestitle:
-          type: text
-          label: Title for the endnotes page
     fieldsetblurb:
       type: fieldset
       legend: Blurb

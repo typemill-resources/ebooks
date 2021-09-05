@@ -107,25 +107,18 @@ h1,h2,h3,h4,h5,h6{
   font-weight: normal;
 }
 h1{
-/*  font-size: 3.125em; */
   font-size: 1.6em;
   font-weight:  bold;
 }
-.bookcontent h1{
-/*    margin-bottom: 3em; */
-}
 h2{
-/*  font-size: 2.618em; */
   font-size: 1.2em;
   font-weight: bold;
 }
 h3{
-/*  font-size: 1.931em; */
   font-size: 1.1em;
   font-weight: normal;
 }
 h4{
-/*  font-size: 1.618em; */
   font-size: 1em;
   font-weight: normal;
   font-style: italic;
@@ -133,7 +126,6 @@ h4{
 h5,h6{
   font-size: 1em;
   font-weight: normal;
-/*  font-size: 1.194em; */
 }
 
 /*
@@ -150,11 +142,6 @@ p{
   margin-bottom: .8em;
 }
 
-/* indent all paragraphs except the first paragraph 
-p + p {
-  text-indent: 1.3em;
-}
-*/
 
 /*
 ** STRONG, ITALIC, SMALL
@@ -232,6 +219,7 @@ dd {
   margin: 0 0 0 110px;
   padding: 0 0 0.5em 0;
 }
+
 /*
 ** MEDIA IMAGES AND VIDEOS
 */
@@ -246,7 +234,6 @@ figure.left{
   max-width: 50%;
   float: left;
   margin: 0 1em 1em 0;
-/*  margin-left: -25mm; */
   break-inside: unset; /* avoid causes rendering errors */
 }
 figure.right {
@@ -254,7 +241,6 @@ figure.right {
   max-width: 50%;
   float: right;
   margin: 0 0 1em 1em;
-/*  margin-right: -25mm; */
   break-inside: unset; /* avoid causes rendering errors */
 }
 figcaption{
@@ -317,32 +303,20 @@ pre>code.language-pagebreak {
     right: 0;
     content: " ";
 }
+
 /*
 ** HORIZONTAL LINES
 */
 
 .bookcontent hr{
-  position: relative;
-  height: 32px;
-  margin: 1em 0;
-  padding: 0;
-  border: 0;
-}
-.bookcontent hr::before{
-  position:absolute;
-  line-height:32px;   /* same height as hr */
-  top: 4px;           /* to keep the upper * in line vertically*/
-  display:block;
-  width:100%;
-  content:"* * *";
-  text-align:center;
+  display: none;
 }
 
 /*
 ** TABLES
 */
+
 table{
-/*  page-break-inside: auto; */
   border-collapse:collapse;
   font-size: 0.8em;
   line-height: 1.2;
@@ -385,10 +359,6 @@ th, td{
 blockquote {
   page-break-before: avoid;
   margin: 1em 0;
-  /*
-  border-left: .8em solid #eee;
-  padding-left: .3em;
-  */
   font-style: italic;
   line-height: 1.3em;
   padding-left: 1.3em;
@@ -437,8 +407,8 @@ a {
   background-color:transparent;
   -webkit-text-decoration-skip:objects;
 }
-/* mark links a[href*='//']:before 
 
+/* mark links 
 .bookcontent a[href*='//']:before{
   content: "\2794";
   margin-right: 3px;
@@ -584,47 +554,22 @@ span.footnote {
 #toc ul{
   padding: 0;
   margin: 0;
-  overflow: hidden;
+  list-style: none;
 }
 #toc ul li{
   hyphens: none;
 }
-
 
 /* generate page numbers */
 #toc li a::after{
   content: target-counter(attr(href), page);
   float: right;
   font-weight: normal;
-}
-
-/* set the style for the list numbering to none */
-#list-toc-generated{ 
-  list-style: none;
-}
-
-#list-toc-generated .toc-element:before{
-  min-width: 40px;
-}
-
-#list-toc-generated .toc-element{
-  padding-left: 0;
-}
-#list-toc-generated .toc-element a{
-  text-decoration: none;
-  color: black;
-}
-#list-toc-generated .toc-element-level-1{
-  margin-top: 25px;
-  font-weight: bold;
-}
-#list-toc-generated .toc-element-level-4{
-  font-style: italic;
-  font-size: .9em;
+  font-style: normal;
 }
 
 /* fake leading */
-#list-toc-generated .toc-element::after{
+#toc .toc-element::after{
     content: 
         ".............................................."
         ".............................................."
@@ -636,37 +581,53 @@ span.footnote {
     letter-spacing: 2px;
     font-weight: normal;
 }
-
-/* delete leaders after page number */
-#list-toc-generated{
-    overflow-x: hidden;
-}
-
-/* fix page number before page breaks */
-#list-toc-generated .toc-element[data-split-to]{
-  display: none;
-}
-
 #list-toc-generated .toc-element{
     display: flex; 
+    overflow-x: hidden;
 }
-
 #list-toc-generated .toc-element a::after{
     position: absolute;
     right: 0;
     background-color: white;
     padding-left: 6px;
 }
-
 #list-toc-generated .toc-element a{
     right: 0;
 }
+
+/* individual styling */
+#toc .toc-element{
+  padding-left: 0;
+}
+#toc .toc-element:before{
+  min-width: 40px;
+}
+#toc .toc-element a{
+  text-decoration: none;
+  color: black;
+}
+#toc .toc-element-level-1{
+  margin-top: 25px;
+  font-weight: bold;
+}
+
+/* style headline counters in toc and text */
+.headlineCounterToC{
+  min-width: 3rem;
+  margin-right: 5px;
+}
+.headlineCounter{
+  display: inline-block;
+  margin-right:5px;
+}
+
 
 /* Hide the table of contents within chapters */
 
 ul.TOC{
   display: none;
 }
+
 
 /*
 ** COVER  
@@ -763,10 +724,6 @@ img.logo{
   bottom: 40px;
   right: 20px;
 }
-.cover p + p {
-    text-indent: 0pt; 
-}
-
 
 .flytitle{
   page: flytitlelayout;

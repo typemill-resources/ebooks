@@ -6,8 +6,8 @@
 }
 @font-face {
     font-family: 'Noto Serif';
-    src:  url('fonts/noto-serif-v9-latin-regular.woff') format('woff'),
-          url('fonts/noto-serif-v9-latin-regular.tiff') format('truetype');
+    src:  url('fonts/Noto/noto-serif-v9-latin-regular.woff') format('woff'),
+          url('fonts/Noto/noto-serif-v9-latin-regular.tiff') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -570,6 +570,7 @@ span.footnote {
   color:  var(--primary-bg-color);
 }
 
+
 /* 
 ** TABLE OF CONTENTS
 */
@@ -577,47 +578,22 @@ span.footnote {
 #toc ul{
   padding: 0;
   margin: 0;
-  overflow: hidden;
+  list-style: none;
 }
 #toc ul li{
   hyphens: none;
 }
-
 
 /* generate page numbers */
 #toc li a::after{
   content: target-counter(attr(href), page);
   float: right;
   font-weight: normal;
-}
-
-/* set the style for the list numbering to none */
-#list-toc-generated{ 
-  list-style: none;
-}
-
-#list-toc-generated .toc-element:before{
-  min-width: 40px;
-}
-
-#list-toc-generated .toc-element{
-  padding-left: 0;
-}
-#list-toc-generated .toc-element a{
-  text-decoration: none;
-  color: black;
-}
-#list-toc-generated .toc-element-level-1{
-  margin-top: 25px;
-  font-weight: bold;
-}
-#list-toc-generated .toc-element-level-4{
-  font-style: italic;
-  font-size: .9em;
+  font-style: normal;
 }
 
 /* fake leading */
-#list-toc-generated .toc-element::after{
+#toc .toc-element::after{
     content: 
         ".............................................."
         ".............................................."
@@ -629,31 +605,50 @@ span.footnote {
     letter-spacing: 2px;
     font-weight: normal;
 }
-
-/* delete leaders after page number */
-#list-toc-generated{
+#list-toc-generated .toc-element{
+    display: flex; 
     overflow-x: hidden;
 }
-
 /* fix page number before page breaks */
 #list-toc-generated .toc-element[data-split-to]{
   display: none;
 }
-
-#list-toc-generated .toc-element{
-    display: flex; 
-}
-
 #list-toc-generated .toc-element a::after{
     position: absolute;
     right: 0;
     background-color: white;
     padding-left: 6px;
 }
-
 #list-toc-generated .toc-element a{
     right: 0;
 }
+
+/* individual styling */
+#toc .toc-element{
+  padding-left: 0;
+}
+#toc .toc-element:before{
+  min-width: 40px;
+}
+#toc .toc-element a{
+  text-decoration: none;
+  color: black;
+}
+#toc .toc-element-level-1{
+  margin-top: 25px;
+  font-weight: bold;
+}
+
+/* style headline counters in toc and text */
+.headlineCounterToC{
+  min-width: 3rem;
+  margin-right: 5px;
+}
+.headlineCounter{
+  display: inline-block;
+  margin-right:5px;
+}
+
 
 /* Hide the table of contents within chapters */
 

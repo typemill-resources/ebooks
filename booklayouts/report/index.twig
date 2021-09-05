@@ -32,40 +32,106 @@
 			}
 		</style>
 
-		{% if ebookdata.toccounter %}
+		<style>
+
+
+			/* pagination */
+
+			{% if ebookdata.totalpages %}
+				@page {
+				    @bottom-right {
+				        content: counter(page) " / " counter(pages);
+				        font-size: 0.7em;
+				        font-weight: bold;
+				        text-align: right;
+				    }
+				}
+
+			{% else %}
+
+				@page {
+				    @bottom-right {
+				        content: counter(page);
+				        font-size: 0.7em;
+				        font-weight: bold;
+				        text-align: right;
+				    }
+				}
+
+			{% endif %}
+
+			/* running footer with title */
 			
-			<style>
-				.headlineCounterToC{
-					min-width: 3rem;
-					margin-right: 5px;
-				}
-				.headlineCounter{
-					display: inline-block;
-					min-width: 2rem;
-					margin-right:5px;
-				}
-			</style>
+			{% if ebookdata.footertitle %}
 
-		{% else %}
+				/* no headline couter in the running footer */
+				{% if ebookdata.toccounter %}
+					h1 .headlineContent {
+					  string-set: title content(text);
+					}
+				{% else %}
+					h1{
+					  string-set: title content(text);
+					}
+				{% endif %}
 
-			<style>
-				.headlineCounterToC,
-				.headlineCounter{
-					display: none;
+			{% endif %}
+
+			/* toc indentation */
+
+			{% if ebookdata.toccounter and ebookdata.tocindent %}
+				.toc-element-level-1 .headlineCounterToC{
+					min-width: 18px;
 				}
-				#list-toc-generated .toc-element-level-1{
-				  margin-top: 25px;
-				  font-weight: bold;
+				#toc .toc-element-level-2{
+					margin-left: 23px;
 				}
-				#list-toc-generated .toc-element-level-3{
-				  margin-left: 12px;
+				.toc-element-level-2 .headlineCounterToC{
+					min-width: 26px;
 				}
-				#list-toc-generated .toc-element-level-4{
-				  margin-left: 24px;
-				}			
-			</style>
-		
-		{% endif %}
+				#toc .toc-element-level-3{
+					margin-left: 54px;
+				}
+				.toc-element-level-3 .headlineCounterToC{
+					min-width: 34px;
+				}
+				#toc .toc-element-level-4{
+					margin-left: 64px;
+				}
+				.toc-element-level-4 .headlineCounterToC{
+					min-width: 42px;
+				}
+				#toc .toc-element-level-5{
+					margin-left: 74px;
+				}
+				.toc-element-level-5 .headlineCounterToC{
+					min-width: 42px;
+				}
+				#toc .toc-element-level-6{
+					margin-left: 84px;
+				}
+				.toc-element-level-6 .headlineCounterToC{
+					min-width: 42px;
+				}
+			{% elseif ebookdata.tocindent %}
+				#toc .toc-element-level-2{
+					margin-left: 16px;
+				}
+				#toc .toc-element-level-3{
+					margin-left: 32px;
+				}
+				#toc .toc-element-level-4{
+					margin-left: 48px;
+				}
+				#toc .toc-element-level-5{
+					margin-left: 64px;
+				}
+				#toc .toc-element-level-6{
+					margin-left: 80px;
+				}
+			{% endif %}
+
+		</style>
 
 	</head>
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
@@ -165,9 +231,11 @@
 					
 					if(ebookdata.toc){
 						createToc({
-						    content: content,
-						    tocElement: '#toc',
-							titleElements: tocHeadlines
+						    content: 		content,
+						    tocElement: 	'#toc',
+						    tocLevels: 		ebookdata.toclevel,
+						    tocCounter: 	ebookdata.toccounter,
+						    headlineArea:	'.bookcontent',
 						});
 					}
 				}
@@ -178,16 +246,7 @@
 		
 		{% if ebookdata.toc %}
 			<script src="{{ base_url }}/plugins/ebooks/public/paged-toc.js"></script>
-			<script>
-			 
-				 var tocHeadlines = [];
-				 var tocLevels = ebookdata.toclevel;
-				 for(var i = 1; i <= tocLevels; i++)
-				 {
-				 	tocHeadlines.push('.bookcontent h'+i);
-				 }
-
-			</script>
 		{% endif %}
+
 	</body>
 </html>

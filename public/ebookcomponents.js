@@ -224,7 +224,7 @@ Vue.component("ebook-content", {
 
 		if(this.formdata.excludebasefolder)
 		{
-			this.$parent.excludeBaseFolder();			
+			this.$parent.excludeBaseFolder(this.formdata.excludebasefolder);			
 		}
 
 		this.$parent.storeEbookData();

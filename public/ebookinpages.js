@@ -95,6 +95,12 @@ Vue.component('tab-ebooks', {
 		FormBus.$on('forminput', formdata => {
 			this.$set(this.formData, formdata.name, formdata.value);
 		});
+
+		if (navigator.userAgent.indexOf('Chrome') == -1 || parseFloat(navigator.userAgent.substring(navigator.userAgent.indexOf('Chrome') + 7).split(' ')[0]) <= 88)
+		{
+	        this.message = 'For optimal results of the pdf-preview we recommend the browser chrome version 88 (minimum).';
+        	this.messagecolor = 'bg-tm-red';
+		}
 	},
 	methods: {
         selectComponent: function(field)
@@ -222,15 +228,19 @@ Vue.component('tab-ebooks', {
 
 			return selectedPages; 
 		},
-		excludeBaseFolder: function()
+		excludeBaseFolder: function(exclude = null)
 		{
-			if(this.navigation[0].disabled)
+			if(exclude)
+			{
+				this.$set(this.navigation[0], 'disabled', true)
+			}
+			else if(this.navigation[0].disabled)
 			{
 				this.$set(this.navigation[0], 'disabled', false)
 			}
 			else
 			{
-				this.$set(this.navigation[0], 'disabled', true)				
+				this.$set(this.navigation[0], 'disabled', true)
 			}
 		},
 		findInObject: function(name, myArray)

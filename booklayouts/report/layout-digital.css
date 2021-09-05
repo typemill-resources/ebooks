@@ -118,12 +118,6 @@
         text-align: left;
         text-transform: uppercase;
     }
-    @bottom-right {
-        content: counter(page) " / " counter(pages);
-        font-size: 0.7em;
-        font-weight: bold;
-        text-align: right;
-    }
 
 /*
     @bottom-right-corner {
@@ -196,9 +190,5 @@ figcaption {
     counter-increment: figureNumber;
 }
 figcaption::before {
-    content: counter(figureNumber);
-}
-
-h1 {
-  string-set: title content(text);
+    content: counter(figureNumber) ": ";
 }

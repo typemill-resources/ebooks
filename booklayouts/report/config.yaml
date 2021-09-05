@@ -105,16 +105,22 @@ customforms:
           type: checkbox
           label: ToC Counter
           checkboxlabel: Add a counter before the headlines in text and Table of Contents.
-    fieldsetendnotes:
-      type: fieldset
-      legend: Endnotes
-      fields:
-        endnotes:
+        tocindent:
           type: checkbox
-          checkboxlabel: Transform footnotes into endnotes
-        endnotestitle:
-          type: text
-          label: Title for the endnotes page
+          label: ToC Indent
+          checkboxlabel: Indent elements in the table of contents hierarchically.
+    fieldsetrunningfooter:
+      type: fieldset
+      legend: Paging and Running Footer
+      fields:
+        totalpages:
+          type: checkbox
+          label: Total Pages
+          checkboxlabel: Show total pages in paging like "34 / 60"
+        footertitle:
+          type: checkbox
+          label: Title in Footer
+          checkboxlabel: Show current title (h1) in footer
     fieldsetblurb:
       type: fieldset
       legend: Blurb

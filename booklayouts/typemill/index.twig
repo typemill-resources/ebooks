@@ -4,7 +4,7 @@
 	<head>
 		<meta charset="UTF-8">
 
-		<title>eBook Preview</title>
+		<title>{{ebookdata.title}}</title>
 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -30,41 +30,6 @@
 				}
 			{% endif %}
 		</style>
-
-		{% if ebookdata.toccounter %}
-			
-			<style>
-				.headlineCounterToC{
-					min-width: 3rem;
-					margin-right: 5px;
-				}
-				.headlineCounter{
-					display: inline-block;
-					min-width: 2rem;
-					margin-right:5px;
-				}
-			</style>
-
-		{% else %}
-
-			<style>
-				.headlineCounterToC,
-				.headlineCounter{
-					display: none;
-				}
-				#list-toc-generated .toc-element-level-1{
-				  margin-top: 25px;
-				  font-weight: bold;
-				}
-				#list-toc-generated .toc-element-level-3{
-				  margin-left: 12px;
-				}
-				#list-toc-generated .toc-element-level-4{
-				  margin-left: 24px;
-				}			
-			</style>
-		
-		{% endif %}
 
 	</head>
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
@@ -174,9 +139,11 @@
 					}
 					if(ebookdata.toc){
 						createToc({
-						    content: content,
-						    tocElement: '#toc',
-							titleElements: tocHeadlines
+						    content: 		content,
+						    tocElement: 	'#toc',
+						    tocLevels: 		ebookdata.toclevel,
+						    tocCounter: 	ebookdata.toccounter,
+						    headlineArea:	'.bookcontent',
 						});
 					}
 				}
@@ -184,18 +151,9 @@
 			Paged.registerHandlers(handlers);
 
 		</script>
+		
 		{% if ebookdata.toc %}
 			<script src="{{ base_url }}/plugins/ebooks/public/paged-toc.js"></script>
-			<script>
-			 
-				 var tocHeadlines = [];
-				 var tocLevels = ebookdata.toclevel;
-				 for(var i = 1; i <= tocLevels; i++)
-				 {
-				 	tocHeadlines.push('.bookcontent h'+i);
-				 }
-
-			</script>
 		{% endif %}
 	</body>
 </html>
