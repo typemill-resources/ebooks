@@ -14,7 +14,7 @@ html{
   -webkit-text-size-adjust:100%;
 }
 body{
-  font-size: 15px;
+  font-size: 14px;
   line-height: calc(2px + 4.5ex + 2px); /* https://hugogiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height */
   line-height: 1.4em;
   font-family: 'Noto Serif', serif;

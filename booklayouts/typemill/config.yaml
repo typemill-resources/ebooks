@@ -1,9 +1,11 @@
-Name: Typemill
-Copyright: Sebastian Schürmanns, trendschau
-Licence: Creative Commons BY 3.0
-Link: https://trendschau.net
-Sizes: A5 (148mm 210mm)
-Photo: Photo by Markus Winkler on Unsplash
+name: Typemill
+version: 1.1.0
+description: a multi-purpose layout for a classic book-design. With hanging indent and a clean typography.
+author: Sebastian Schürmanns, trendschau
+licence: CC BY 3.0
+link: https://trendschau.net
+sizes: A5
+photo: Photo by Markus Winkler on Unsplash
 
 customforms:
   fields:

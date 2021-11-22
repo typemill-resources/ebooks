@@ -35,7 +35,7 @@ class Ebooks extends Plugin
 	public static function addNewRoutes()
 	{
 		return [
-			['httpMethod' => 'get', 'route' => '/tm/ebooks', 'name' => 'ebooks.show', 'class' => 'Typemill\Controllers\SettingsController:showBlank', 'resource' => 'system', 'privilege' => 'view'],
+			['httpMethod' => 'get', 'route' => '/tm/ebooks', 'name' => 'ebooks.show', 'class' => 'Typemill\Controllers\ControllerSettings:showBlank', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooklayouts', 'name' => 'ebooklayouts.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookLayouts', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
@@ -67,7 +67,6 @@ class Ebooks extends Plugin
 		{
 	        $this->addEditorJS('/ebooks/public/thumbindex.js');
 		}
-
    	}
 
     public function onMetaDefinitionsLoaded($metadata)

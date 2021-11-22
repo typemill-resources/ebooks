@@ -1,9 +1,11 @@
-Name: Manual
-Copyright: Sebastian Schürmanns, trendschau.net
-Licence: Creative Commons BY 3.0
-Link: https://trendschau.net
-Sizes: A5 (148mm 210mm)
-Graphic: Camera by Martin Chapman, Noun Project
+name: Manual
+version: 1.0.0
+description: A perfect layout for manuals. With multi-language-support and a thumb register.
+author: Sebastian Schürmanns, trendschau.net
+licence: CC BY 3.0
+link: https://trendschau.net
+sizes: A5
+graphic: Camera by Martin Chapman, Noun Project
 
 customforms:
   fields:
