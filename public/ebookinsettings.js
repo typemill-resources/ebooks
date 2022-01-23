@@ -1,5 +1,14 @@
 /* Needed for image component integration */
-const FormBus = new Vue();
+
+/*
+if (typeof FormBus === 'undefined' || FormBus === null) {
+	const FormBus = new Vue();
+}
+
+	const FormBus = new Vue();
+
+*/
+
 
 let ebooks = new Vue({
     delimiters: ['${', '}'],

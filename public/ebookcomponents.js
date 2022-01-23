@@ -5,6 +5,7 @@ Vue.component("ebook-layout", {
 			src: this.$parent.root + '/plugins/ebooks/booklayouts/',
 			cover: false,
 			booklayout: { 'customforms': false },
+			shortcodes: false,
 		}
 	},
  	template: '<div class="ebookcover">' +
@@ -29,6 +30,19 @@ Vue.component("ebook-layout", {
 						  	'<span class="error" v-if="errors.layout">{{ errors.layout[0] }}</span>' +
 						'</div>' +
 	 				'</fieldset>' +
+	 				'<fieldset v-if="shortcodes" class="fs-formbuilder">' +
+		 				'<legend>Shortcodes</legend>' +
+						'<label for="">Disable shortcodes</label>' +
+						'<label class="control-group">Disable and exclude all shortcodes for the eBook.' +
+							'<input type="checkbox" name="shortcodes" v-model="formdata.disableshortcodes" />' +
+							'<span class="checkmark"></span>' +
+						'</label>' +
+						'<label for="">Activate shortcodes individually</label>' +
+						'<label v-for="(shortcodedata,shortcodename) in shortcodes" :key="shortcodename" class="control-group">{{shortcodename}}' +
+							'<input type="checkbox" v-model="formdata.activeshortcodes" :id="shortcodename" :value="shortcodename" />' +
+							'<span class="checkmark"></span>' +
+						'</label>' +
+	 				'</fieldset>' +
 					'<div class="large">' + 
 						'<button ref="submitdesign" class="button bn br2 bg-tm-green white" type="submit">Next step</button>' +
 					'</div>' +
@@ -50,6 +64,23 @@ Vue.component("ebook-layout", {
 			this.$parent.storeEbookData();
 		}
 		this.$parent.initialize = false;
+
+		var self = this;
+
+	    myaxios.get('/api/v1/shortcodedata',{
+			'url':			document.getElementById("path").value,
+			'csrf_name': 	document.getElementById("csrf_name").value,
+			'csrf_value':	document.getElementById("csrf_value").value,
+		})
+ 		.then(function (response)
+   		{
+ 			self.shortcodes = response.data.shortcodedata;
+		})
+		.catch(function (error)
+		{
+			self.message = error.response.data.errors.message;
+			self.messagecolor = 'bg-tm-red';
+		});
 	},
 	methods: {
 		changeCover: function(details)
@@ -67,6 +98,11 @@ Vue.component("ebook-layout", {
 			{
 				return true;
 			}
+		},
+		toggleShortcode: function(shortcodename)
+		{
+			alert(shortcodename);
+			console.info(this.formdata.activeshortcodes);
 		},
 		submitstep: function()
 		{

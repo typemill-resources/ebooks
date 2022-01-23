@@ -35,6 +35,17 @@
 		<style>
 
 
+			/* remove empty pages */
+
+			{% if ebookdata.hideemptypages %}
+			
+				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				    break-before: page; /* page, right, left, recto, verso */
+				}
+			
+			{% endif %}
+
+
 			/* pagination */
 
 			{% if ebookdata.totalpages %}
@@ -157,13 +168,15 @@
 			</div>
 		</div>
 
-		<div class="imprint">
-			<div class="imprint-bottom">
+		{% if ebookdata.imprint %}
+			<div class="imprint">
+				<div class="imprint-bottom">
 
-				{{ markdown(ebookdata.imprint) }}
+					{{ markdown(ebookdata.imprint) }}
 
+				</div>
 			</div>
-		</div>
+		{% endif %}
 		
 		{% if ebookdata.toc %}
 			<div class="tableofcontents">

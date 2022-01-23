@@ -1,5 +1,5 @@
 name: Report
-version: 1.0.0
+version: 1.0.1
 description: A modern layout for reports and similar publications in A4-format. Change font-sizes, font-families, brand-colors, and much more.
 author: Sebastian Schürmanns, trendschau.net
 licence: CC BY 3.0
@@ -131,6 +131,13 @@ customforms:
           type: textarea
           label: Text for the blurb (use markdown)
           description: Text will be displayed at the bottom with small font. Keep empty to skip the blurb.
+    fieldsetemptypages:
+      type: fieldset
+      legend: Empty Pages
+      fields:
+        hideemptypages:
+          type: checkbox
+          checkboxlabel: Do not add empty pages before content elements like imprint, table of content and book-chapters.
     fieldsetimagequality:
       type: fieldset
       legend: Image Quality

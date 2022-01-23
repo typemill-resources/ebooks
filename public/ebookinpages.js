@@ -65,6 +65,11 @@ Vue.component('tab-ebooks', {
         	self.formData 		= ebookdata['formdata'];
         	self.layoutData 	= ebookdata['layoutdata'];
 
+        	if(typeof self.formData.activeshortcodes == 'undefined')
+        	{
+	        	self.formData.activeshortcodes = [];
+        	}
+
         	/* if there are no stored formdata yet */
         	if(!self.formData)
         	{

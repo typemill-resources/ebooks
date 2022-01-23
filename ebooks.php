@@ -50,36 +50,43 @@ class Ebooks extends Plugin
 		];
 	}
 
+	# ebooks in pages
     public function onTwigLoaded($metadata)
    	{
 		$this->config = $this->getPluginSettings('ebooks');
 
-		# inject ebook js and css into the editor template
-		if(isset($this->config['ebooksinpages']))
+		if($this->adminpath)
 		{
-	        $this->addEditorCSS('/ebooks/public/ebooks.css');
-	        $this->addEditorJS('/ebooks/public/ebookcomponents.js');
-	        $this->addEditorJS('/ebooks/public/ebookinpages.js');			
-		}
+			if( isset($this->config['ebooksinpages']) && (strpos($this->path, 'tm/content') !== false) )
+			{
+				$this->addEditorCSS('/ebooks/public/ebooks.css');
+				$this->addEditorJS('/ebooks/public/ebookcomponents.js');
+				$this->addEditorJS('/ebooks/public/ebookinpages.js');
 
-		# inject thumbindex.js into pages if activated
-		if(isset($this->config['thumbindex']))
-		{
-	        $this->addEditorJS('/ebooks/public/thumbindex.js');
+				# inject thumbindex.js into pages if activated
+				if(isset($this->config['thumbindex']))
+				{
+			        $this->addEditorJS('/ebooks/public/thumbindex.js');
+				}
+			}
 		}
    	}
 
     public function onMetaDefinitionsLoaded($metadata)
     {
+		$meta = $metadata->getData();
+
+		$thumbindex = false;
+
 		if(isset($this->config['ebooksinpages']))
 		{
-			$meta = $metadata->getData();
-
 			# add a tab called "ebook" into pages with no fields, because we will use the fields of the ebook plugin.
 			$meta['ebooks'] = ['fields'=> []];
 
 			if(isset($this->config['thumbindex']))
 			{
+				$thumbindex = true;
+
 				$languageString = $this->config['languages'];
 
 		        # standardize line breaks
@@ -106,13 +113,13 @@ class Ebooks extends Plugin
 
 				$meta['thumbindex']['fields']['language']['options'] = $languages;
 			}
-			else
-			{
-				unset($meta['thumbindex']);
-			}
-
-			$metadata->setData($meta);
 		}
+		if(!$thumbindex)
+		{
+			unset($meta['thumbindex']);
+		}
+		
+		$metadata->setData($meta);
     }
 
 	public function onSystemnaviLoaded($navidata)
@@ -137,28 +144,32 @@ class Ebooks extends Plugin
 		}
 	}
 
+	# ebooks in settings
 	public function onPageReady($data)
 	{
-		# inject ebook template into the settings page
-		if( isset($this->config['ebooksinsettings']) && (strpos($this->getPath(), 'tm/ebooks') !== false) )
+		if($this->adminpath)
 		{
-			# add the css and vue application
-		    $this->addCSS('/ebooks/public/ebooks.css');
-		    $this->addJS('/ebooks/public/ebookcomponents.js');
-		    $this->addJS('/ebooks/public/ebookinsettings.js');
-			
-			$pagedata = $data->getData();
-			
-			$twig 	= $this->getTwig();
-			$loader = $twig->getLoader();
-			$loader->addPath(__DIR__ . '/templates');
-			
-			# fetch the template and render it with twig
-			$content = $twig->fetch('/ebooks.twig', []);
+			# inject ebook template into the settings page
+			if( isset($this->config['ebooksinsettings']) && (strpos($this->getPath(), 'tm/ebooks') !== false) )
+			{
+				# add the css and vue application
+			    $this->addCSS('/ebooks/public/ebooks.css');
+			    $this->addJS('/ebooks/public/ebookcomponents.js');
+			    $this->addJS('/ebooks/public/ebookinsettings.js');
+				
+				$pagedata = $data->getData();
+				
+				$twig 	= $this->getTwig();
+				$loader = $twig->getLoader();
+				$loader->addPath(__DIR__ . '/templates');
+				
+				# fetch the template and render it with twig
+				$content = $twig->fetch('/ebooks.twig', []);
 
-			$pagedata['content'] = $content;
-			
-			$data->setData($pagedata);
+				$pagedata['content'] = $content;
+				
+				$data->setData($pagedata);
+			}
 		}
 	}
 
@@ -199,7 +210,7 @@ class Ebooks extends Plugin
 
 		if($params['url'] == '/')
 		{
-			return $response->withJson(array('home' => true, 'errors' => ['message' => 'The homepage does not support an ebook generation. Please choose another page.']), 422);
+			return $response->withJson(array('home' => true, 'errors' => ['message' => "The homepage does not support the ebook generation. Please go to the subpages or use the ebook tab in the settings if you want to create an ebook from the whole website."]), 422);
 		}
 
 		# get the metadata from page
@@ -383,6 +394,8 @@ class Ebooks extends Plugin
 		# list all standardfields
 		$standardfields	= [
 			'layout',
+			'activeshortcodes',
+			'disableshortcodes',
 			'downgradeheadlines',
 			'excludebasefolder',
 			'epubidentifierisbn',
@@ -505,7 +518,7 @@ class Ebooks extends Plugin
 		}
 
 		# generate the book content from ebook-navigation
-		$parsedown 		= new ParsedownExtension($base_url);
+		$parsedown 		= new ParsedownExtension($base_url, $settingsForHeadlineAnchors = false, $this->getDispatcher());
 		
 		# the default mode is with footnotes, but user can activate endnotes too
 		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
@@ -513,7 +526,21 @@ class Ebooks extends Plugin
 			# if default mode, then we get a different html from parsedown 
 			$parsedown->withSpanFootnotes();
 		}
-		
+
+		# check if shortcodes should be rendered
+		if(isset($ebookdata['disableshortcodes']) && $ebookdata['disableshortcodes'])
+		{
+			# empty array will stop all shortcodes
+			$parsedown->setAllowedShortcodes(array());
+		}
+		elseif(isset($ebookdata['activeshortcodes']) && is_array($ebookdata['activeshortcodes']) && !empty($ebookdata['activeshortcodes']))
+		{
+			# only selected shortcodes will be rendered
+			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
+		}
+
+
+
 		# skip the base folder if activated
 		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
 		{
