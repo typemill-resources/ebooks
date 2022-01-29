@@ -1,47 +1,70 @@
 Vue.component("ebook-layout", {
-	props: ['errors', 'formdata', 'layouts'],
+	props: ['errors', 'formdata', 'layouts', 'ebookprojects', 'currentproject'],
 	data: function(){
 		return {
 			src: this.$parent.root + '/plugins/ebooks/booklayouts/',
-			cover: false,
-			booklayout: { 'customforms': false },
 			shortcodes: false,
+			projectname: '',
+			projectnameerror: false,
+			disabled: 'disabled',
 		}
 	},
  	template: '<div class="ebookcover">' +
  				'<form id="design" @submit.prevent="submitstep">' +
+ 					'<fieldset v-if="ebookprojects" class="subfield">' +
+	 					'<legend>Select a Project</legend>' +
+						'<div class="large">' +
+							'<div v-for="ebookproject in ebookprojects" class="ba b--moon-gray mb2 relative pa2 pb1 hover-bg-light-gray">' +
+								'<label class="control-group w-90">{{ readableProject(ebookproject) }}' +
+									'<input @change="changeProject(ebookproject)" type="radio" name="project" :checked="ebookproject == currentproject" />' +
+									'<span class="radiomark"></span>' +
+								'</label>' +
+								'<button @click.prevent="deleteProject(ebookproject)" class="bg-white hover-bg-tm-red moon-gray hover-white ba bw1 b b--moon-gray  dib tc lh-title absolute right-0 top-0 w2 h2 mt2 mr2">x</button>' +
+							'</div>' +
+						'</div>' +
+						'<div class="large">' +
+							'<label for="ebookprojectname">Insert a name to create a new ebookproject</label>' +
+							'<input id="ebookprojectname" name="ebookprojectname" v-model="projectname" @input="checkProjectName()" type="text" maxlength="20" />' +
+							'<button class="uuid-button button bn br2 bg-tm-green white absolute" @click.prevent="createProject()" :disabled="disabled">Create project</button>' +
+							'<div class="fielddescription"><span class="error" v-if="projectnameerror">{{ projectnameerror }}</span></div>' +
+						'</div>' +
+ 					'</fieldset>' +
 	 				'<fieldset class="subfield">' +
 	 					'<legend>Select a Layout</legend>' +
-						'<div class="large half"><img class="coverpreview" :src="cover"></div>' +
+						'<div class="large half"><img class="coverpreview" :src="getCover()"></div>' +
 						'<div class="large half" :class="{ error : errors.design}">' +
 							'<label>Select a book layout</label>' +
 							'<div v-for="details,layout in layouts">' +
 								'<label class="control-group">{{ layout }}' +
-									'<input @change="changeCover(layout)" type="radio" name="design" v-model="formdata.layout" :value="layout" />' +
+									'<input type="radio" name="design" v-model="formdata.layout" :value="layout" />' +
 								  	'<span class="radiomark"></span>' +
 								'</label>' +
 							'</div>' +
-							'<div class="layoutinfo" v-if="booklayout">' + 
+							'<div class="layoutinfo">' + 
 								'<div class="label">About this layout</div>' +
 								'<ul>' +
-									'<li v-for="info,name in booklayout" v-if="showinfo(name)"><span class="infokey">{{ name }}:</span><a v-if="name == \'Link\'" :href="info">{{ info }}</a><span v-else>{{ info }}</span></li>' +
+									'<li v-for="info,name in layouts[formdata.layout]" v-if="showinfo(name)"><span class="infokey">{{ name }}:</span><a v-if="name == \'Link\'" :href="info">{{ info }}</a><span v-else>{{ info }}</span></li>' +
 								'</ul>' +
 							'</div>' +
 						  	'<span class="error" v-if="errors.layout">{{ errors.layout[0] }}</span>' +
 						'</div>' +
 	 				'</fieldset>' +
 	 				'<fieldset v-if="shortcodes" class="fs-formbuilder">' +
-		 				'<legend>Shortcodes</legend>' +
-						'<label for="">Disable shortcodes</label>' +
-						'<label class="control-group">Disable and exclude all shortcodes for the eBook.' +
-							'<input type="checkbox" name="shortcodes" v-model="formdata.disableshortcodes" />' +
-							'<span class="checkmark"></span>' +
-						'</label>' +
-						'<label for="">Activate shortcodes individually</label>' +
-						'<label v-for="(shortcodedata,shortcodename) in shortcodes" :key="shortcodename" class="control-group">{{shortcodename}}' +
-							'<input type="checkbox" v-model="formdata.activeshortcodes" :id="shortcodename" :value="shortcodename" />' +
-							'<span class="checkmark"></span>' +
-						'</label>' +
+		 				'<legend>Configure shortcodes</legend>' +
+						'<div class="large">' +
+							'<label for="">Disable shortcodes</label>' +
+							'<label class="control-group">Disable and exclude all shortcodes for the eBook.' +
+								'<input type="checkbox" name="shortcodes" v-model="formdata.disableshortcodes" />' +
+								'<span class="checkmark"></span>' +
+							'</label>' +
+						'</div>' +
+						'<div class="large">' +
+							'<label for="">Activate shortcodes individually</label>' +
+							'<label v-for="(shortcodedata,shortcodename) in shortcodes" :key="shortcodename" class="control-group">{{shortcodename}}' +
+								'<input type="checkbox" v-model="formdata.activeshortcodes" :id="shortcodename" :value="shortcodename" />' +
+								'<span class="checkmark"></span>' +
+							'</label>' +
+						'</div>' +
 	 				'</fieldset>' +
 					'<div class="large">' + 
 						'<button ref="submitdesign" class="button bn br2 bg-tm-green white" type="submit">Next step</button>' +
@@ -56,9 +79,6 @@ Vue.component("ebook-layout", {
 			  '</div>',
 	mounted: function(){
 		
-		this.booklayout = this.layouts[this.formdata.layout];
-		this.cover = this.src + this.formdata.layout + '/cover.png';
-
 		if(!this.$parent.initialize)
 		{
 			this.$parent.storeEbookData();
@@ -83,10 +103,50 @@ Vue.component("ebook-layout", {
 		});
 	},
 	methods: {
-		changeCover: function(details)
+		readableProject: function(ebookproject)
 		{
-			this.cover = this.src + this.formdata.layout + '/cover.png';
-			this.booklayout = this.layouts[this.formdata.layout];
+			if(ebookproject == 'ebookdata.yaml')
+			{
+				return 'default project';
+			}
+			var readablename = ebookproject.replace(".yaml", "");
+			return readablename.replace("ebookdata-", ""); 
+		},
+		changeProject: function(ebookproject)
+		{
+			this.$parent.setCurrentProject(ebookproject);
+			this.$parent.loadEbookProject();
+		},
+		createProject: function()
+		{
+			this.$parent.createEbookProject('ebookdata-' + this.projectname + '.yaml');
+			this.projectname = '';
+		},
+		checkProjectName: function()
+		{
+			this.projectnameerror = false;
+			this.disabled = 'disabled';
+
+			if(this.projectname.length == 0)
+			{
+				return;
+			}
+			else if(this.projectname.length < 3 || this.projectname.length > 20)
+			{
+				this.projectnameerror = "Must be between 3 - 20 characters.";
+			}
+			else if(/^[a-z\-]*$/gm.test(this.projectname))
+			{
+				this.disabled = false;
+			}
+			else
+			{
+				this.projectnameerror = 'Only characters a-z and - allowed.'
+			}
+		},
+		getCover: function()
+		{
+			return this.src + this.formdata.layout + '/cover.png';
 		},
 		getVideoImgUrl: function()
 		{
@@ -99,14 +159,13 @@ Vue.component("ebook-layout", {
 				return true;
 			}
 		},
-		toggleShortcode: function(shortcodename)
-		{
-			alert(shortcodename);
-			console.info(this.formdata.activeshortcodes);
-		},
 		submitstep: function()
 		{
 			this.$parent.submit('settings');
+		},
+		deleteProject: function(ebookproject)
+		{
+			this.$parent.deleteEbookProject(ebookproject);
 		},
 	}
 });

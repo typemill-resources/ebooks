@@ -40,8 +40,10 @@ class Ebooks extends Plugin
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabitem', 'name' => 'ebooktabitem.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 'resource' => 'content', 'privilege' => 'create'],
+			['httpMethod' => 'get', 'route' => '/api/v1/ebookprojects', 'name' => 'ebookprojects.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookProjects', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookData', 'resource' => 'system', 'privilege' => 'view'],
+			['httpMethod' => 'delete', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.delete', 'class' => 'Plugins\Ebooks\Ebooks:deleteEbookData', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooknavi', 'name' => 'ebooknavi.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookNavi', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'post', 'route' => '/api/v1/headlinepreview', 'name' => 'headline.preview', 'class' => 'Plugins\Ebooks\Ebooks:generateHeadlinePreview', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'get', 'route' => '/api/v1/epubuuid', 'name' => 'epub.uuid', 'class' => 'Plugins\Ebooks\Ebooks:generateUuidV4', 'resource' => 'content', 'privilege' => 'create'],
@@ -173,8 +175,7 @@ class Ebooks extends Plugin
 		}
 	}
 
-	# gets the centrally stored ebook-data for ebook-plugin in settings-area
-	public function getEbookData($request, $response, $args)
+	public function getEbookProjects($request, $response, $args)
 	{
 		$settings 		= $this->getSettings();
 
@@ -186,20 +187,63 @@ class Ebooks extends Plugin
 			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
 		}
 
+		$folderContent = array_diff(scandir($folder), array('..', '.'));
+		$ebookprojects = [];
+
+		foreach($folderContent as $file)
+		{
+			if(substr($file,0,9) == 'ebookdata')
+			{
+				$ebookprojects[] = $file;
+			}
+		}
+
+		return $response->withJson(array('ebookprojects' => $ebookprojects, 'errors' => false), 200);
+	}
+
+	# single endpoint to get only the layouts. Not in use right now
+	public function getEbookLayouts($request, $response, $args)
+	{
+		$booklayouts = $this->scanEbookLayouts();
+
+		return $response->withJson(array('layoutdata' => $booklayouts, 'errors' => false), 200);
+	}
+
+	# gets the centrally stored ebook-data for ebook-plugin in settings-area
+	public function getEbookData($request, $response, $args)
+	{
+		$params 		= $request->getParams();
+		$settings 		= $this->getSettings();
+		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		$folder 		= $settings['rootPath'] . $folderName;
+
+		if(!$this->checkEbookFolder($folder))
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
+		}
+
+		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'The projectname is not valid.']), 500);
+		}
+
 		# write params
 		$writeYaml 	= new WriteYaml();
 
 		# get the stored ebook-data
-		$formdata = $writeYaml->getYaml($folderName, 'ebookdata.yaml');
+		$formdata = $writeYaml->getYaml($folderName, $params['projectname']);
 
-		# check formdata for customfields
-		
+		if(!$formdata)
+		{
+#			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find any data for that ebookproject.']), 500);
+		}
 
 		# get the ebook layout
-		$booklayouts = $this->scanEbooklayouts();
+#		$booklayouts = $this->scanEbooklayouts();
 
-		return $response->withJson(array('formdata' => $formdata, 'layoutdata' => $booklayouts, 'errors' => false), 200);
+		return $response->withJson(array('formdata' => $formdata, 'errors' => false), 200);
 	}
+
 
 	# gets the stored ebook-data from page yaml for the ebook-plugin in page tab. We have to do it separately because fields are stripped out in tab.
 	public function getEbookTabData($request, $response, $args)
@@ -242,6 +286,14 @@ class Ebooks extends Plugin
 			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
 		}
 
+		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'The projectname is not valid.']), 500);
+		}
+
+		$projectname 	= str_replace('.yaml', '', $params['projectname']);
+		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
+
 		# create objects to read and write data
 		$writeYaml 		= new WriteYaml();
 		$writeCache 	= new WriteCache();
@@ -254,8 +306,8 @@ class Ebooks extends Plugin
 		}
 		
 		# write params
-		$ebookstored 	= $writeYaml->updateYaml($folderName, 'ebookdata.yaml', $validatedParams['data']);
-		$navistored 	= $writeCache->updateCache($folderName, 'navigation.txt', false, $validatedParams['navigation']);
+		$ebookstored 	= $writeYaml->updateYaml($folderName, $projectname . '.yaml', $validatedParams['data']);
+		$navistored 	= $writeCache->updateCache($folderName, $naviname . '.txt', false, $validatedParams['navigation']);
 		
 		if($ebookstored AND $navistored)
 		{
@@ -263,6 +315,48 @@ class Ebooks extends Plugin
 		}
 
 		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
+	}
+
+	# deletes the ebook-data (book-details and navigation) from central ebook in settings-area into the data-folder 
+	public function deleteEbookData($request, $response, $args)
+	{
+		$params 		= $request->getParams();
+		$settings 		= $this->getSettings();
+		$uri 			= $request->getUri()->withUserInfo('');
+		$base_url		= $uri->getBaseUrl();
+
+		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		$folder 		= $settings['rootPath'] . $folderName;
+
+		if(!$this->checkEbookFolder($folder))
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
+		}
+
+		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['message' => 'The projectname is not valid.']), 422);
+		}
+
+		$projectname 	= str_replace('.yaml', '', $params['projectname']);
+		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
+
+		# create objects to read and write data
+		$writeYaml 		= new WriteYaml();
+		
+		$ebookDeleted = $writeYaml->deleteFileWithPath($folderName . DIRECTORY_SEPARATOR . $projectname . '.yaml');
+		$naviDeleted = $writeYaml->deleteFileWithPath($folderName . DIRECTORY_SEPARATOR . $naviname . '.txt');
+		
+		if(!$ebookDeleted OR !$naviDeleted)
+		{
+			$folderContent = array_diff(scandir($folder), array('..', '.', 'tmpitem.txt'));
+			if(!empty($folderContent))
+			{
+				return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not delete all ebook-data. Please try again.']), 422);
+			}
+		}
+		
+		return $response->withJson(array("ebookdeleted" => $ebookDeleted, "navideleted" => $navideleted), 200);
 	}
 
 	# stores the ebook data from a page tab into the page-yaml
@@ -318,14 +412,6 @@ class Ebooks extends Plugin
 		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
 	}
 
-	# single endpoint to get only the layouts. Not in use right now
-	public function getEbookLayouts($request, $response, $args)
-	{
-		$booklayouts = $this->scanEbookLayouts();
-
-		return $response->withJson(array('layoutdata' => $booklayouts, 'errors' => false), 200);
-	}
-
 	# scans the folder with the ebooklayouts and returns layout-names as array
 	public function scanEbooklayouts()
 	{
@@ -349,6 +435,7 @@ class Ebooks extends Plugin
 	# gets the ebook navigation from data folder or the general page navigation
 	public function getEbookNavi($request, $response, $args)
 	{
+		$params 		= $request->getParams();
 		$settings 		= $this->getSettings();
 
 		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
@@ -356,12 +443,20 @@ class Ebooks extends Plugin
 
 		if(!$this->checkEbookFolder($folder))
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
+			return $response->withJson(array('navigation' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
 		}
+
+		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
+		{
+			return $response->withJson(array('navigation' => false, 'errors' => ['message' => 'The projectname is not valid.']), 500);
+		}
+
+		$projectname 	= str_replace('.yaml', '', $params['projectname']);
+		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
 
 		# write params
 		$writeCache 	= new WriteCache();
-		$navigation 	= $writeCache->getCache($folderName, 'navigation.txt');
+		$navigation 	= $writeCache->getCache($folderName, $naviname . '.txt');
 
 		if(!$navigation)
 		{
@@ -370,10 +465,10 @@ class Ebooks extends Plugin
 
 		if(!$navigation)
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.', 'disable' => true]), 422);
+			return $response->withJson(array('navigation' => false, 'errors' => ['message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.', 'disable' => true]), 422);
 		}
 
-		return $response->withJson(array('data' => $navigation, 'errors' => false), 200);
+		return $response->withJson(array('navigation' => $navigation, 'errors' => false), 200);
 	}
 
 	# validates the ebook-input data from both, the tab and the centrally used ebook-feature
@@ -508,13 +603,16 @@ class Ebooks extends Plugin
 			# should we delete the old tmpitem.txt here or simply let next overwrite it?
 		}
 		# otherwise it is from the settings
-		else
-		{
+		elseif(!empty($params) && isset($params['projectname']))
+		{	
+			$projectname 	= str_replace('.yaml', '', $params['projectname']);
+			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
+
 			# get bookdata
-			$ebookdata 	= $writeYaml->getYaml($ebookFolderName, 'ebookdata.yaml');
+			$ebookdata 		= $writeYaml->getYaml($ebookFolderName, $projectname .'.yaml');
 
 			# get navigationdata
-			$navigation = $writeCache->getCache($ebookFolderName, 'navigation.txt');
+			$navigation = $writeCache->getCache($ebookFolderName, $naviname . '.txt');
 		}
 
 		# generate the book content from ebook-navigation
@@ -538,8 +636,6 @@ class Ebooks extends Plugin
 			# only selected shortcodes will be rendered
 			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
 		}
-
-
 
 		# skip the base folder if activated
 		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
