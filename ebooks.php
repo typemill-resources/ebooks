@@ -233,14 +233,6 @@ class Ebooks extends Plugin
 		# get the stored ebook-data
 		$formdata = $writeYaml->getYaml($folderName, $params['projectname']);
 
-		if(!$formdata)
-		{
-#			return $response->withJson(array('data' => false, 'errors' => ['message' => 'We did not find any data for that ebookproject.']), 500);
-		}
-
-		# get the ebook layout
-#		$booklayouts = $this->scanEbooklayouts();
-
 		return $response->withJson(array('formdata' => $formdata, 'errors' => false), 200);
 	}
 
@@ -343,6 +335,12 @@ class Ebooks extends Plugin
 
 		# create objects to read and write data
 		$writeYaml 		= new WriteYaml();
+
+
+		if(!$writeYaml->checkFile($folderName, $projectname . '.yaml') && !$writeYaml->checkFile($folderName, $naviname . '.txt'))
+		{
+			return $response->withJson(array(), 200);
+		}
 		
 		$ebookDeleted = $writeYaml->deleteFileWithPath($folderName . DIRECTORY_SEPARATOR . $projectname . '.yaml');
 		$naviDeleted = $writeYaml->deleteFileWithPath($folderName . DIRECTORY_SEPARATOR . $naviname . '.txt');

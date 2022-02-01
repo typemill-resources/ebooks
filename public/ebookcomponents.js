@@ -135,6 +135,10 @@ Vue.component("ebook-layout", {
 			{
 				this.projectnameerror = "Must be between 3 - 20 characters.";
 			}
+			else if(this.ebookprojects.indexOf('ebookdata-' + this.projectname + '.yaml') !== -1)
+			{
+				this.projectnameerror = "This projectname already exists";				
+			}
 			else if(/^[a-z\-]*$/gm.test(this.projectname))
 			{
 				this.disabled = false;

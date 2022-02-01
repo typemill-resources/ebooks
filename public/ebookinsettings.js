@@ -180,12 +180,18 @@ let ebooks = new Vue({
 					'projectname': 	ebookproject
 	        	}
 			})
- 	       .then(function (response)
+ 	        .then(function (response)
     	    {
-				for( var i = 0; i < self.ebookprojects.length; i++){ 
-			                                   
-					if ( self.ebookprojects[i] === ebookproject) { 
+				for( var i = 0; i < self.ebookprojects.length; i++)
+				{ 
+					if ( self.ebookprojects[i] === ebookproject)
+					{
 						self.ebookprojects.splice(i, 1);
+						if(ebookproject == self.currentproject)
+						{
+							self.currentproject = self.ebookprojects[0];
+							self.loadEbookProject();
+						}
 						break;
 					}
 				}
