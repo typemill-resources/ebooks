@@ -177,11 +177,6 @@
 }
 
 
-/* add page breaks */
-.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
-    break-before: right; /* page, left, recto, verso */
-}
-
 /* add counter to figcaptions */
 body {
     counter-reset: figureNumber;

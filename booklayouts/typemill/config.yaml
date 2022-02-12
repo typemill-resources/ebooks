@@ -1,6 +1,6 @@
 name: Typemill
-version: 1.1.0
-description: a multi-purpose layout for a classic book-design. With hanging indent and a clean typography.
+version: 1.2.0
+description: A multi-purpose layout for a classic book-design. With hanging indent and a clean typography.
 author: Sebastian Schürmanns, trendschau
 licence: CC BY 3.0
 link: https://trendschau.net
@@ -49,22 +49,63 @@ customforms:
           type: text 
           label: Primary Background Color (top area)
           placeholder: cadetblue
-          description: Use color name like 'black' or hex code like '#000000'.
+          description: Color name 'black' or hex code '#000000'.
+          class: medium
         primaryfontcolor:
           type: text
           label: Primary Font Color (in white box)
           placeholder: black
-          description: Use color name like 'black' or hex code like '#000000'.
+          description: Color name 'black' or hex code '#000000'.
+          class: medium
         secondarycolor:
           type: text
           label: Secondary Background Color (bottom area)
           placeholder: cadetblue
-          description: Use color name like 'black' or hex code like '#000000'.
+          description: Color name 'black' or hex code '#000000'.
+          class: medium
         secondaryfontcolor:
           type: text
           label: Secondary Font Color (bottom area)
           placeholder: white
-          description: Use color name like 'black' or hex code like '#000000'.
+          description: Color name 'black' or hex code '#000000'.
+          class: medium
+    fieldsetfonts:
+      type: fieldset
+      legend: Text
+      fields:
+        fontheadline:
+          type: select
+          label: font for headlines
+          class: medium
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+        fontbody:
+          type: select
+          label: font for body text
+          class: medium
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+        linkcolor:
+          type: text
+          label: Font color for links
+          placeholder: cadetblue
+        fontsize:
+          type: number
+          label: General font size for body text
+        textalign:
+          type: select
+          label: text alignment 
+          options:
+            justify: justify
+            left: left
+        hyphens:
+          type: select
+          label: hyphens 
+          options:
+            auto: auto
+            none: none
     fieldsetimprint:
       type: fieldset
       legend: Imprint
@@ -117,6 +158,13 @@ customforms:
           type: textarea
           label: Text for the blurb (use markdown)
           description: Keep empty to skip the blurb.
+    fieldsetemptypages:
+      type: fieldset
+      legend: Empty Pages
+      fields:
+        hideemptypages:
+          type: checkbox
+          checkboxlabel: Do not add empty pages before content elements like imprint, table of content and book-chapters.
     fieldsetimagequality:
       type: fieldset
       legend: Image Quality

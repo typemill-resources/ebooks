@@ -118,12 +118,23 @@ Vue.component('tab-ebooks', {
         },
 		triggersubmit: function(tab)
 		{
+			/* triggered by navigation */
+			if(this.currentTab == 'layout')
+			{
+				this.storeCustomCSS();
+			}
+
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
 			this.moveUp();
 		},
 		submit: function(tab)
 		{
+			/* triggered by navigation */
+			if(this.currentTab == 'layout')
+			{
+				this.storeCustomCSS();
+			}
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
 			this.moveUp();
@@ -176,6 +187,26 @@ Vue.component('tab-ebooks', {
 	            }
 	        });
 		},
+		storeCustomCSS: function()
+		{
+			var customcss = this.layoutData[this.formData.layout].customcss;
+
+			var self = this;
+
+			myaxios.post('/api/v1/ebooklayoutcss',{
+					'url':			document.getElementById("path").value,        		
+					'csrf_name': 	document.getElementById("csrf_name").value,
+					'csrf_value':	document.getElementById("csrf_value").value,
+					'css': 			customcss,
+					'layout': 		this.formData.layout
+			})
+			.then(function (response) {
+
+			})
+			.catch(function (error)
+			{
+			});				
+		},		
 		markSelectedPages: function(navigation, selectedPages, markedNavigation)
 		{
 			for(let i = 0; i < navigation.length; i++)

@@ -30,18 +30,19 @@ body{
   font-size: var(--font-size);
   line-height: calc(2px + 4.5ex + 2px); /* https://hugogiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height */
   line-height: 1.4em;
-  font-family: var(--font-body);
+  font-family: var(--body-font);
+  color:  var(--body-color);
   margin: 0;
   padding: 0;
   text-rendering: optimizeLegibility;
 }
 
 h1,h2,h3,h4,h5,h6{
-  font-family: var(--font-headlines); 
+  font-family: var(--headline-font); 
 }
 
 .bookcontent h1, .bookcontent h2, .bookcontent h3, .bookcontent h4, .bookcontent h5, .bookcontent h6{
-  color:  var(--primary-bg-color); 
+  color:  var(--headline-color); 
 }
 
 /* 
@@ -210,7 +211,7 @@ dt{
   clear: left;
   width: 100px;
   font-weight: bold;
-  color: var(--primary-bg-color);
+  color: var(--headline-color);
 }
 dt::after {
   content: ": ";
@@ -275,7 +276,8 @@ samp{
   font-family:monospace, monospace;
 }
 pre,code{
-  background: #eee;
+  background: #333;
+  color:  white;
   word-break: break-word;  /* long urls might overflow the page, alternative is break-all; */
 }
 pre{
@@ -403,8 +405,8 @@ blockquote cite em{
 
 
 a {
-  text-decoration: underline;
-  color: var(--primary-bg-color); 
+  text-decoration: none;
+  color: var(--link-color); 
   background-color:transparent;
   -webkit-text-decoration-skip:objects;
 }
@@ -542,10 +544,10 @@ span.footnote {
     line-height:  1.1em;
 }
 .footnote::footnote-call {
-  color:  var(--primary-bg-color);
+  color:  var(--link-color);
 }
 .footnote::footnote-marker {
-  color:  var(--primary-bg-color);
+  color:  var(--link-color);
 }
 
 /* 
@@ -635,12 +637,12 @@ ul.TOC{
 */
 
 .cover{
-  font-family: arial;
+  font-family: 'Noto Sans', arial, sans-serif;
   page: coverlayout;
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: var(--primary-bg-color);  
+  background-color: var(--primary-cover-bg-color);  
   background-size: cover;
 }
 .cover-top{
@@ -661,8 +663,16 @@ ul.TOC{
   left: 0;
   right: 0;
   padding: 0px;
-  background-color: var(--primary-bg-color);  
-  color:  var(--primary-ft-color);
+  background-color: var(--primary-cover-bg-color);
+  color:  var(--primary-cover-ft-color);
+}
+.coverimage{
+  width: 100%;
+  height: 100%;
+}
+.coverimage img{
+  display:  block;
+  max-width: 100%;
 }
 .cover-bottom{
   position:absolute;
@@ -672,8 +682,11 @@ ul.TOC{
   bottom: 0;
   left:  0;
   padding: 0;
-  background-color: var(--secondary-bg-color);
-  color: var(--secondary-ft-color);
+  background-color: var(--secondary-cover-bg-color);
+  color: var(--secondary-cover-ft-color);
+}
+.cover-bottom p{
+  text-align: left;
 }
 .bottomcorner{
   padding-top: 40px;
@@ -796,7 +809,7 @@ img.logo{
 
 .blurb{
   page: blurb;
-  background-color: var(--secondary-bg-color);
+  background-color: var(--secondary-bg-cover-color);
   background-size: cover;
   position: absolute;
   text-align: left;

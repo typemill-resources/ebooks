@@ -12,8 +12,6 @@
 		<meta name="author" content="{{ metatabs.meta.author }}" />
 		<meta name="generator" content="Typemill" />
 
-		{{ assets.renderCSS() }}
-
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/manual/layout-digital.css" />
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/manual/layout.css" />
 	
@@ -23,10 +21,34 @@
 			  --secondary-bg-color: {{ ebookdata.secondarycolor ? ebookdata.secondarycolor : 'cadetblue' }};
 			  --primary-ft-color: {{ ebookdata.primaryfontcolor ? ebookdata.primaryfontcolor : 'white' }};
 			  --secondary-ft-color: {{ ebookdata.secondaryfontcolor ? ebookdata.secondaryfontcolor : 'white' }};
+			  --body-font: {{ ebookdata.fontbody ? ebookdata.fontbody : 'Open Sans' }};
+			  --headline-font: {{ ebookdata.fontheadline ? ebookdata.fontheadline : 'Open Sans' }};
+			  --font-size: {{ ebookdata.fontsize ? ebookdata.fontsize : '12' }}px;
+			  --text-align: {{ ebookdata.textalign ? ebookdata.textalign : 'justify' }};
+			  --hyphens: {{ ebookdata.hyphens ? ebookdata.hyphens : 'auto' }};
 			}
+
+			{% if ebookdata.hideemptypages %}
+			
+				/* remove empty pages */
+				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				    break-before: page; /* page, right, left, recto, verso */
+				}
+
+			{% else %}
+
+				/* add page breaks */
+				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				    break-before: right; /* page, left, recto, verso */
+				}
+			
+			{% endif %}
+
+
 		</style>
 
-		{% if thumbindex %}
+
+		{% if thumbindex %} 
 			<style>
 				.thumbindex {
 				  position: fixed;
@@ -78,6 +100,8 @@
 				{% endfor %}
 			</style>
 		{% endif %}
+
+		{{ assets.renderCSS() }}
 
 	</head>
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">

@@ -1,5 +1,5 @@
 name: Manual
-version: 1.0.0
+version: 1.1.0
 description: A perfect layout for manuals. With multi-language-support and a thumb register.
 author: Sebastian Schürmanns, trendschau.net
 licence: CC BY 3.0
@@ -29,42 +29,71 @@ customforms:
           type: checkbox
           label: Fly title
           checkboxlabel: Add a fly title after the cover. 
-    fieldsetcoverimage:
+    fieldsetcoverdesign:
       type: fieldset
-      legend: Cover Image
-      fields:
-        coverimage:
-          type: image
-          label: Upload a cover image
-          description: only jpg or png accepted. The image will be integrated on the cover below the text.
-    fieldsetcovercolors:
-      type: fieldset
-      legend: Cover Colors
-      fields:
-        primarycolor:
-          type: text 
-          label: Primary Background Color
-          description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
-        primaryfontcolor:
-          type: text
-          label: Primary Font Color
-          description: The font color of the top area. Will also be used for the active thumb register.
-        secondarycolor:
-          type: text
-          label: Secondary Background Color
-          description: The background color of the bottom area. Will also be used of the inactive thumb register.
-        secondaryfontcolor:
-          type: text
-          label: Secondary Font Color
-          description: The font color of the bottom area. Will also be used for the inactive thumb register.
-    fieldsetlogo:
-      type: fieldset
-      legend: Logo
+      legend: Cover Design
       fields:
         logo:
           type: image
           label: Upload your LOGO
           description: only jpg or png accepted. Will be added to the cover bottom area
+        coverimage:
+          type: image
+          label: Upload a cover image
+          description: only jpg or png accepted. The image will be integrated on the cover below the text.
+        primarycolor:
+          type: text 
+          label: Primary Background Color
+          description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
+          class: medium
+        primaryfontcolor:
+          type: text
+          label: Primary Font Color
+          description: The font color of the top area. Will also be used for the active thumb register.
+          class: medium
+        secondarycolor:
+          type: text
+          label: Secondary Background Color
+          description: The background color of the bottom area. Will also be used of the inactive thumb register.
+          class: medium
+        secondaryfontcolor:
+          type: text
+          label: Secondary Font Color
+          description: The font color of the bottom area. Will also be used for the inactive thumb register.
+          class: medium
+    fieldsetfonts:
+      type: fieldset
+      legend: Text
+      fields:
+        fontheadline:
+          type: select
+          label: font for headlines
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+            'Jost': Jost
+        fontbody:
+          type: select
+          label: font for body text
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+            'Jost': Jost
+        fontsize:
+          type: number
+          label: General font size for body text
+        textalign:
+          type: select
+          label: text alignment 
+          options:
+            justify: justify
+            left: left
+        hyphens:
+          type: select
+          label: hyphens 
+          options:
+            auto: auto
+            none: none
     fieldsetimprint:
       type: fieldset
       legend: Imprint
@@ -99,6 +128,13 @@ customforms:
           type: textarea
           label: Text for the blurb (use markdown)
           description: Text will be displayed at the bottom with small font. Keep empty to skip the blurb.
+    fieldsetemptypages:
+      type: fieldset
+      legend: Empty Pages
+      fields:
+        hideemptypages:
+          type: checkbox
+          checkboxlabel: Do not add empty pages before content elements like imprint, table of content and book-chapters.
     fieldsetimagequality:
       type: fieldset
       legend: Image Quality

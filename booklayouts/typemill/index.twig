@@ -12,8 +12,6 @@
 		<meta name="author" content="{{ metatabs.meta.author }}" />
 		<meta name="generator" content="Typemill" />
 
-		{{ assets.renderCSS() }}
-
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/typemill/layout-digital.css" />
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/typemill/layout.css" />
 		
@@ -23,13 +21,40 @@
 			  --secondary-bg-color: {{ ebookdata.secondarycolor ? ebookdata.secondarycolor : 'cadetblue' }};
 			  --primary-ft-color: {{ ebookdata.primaryfontcolor ? ebookdata.primaryfontcolor : 'black' }};
 			  --secondary-ft-color: {{ ebookdata.secondaryfontcolor ? ebookdata.secondaryfontcolor : 'white' }};
+			  --body-font: {{ ebookdata.fontbody ? ebookdata.fontbody : 'Open Sans' }};
+			  --headline-font: {{ ebookdata.fontheadline ? ebookdata.fontheadline : 'Open Sans' }};
+			  --link-color: {{ ebookdata.linkcolor ? ebookdata.linkcolor : 'cadetblue' }};
+			  --font-size: {{ ebookdata.fontsize ? ebookdata.fontsize : '16' }}px;
+			  --text-align: {{ ebookdata.textalign ? ebookdata.textalign : 'justify' }};
+			  --hyphens: {{ ebookdata.hyphens ? ebookdata.hyphens : 'auto' }};			  
 			}
+
+			/* optional cover image */
 			{% if ebookdata.coverimage %}
 				.cover{
 					background-image: url( {{ base_url }}/{{ ebookdata.coverimage }} );
 				}
 			{% endif %}
+
+			{% if ebookdata.hideemptypages %}
+
+				/* remove empty pages */
+				.flytitle, .dedication, .tableofcontents, .bookcontent, .chapter, .bookcontent h1, #endnotes, .blurb {
+				    break-before: page;
+				}
+
+			{% else %}
+			
+				/* add page breaks */
+				.flytitle, .dedication, .tableofcontents, .bookcontent, .chapter, .bookcontent h1, #endnotes, .blurb {
+				    break-before: right; /* page, left, recto, verso */
+				}
+
+			{% endif %}
+
 		</style>
+
+		{{ assets.renderCSS() }}
 
 	</head>
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
@@ -155,5 +180,6 @@
 		{% if ebookdata.toc %}
 			<script src="{{ base_url }}/plugins/ebooks/public/paged-toc.js"></script>
 		{% endif %}
+
 	</body>
 </html>

@@ -77,16 +77,16 @@ let ebooks = new Vue({
 				self.ebookprojects = ['ebookdata.yaml'];
 
 			}
+			
 			self.dataLoaded = true;
 			self.disabled = false;
 
+	        /* load the default navigation */
+	        this.loadEbookNavi();
         })
         .catch(function (error)
         {
         });
-
-        /* load the default navigation */
-        this.loadEbookNavi();
 
 		FormBus.$on('forminput', formdata => {
 			this.$set(this.formData, formdata.name, formdata.value);
@@ -205,24 +205,37 @@ let ebooks = new Vue({
 		},
 		triggersubmit: function(tab)
 		{
-			window.scrollTo({
-				top: 0,
-				left: 0, 
-				behavior: 'smooth'
-			});
+			/* triggered by navigation */
+			if(this.currentTab == 'layout')
+			{
+				this.storeCustomCSS();
+			}
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
+			this.moveUp();
 		},
 		submit: function(tab)
 		{
-			window.scrollTo({
-				top: 0,
-				left: 0, 
-				behavior: 'smooth'
-			});			
+			/* triggered by button */
+			if(this.currentTab == 'layout')
+			{
+				this.storeCustomCSS()
+			}
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
+			this.moveUp();
 		},
+		moveUp()
+		{
+			setTimeout(function(){ 
+	       		window.scrollTo({
+				  top: 0,
+				  left: 0,
+				  behavior: 'smooth'
+				});
+
+			}, 100);
+      	},		
 		storeEbookData: function()
 		{
 			this.message = false;
@@ -257,6 +270,26 @@ let ebooks = new Vue({
 	            }
 	        });
 		},
+		storeCustomCSS: function()
+		{
+			var customcss = this.layoutData[this.formData.layout].customcss;
+
+			var self = this;
+
+			myaxios.post('/api/v1/ebooklayoutcss',{
+					'url':			document.getElementById("path").value,        		
+					'csrf_name': 	document.getElementById("csrf_name").value,
+					'csrf_value':	document.getElementById("csrf_value").value,
+					'css': 			customcss,
+					'layout': 		this.formData.layout
+			})
+			.then(function (response) {
+
+			})
+			.catch(function (error)
+			{
+			});				
+		},
 		getTabClass: function(tab)
 		{
 			active = (this.currentTab === tab) ? ' active' : '';
@@ -286,7 +319,7 @@ let ebooks = new Vue({
 		},
 		getEpubUrl: function()
 		{
-			return this.root + '/tm/ebooks/epub';
+			return this.root + '/tm/ebooks/epub?projectname=' + this.currentproject;
 		},		
 		tmpStoreItem: function()
 		{

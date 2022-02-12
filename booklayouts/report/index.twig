@@ -12,20 +12,21 @@
 		<meta name="author" content="{{ metatabs.meta.author }}" />
 		<meta name="generator" content="Typemill" />
 
-		{{ assets.renderCSS() }}
-
-
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/report/layout-digital.css" />
 		<link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/report/layout.css" />
 	
 		<style>
 			:root {
-			  --primary-bg-color: {{ ebookdata.primarycolor ? ebookdata.primarycolor : 'cadetblue' }};
-			  --secondary-bg-color: {{ ebookdata.secondarycolor ? ebookdata.secondarycolor : 'cadetblue' }};
-			  --primary-ft-color: {{ ebookdata.primaryfontcolor ? ebookdata.primaryfontcolor : 'white' }};
-			  --secondary-ft-color: {{ ebookdata.secondaryfontcolor ? ebookdata.secondaryfontcolor : 'white' }};
-			  --font-body: {{ ebookdata.fontbody ? ebookdata.fontbody : 'Open Sans' }};
-			  --font-headlines: {{ ebookdata.fontheadline ? ebookdata.fontheadline : 'Open Sans' }};
+			  --primary-cover-bg-color: {{ ebookdata.primarycolor ? ebookdata.primarycolor : 'cadetblue' }};
+			  --secondary-cover-bg-color: {{ ebookdata.secondarycolor ? ebookdata.secondarycolor : 'cadetblue' }};
+			  --primary-cover-ft-color: {{ ebookdata.primaryfontcolor ? ebookdata.primaryfontcolor : 'white' }};
+			  --secondary-cover-ft-color: {{ ebookdata.secondaryfontcolor ? ebookdata.secondaryfontcolor : 'white' }};
+			  --body-font: {{ ebookdata.fontbody ? ebookdata.fontbody : 'Open Sans' }};
+			  --body-color: {{ ebookdata.fontbodycolor ? ebookdata.fontbodycolor : '#333' }};
+			  --headline-font: {{ ebookdata.fontheadline ? ebookdata.fontheadline : 'Open Sans' }};
+			  --headline-color: {{ ebookdata.fontheadlinecolor ? ebookdata.fontheadlinecolor : 'cadetblue' }};
+			  --link-color: {{ ebookdata.linkcolor ? ebookdata.linkcolor : 'cadetblue' }};
+			  --contrast-color: {{ ebookdata.contrastcolor ? ebookdata.contrastcolor : 'cadetblue' }};
 			  --font-size: {{ ebookdata.fontsize ? ebookdata.fontsize : '16' }}px;
 			  --text-align: {{ ebookdata.textalign ? ebookdata.textalign : 'justify' }};
 			  --hyphens: {{ ebookdata.hyphens ? ebookdata.hyphens : 'auto' }};
@@ -34,13 +35,43 @@
 
 		<style>
 
+			/* cover image options */
 
-			/* remove empty pages */
+			{% if ebookdata.coverimagefit %}
+
+				.coverimage img{
+				  height: 100%;
+				  object-fit:cover;
+				}
+
+			{% elseif ebookdata.coverimagewidth %}
+
+				.coverimage{
+					position:relative;
+					height:77%;
+				}
+				.coverimage img{
+					position:absolute;
+					width: {{ebookdata.coverimagewidth}};
+					left: 50%;
+					top: 50%;
+					transform: translate(-50%,-50%);
+				}
+
+			{% endif %}
 
 			{% if ebookdata.hideemptypages %}
 			
+				/* remove empty pages */
 				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
 				    break-before: page; /* page, right, left, recto, verso */
+				}
+
+			{% else %}
+
+				/* add page breaks */
+				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				    break-before: right; /* page, left, recto, verso */
 				}
 			
 			{% endif %}
@@ -144,6 +175,8 @@
 
 		</style>
 
+		{{ assets.renderCSS() }}
+
 	</head>
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
 
@@ -156,7 +189,11 @@
 			<div class="cover-title">
 				<h1 class="cover-headline">{{ ebookdata.title }}</h1>
 				<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
-				{% if ebookdata.coverimage %} <img src="{{ base_url }}/{{ ebookdata.coverimage }} ">{% endif %}
+				{% if ebookdata.coverimage %}
+					<div class="coverimage">
+						<img src="{{ base_url }}/{{ ebookdata.coverimage }} ">
+					</div>
+				{% endif %}
 			</div>
 			<div class="cover-bottom">
 				{% if ebookdata.coverlefttext %}

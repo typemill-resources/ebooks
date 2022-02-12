@@ -37,6 +37,7 @@ class Ebooks extends Plugin
 		return [
 			['httpMethod' => 'get', 'route' => '/tm/ebooks', 'name' => 'ebooks.show', 'class' => 'Typemill\Controllers\ControllerSettings:showBlank', 'resource' => 'system', 'privilege' => 'view'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooklayouts', 'name' => 'ebooklayouts.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookLayouts', 'resource' => 'content', 'privilege' => 'create'],
+			['httpMethod' => 'post', 'route' => '/api/v1/ebooklayoutcss', 'name' => 'ebooklayoutcss.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookLayoutCSS', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
 			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabitem', 'name' => 'ebooktabitem.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 'resource' => 'content', 'privilege' => 'create'],
@@ -61,14 +62,14 @@ class Ebooks extends Plugin
 		{
 			if( isset($this->config['ebooksinpages']) && (strpos($this->path, 'tm/content') !== false) )
 			{
-				$this->addEditorCSS('/ebooks/public/ebooks.css');
-				$this->addEditorJS('/ebooks/public/ebookcomponents.js');
-				$this->addEditorJS('/ebooks/public/ebookinpages.js');
+				$this->addEditorCSS('/ebooks/public/ebooks.css?20220215');
+				$this->addEditorJS('/ebooks/public/ebookcomponents.js?20220215');
+				$this->addEditorJS('/ebooks/public/ebookinpages.js?20220215');
 
 				# inject thumbindex.js into pages if activated
 				if(isset($this->config['thumbindex']))
 				{
-			        $this->addEditorJS('/ebooks/public/thumbindex.js');
+			        $this->addEditorJS('/ebooks/public/thumbindex.js?20220215');
 				}
 			}
 		}
@@ -422,12 +423,61 @@ class Ebooks extends Plugin
 
 		foreach($layoutfolders as $layout)
 		{
+			# load config files from ebook layout
 			$configfolder = 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $layout;
 			$bookconfig = $writeYaml->getYaml($configfolder, 'config.yaml');
+
+			# load customcss
+			$customcss = $writeYaml->getFile('cache', 'ebooklayout-' . $layout . '-custom.css');
+			$bookconfig['customcss'] = $customcss ? $customcss : '';
+
 			$booklayouts[$layout] = $bookconfig;
 		}
 
 		return $booklayouts;
+	}
+
+	public function storeEbookLayoutCSS($request, $response, $args)
+	{
+		$params 		= $request->getParams();
+		$settings 		= $this->getSettings();
+
+		if(!isset($params['layout']) OR $params['layout'] == '')
+		{
+			return $response->withJson(array('result' => false, 'errors' => ['message' => 'Layout name is missing.']), 500);
+		}
+
+		if(!isset($params['css']))
+		{
+			return $response->withJson(array('result' => false, 'errors' => ['message' => 'CSS parameter is missing.']), 500);
+		}
+
+		$layout 		= $params['layout'];
+		$customcss 		= $params['css'];
+
+		# write params
+		$write 			= new WriteCache();
+
+		# make sure no file is set if there is no custom css
+		if($customcss == '')
+		{
+			# delete the css file if exists
+			$write->deleteFileWithPath('cache' . DIRECTORY_SEPARATOR . 'ebooklayout-' . $layout . '-custom.css');
+			return $response->withJson(array('result' => true, 'message' => 'deleted css file.'), 200);
+		}
+		else
+		{
+			if ( $customcss != strip_tags($customcss) )
+			{
+				return $response->withJson(array('result' => false, 'errors' => ['message' => 'CSS contains html.']), 500);
+			}
+			else
+			{
+				# store css
+				$write->writeFile('cache', 'ebooklayout-' . $layout . '-custom.css', $customcss);
+				return $response->withJson(array('result' => true), 200);
+			}
+		}
 	}
 
 	# gets the ebook navigation from data folder or the general page navigation
@@ -616,6 +666,9 @@ class Ebooks extends Plugin
 		# generate the book content from ebook-navigation
 		$parsedown 		= new ParsedownExtension($base_url, $settingsForHeadlineAnchors = false, $this->getDispatcher());
 		
+		# disable attributes for images because of bug in pagedjs
+		$parsedown->withoutImageAttributes();
+		
 		# the default mode is with footnotes, but user can activate endnotes too
 		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
 		{
@@ -656,7 +709,7 @@ class Ebooks extends Plugin
 		}
 
 		# we have to dispatch onTwigLoaded to get javascript from other plugins
-		$this->container->dispatcher->dispatch('onTwigLoaded');		
+		$this->container->dispatcher->dispatch('onTwigLoaded');
 
 		$twig   		= $this->getTwig();
 		$loader 		= $twig->getLoader();
@@ -664,6 +717,13 @@ class Ebooks extends Plugin
 		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
 	
 		$booklayouts = $this->scanEbooklayouts();
+
+		# load customcss
+		$customcss = $writeYaml->checkFile('cache', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		if($customcss)
+		{
+			$this->container->assets->addCSS($base_url . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		}
 
 		return $twig->render($response, '@booklayouts/index.twig', [
 			'settings' 		=> $settings, 
@@ -908,19 +968,40 @@ class Ebooks extends Plugin
 		}
 
 		# otherwise it is from the settings
-		else
-		{
+		elseif(!empty($params) && isset($params['projectname']))
+		{	
+			$projectname 	= str_replace('.yaml', '', $params['projectname']);
+			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
+
 			# get bookdata
-			$ebookdata 	= $writeYaml->getYaml($ebookFolderName, 'ebookdata.yaml');
+			$ebookdata 		= $writeYaml->getYaml($ebookFolderName, $projectname .'.yaml');
 
 			# get navigationdata
-			$navigation = $writeCache->getCache($ebookFolderName, 'navigation.txt');
+			$navigation = $writeCache->getCache($ebookFolderName, $naviname . '.txt');
+		}
+
+		if(!$navigation OR !$ebookdata)
+		{
+			$response->write('There is no navigation or no ebookdata for this book project.');
+			return $response;
 		}
 
 		# generate the book content from ebook-navigation
 		$parsedown 		= new ParsedownExtension($base_url);
 
 		$parsedown->withSpanFootnotes();
+
+		# check if shortcodes should be rendered
+		if(isset($ebookdata['disableshortcodes']) && $ebookdata['disableshortcodes'])
+		{
+			# empty array will stop all shortcodes
+			$parsedown->setAllowedShortcodes(array());
+		}
+		elseif(isset($ebookdata['activeshortcodes']) && is_array($ebookdata['activeshortcodes']) && !empty($ebookdata['activeshortcodes']))
+		{
+			# only selected shortcodes will be rendered
+			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
+		}		
 		
 		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
 		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
@@ -929,10 +1010,12 @@ class Ebooks extends Plugin
 
 		# setting timezone for time functions used for logging to work properly
 		date_default_timezone_set('Europe/Berlin');
-		$log = new Logger("Example", TRUE);
+		$log = new Logger("eBook Log", TRUE);
 
 #		$fileDir = './PHPePub';
-
+		$fileDir = '.';
+		$fileDir = $settings['rootPath'];
+		
 		# ePub 3 is not fully implemented. but aspects of it is, in order to help implementers.
 		# ePub 3 uses HTML5, formatted strictly as if it was XHTML but still using just the HTML5 doctype (aka XHTML5)
 		$book = new EPub(EPub::BOOK_VERSION_EPUB3, "en", EPub::DIRECTION_LEFT_TO_RIGHT); // Default is ePub 2
@@ -1097,6 +1180,7 @@ class Ebooks extends Plugin
 		# setCoverImage can only be called once per book, but can be called at any point in the book creation.
 		$log->logLine("Set Cover Image");
 
+		# DONT DO THIS BECAUSE NAMINGS ARE FLEXIBLE DEPENDING ON LAYOUT
 		$cover = $content_start . "<h1>" . $ebookdata['title'] . "</h1>\n";
 		if(isset($ebookdata['subtitle']) && $ebookdata['subtitle'] != '') { 	$cover .= "<h2>" . $ebookdata['subtitle'] . "</h2>\n"; }
 		if(isset($ebookdata['author']) && $ebookdata['author'] != '') { 		$cover .= "<p>" . $ebookdata['author'] . "</p>\n"; }
@@ -1116,38 +1200,58 @@ class Ebooks extends Plugin
 
 		$ChapterName 	= (isset($ebookdata['epubchaptername']) && $ebookdata['epubchaptername'] != '' ) ? $ebookdata['epubchaptername'] . ' ' : '';
 		$prefix 		= '';
-		$prefixNumber	= (isset($ebookdata[epubchapternumber]) && $ebookdata[epubchapternumber]) ? true : false;
-		$chapNumArray 	= ['1' => 1]; # initial chapter
+		$prefixNumber	= (isset($ebookdata['epubchapternumber']) && $ebookdata['epubchapternumber']) ? true : false;
+		$chapNumArray 	= ['0' => 1]; # initial chapter
 		$lastLevel 		= false;
+
 		foreach($bookcontent as $chapter)
 		{
 			if($lastLevel)
 			{
-				# increment chapter of current level
-				if(isset($chapNumArray[$chapter['level']]))
+				# we have to reduce by 1 so we find the correct key in chapNumArray starting with 0
+				$chapterKey = $chapter['level']-1;
+				
+				# if we are in the same level
+				if( ($chapter['level'] == $lastLevel) ) 
 				{
-					$chapNumArray[$chapter['level']]++;		
+					if(!isset($chapNumArray[$chapterKey]))
+					{
+						print_r($chapNumArray);
+						die('the chapnum level . ' . $chapter['level'] . ' does not exist.' );
+					}
+
+					# increment
+					$chapNumArray[$chapterKey]++;
 				}
-				# initialise chapter of current level
-				else
+				# if we went one level deeper in the hierarchy
+				elseif($chapter['level'] > $lastLevel)
 				{
-					# we go one level deeper
-					$chapNumArray[$chapter['level']] = 1;
+					if(isset($chapNumArray[$chapterKey]))
+					{
+						print_r($chapNumArray);
+						die('the chapnum level . ' . $chapter['level'] . ' already exists.' );
+					}
+
+					# we initialize the deeper level with 1
+					$chapNumArray[$chapterKey] = 1;
 
 					# that means we add a sub-level
 					$book->subLevel();
 				}
-
-				# if the current level is smaller than the array of the current chapnumber
-				if(count($chapNumArray) > $chapter['level'])
+				# if we went one level up in the hierarchy
+				elseif($chapter['level'] < $lastLevel)
 				{
-					# then we went up in the hierarchy, so we also cut/shorten the array accordingly...
+					# we cut/shorten the chapNumArray accordingly...
 					$chapNumArray = array_slice($chapNumArray, 0, $chapter['level']);
 
+					# and we increment the current chapter level
+					$chapNumArray[$chapterKey]++;
+
 					# and we adjust the level for the ePub accordingly
-					$book->setCurrentLevel($chapter['level']);					
+					$book->setCurrentLevel($chapter['level']);
 				}
 			}
+
 			$lastLevel = $chapter['level'];
 			
 			$readableChapNum = implode(".", $chapNumArray);
@@ -1171,13 +1275,13 @@ class Ebooks extends Plugin
 				$prefix = $readableChapNum . ': ';
 				if($ChapterName != '')
 				{
-					$prefix = $ChapterName . " " . $prefix;					
+					$prefix = $ChapterName . " " . $prefix;
 				}
 			}
 
-			$book->addChapter($prefix . $chapter['metadata']['meta']['title'], $filename, $chapterHtml, true, EPub::EXTERNAL_REF_ADD);
+			$book->addChapter($prefix . $chapter['metadata']['meta']['title'], $filename, $chapterHtml, true, EPub::EXTERNAL_REF_IGNORE);
 		}
-		
+
 		$book->rootLevel();
 		$book->buildTOC($cssFileName = null, $tocCSSClass = "toc", $title = $tocName);
 
@@ -1192,7 +1296,7 @@ class Ebooks extends Plugin
 		# Finalize the book, and build the archive.
 		$book->finalize(); 
 
-		$filename = preg_replace('/[ \.\?\!\:]/', "-", $ebookdata['title'] . '-' . $ebookdata['edition']);
+		$filename = preg_replace('/[ \.\?\!\:]/', "-", $ebookdata['title']);
 
 		# Send the book to the client. ".epub" will be appended if missing.
 		$zipData = $book->sendBook($filename);

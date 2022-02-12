@@ -1,10 +1,17 @@
 @font-face {
-    font-family: 'Noto Serif';
-    src:  url('fonts/noto-serif-v9-latin-regular.woff') format('woff'),
-          url('fonts/noto-serif-v9-latin-regular.tiff') format('truetype');
+    font-family: 'Open Sans';
+    src:  url('fonts/Open_Sans/OpenSans-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
+@font-face {
+    font-family: 'Noto Serif';
+    src:  url('fonts/Noto/noto-serif-v9-latin-regular.woff') format('woff'),
+          url('fonts/Noto/noto-serif-v9-latin-regular.tiff') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* 
 ** HTML & BODY
 */
@@ -14,19 +21,17 @@ html{
   -webkit-text-size-adjust:100%;
 }
 body{
-  font-size: 14px;
+  font-size: var(--font-size);
   line-height: calc(2px + 4.5ex + 2px); /* https://hugogiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height */
   line-height: 1.4em;
-  font-family: 'Noto Serif', serif;
-/*  font-family: 'fanwood_text';
-  font-family: 'Noto serif'; */
+  font-family: var(--body-font);
   margin: 0;
   padding: 0;
   text-rendering: optimizeLegibility;
 }
 
 h1,h2,h3,h4,h5,h6{
-  font-family: 'Noto Serif', serif;  
+  font-family: var(--headline-font); 
 }
 
 /* 
@@ -92,31 +97,26 @@ h1,h2,h3,h4,h5,h6{
   font-weight: normal;
 }
 h1{
-/*  font-size: 3.125em; */
   font-size: 2.6em;
 }
 .bookcontent h1{
     margin-bottom: 3em;
 }
 h2{
-/*  font-size: 2.618em; */
   font-size: 1.5em;
   font-weight: bold;
 }
 h3{
-/*  font-size: 1.931em; */
   font-size: 1.17em;
   font-weight: bold;
 }
 h4{
-/*  font-size: 1.618em; */
   font-size: 1.17em;
   font-weight: normal;
 }
 h5{
   font-size: 1em;
   font-weight: normal;
-/*  font-size: 1.194em; */
 }
 h6{
   font-size: 1em;
@@ -131,8 +131,8 @@ h6{
 /* Paragraphs justified, with hyphens, paragraph must have at least 2 lines at start or end of page (widow/orphan) */
 p{
   word-wrap: break-word;
-  hyphens: auto;
-  text-align: justify;
+  hyphens: var(--hyphens);
+  text-align: var(--text-align);
   widows: 2;
   orphans: 2;
 }
@@ -415,10 +415,8 @@ blockquote cite em{
 
 
 a {
-  text-decoration: underline;
-/*  text-decoration-style: dotted; 
-  color: inherit; */
-  color: seagreen;
+  text-decoration: none;
+  color: var(--link-color); 
   background-color:transparent;
   -webkit-text-decoration-skip:objects;
 }

@@ -48,6 +48,10 @@ Vue.component("ebook-layout", {
 							'</div>' +
 						  	'<span class="error" v-if="errors.layout">{{ errors.layout[0] }}</span>' +
 						'</div>' +
+						'<div class="large">' +
+							'<label><b>{{ layouts[formdata.layout].name }}</b>: Customize the layout with CSS</label>' +
+							'<textarea class="codearea" rows="8" v-model="layouts[formdata.layout].customcss"></textarea>' +
+						'</div>' +
 	 				'</fieldset>' +
 	 				'<fieldset v-if="shortcodes" class="fs-formbuilder">' +
 		 				'<legend>Configure shortcodes</legend>' +
@@ -84,6 +88,10 @@ Vue.component("ebook-layout", {
 			this.$parent.storeEbookData();
 		}
 		this.$parent.initialize = false;
+
+		this.$nextTick(() => {
+			this.autosize();
+		});		
 
 		var self = this;
 
@@ -158,7 +166,7 @@ Vue.component("ebook-layout", {
 		},
 		showinfo: function(name)
 		{
-			if(name != 'customforms')
+			if(name != 'customforms' && name != 'customcss')
 			{
 				return true;
 			}
@@ -171,6 +179,10 @@ Vue.component("ebook-layout", {
 		{
 			this.$parent.deleteEbookProject(ebookproject);
 		},
+		autosize: function()
+		{
+			autosize(document.querySelector('textarea'));
+		},		
 	}
 });
 
@@ -238,9 +250,7 @@ Vue.component("ebook-settings", {
 			}
 			else
 			{
-				var fieldclass = field.class;
-				delete field.class;
-				return fieldclass;
+				return field.class;
 			}
 		},	
 		selectComponent: function(field)

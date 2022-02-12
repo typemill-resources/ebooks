@@ -1,5 +1,5 @@
 name: Report
-version: 1.0.1
+version: 1.1.0
 description: A modern layout for reports and similar publications in A4-format. Change font-sizes, font-families, brand-colors, and much more.
 author: Sebastian Schürmanns, trendschau.net
 licence: CC BY 3.0
@@ -24,51 +24,86 @@ customforms:
         coverrighttext:
           type: textarea
           label: Text in right botton corner (use markdown)
-        coverimage:
-          type: image
-          label: Upload a cover image
-          description: only jpg or png accepted. The image will be integrated on the cover below the text.
         logo:
           type: image
           label: Upload your LOGO
           description: only jpg or png accepted. Will be added to the cover bottom area
+        coverimage:
+          type: image
+          label: Upload a cover image
+          description: only jpg or png accepted. The image will be integrated on the cover below the text.
+        coverimagefit:
+          type: checkbox
+          label: Full size cover image
+          checkboxlabel: Adjust the cover image to fill the whole area.
+        coverimagewidth:
+          type: text
+          label: Maximum width of cover image in px or %
+          placeholder: 400px
+          description: Please uncheck the full-size option if you use a maximum width
         primarycolor:
           type: text 
-          label: Color for cover background and headlines
-          description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
+          label: Background color for cover
+          placeholder: cadetblue
+          class: medium
         primaryfontcolor:
           type: text
-          label: Font color for headlines on cover
-          description: The font color of the top area. Will also be used for the active thumb register.
+          label: Font color for cover
+          placeholder: white
+          class: medium
         secondarycolor:
           type: text
-          label: Background color of bottom area of the cover
-          description: The background color of the bottom area. Will also be used of the inactive thumb register.
+          label: Background color of cover-bottom
+          placeholder: cadetblue
+          class: medium
         secondaryfontcolor:
           type: text
-          label: Font color of bottom area of the cover
-          description: The font color of the bottom area. Will also be used for the inactive thumb register.
+          label: Font color of cover-bottom
+          placeholder: white
+          class: medium
     fieldsetfonts:
       type: fieldset
       legend: Text
       fields:
-        fontsize:
-          type: number
-          label: General font size for body text
-        fontbody:
-          type: select
-          label: font for body text
-          options:
-            'Noto Serif': Noto Serif
-            'Open Sans': Open Sans
-            'Jost': Jost
         fontheadline:
           type: select
           label: font for headlines
+          class: medium
           options:
             'Noto Serif': Noto Serif
             'Open Sans': Open Sans
             'Jost': Jost
+        fontheadlinecolor:
+          type: text
+          label: Font color for headlines
+          placeholder: cadetblue
+          class: medium
+        fontbody:
+          type: select
+          label: font for body text
+          class: medium
+          options:
+            'Noto Serif': Noto Serif
+            'Open Sans': Open Sans
+            'Jost': Jost
+        fontbodycolor:
+          type: text
+          label: Font color for body text
+          placeholder: '#333'
+          class: medium
+        linkcolor:
+          type: text
+          label: Font color for links
+          placeholder: cadetblue
+          class: medium
+        contrastcolor:
+          type: text
+          label: contrast color, e.g. for table headers with white text
+          placeholder: cadetblue
+          class: medium
+        fontsize:
+          type: number
+          label: General font size for body text
         textalign:
           type: select
           label: text alignment 

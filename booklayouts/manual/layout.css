@@ -1,4 +1,10 @@
 @font-face {
+    font-family: 'Open Sans';
+    src:  url('fonts/Open_Sans/OpenSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
     font-family: 'Jost';
     src:  url('fonts/Jost/Jost-300-Light.ttf') format('truetype');
     font-weight: normal;
@@ -21,17 +27,17 @@ html{
   -webkit-text-size-adjust:100%;
 }
 body{
-  font-size: 12px;
+  font-size: var(--font-size);
   line-height: calc(2px + 4.5ex + 2px); /* https://hugogiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height */
   line-height: 1.2em;
-  font-family: 'Jost', sans-serif;
+  font-family: var(--body-font);
   margin: 0;
   padding: 0;
   text-rendering: optimizeLegibility;
 }
 
 h1,h2,h3,h4,h5,h6{
-  font-family: 'Jost', sans-serif; 
+  font-family: var(--headline-font); 
 }
 
 .bookcontent h1, .bookcontent h2, .bookcontent h3, .bookcontent h4, .bookcontent h5, .bookcontent h6{
@@ -137,12 +143,13 @@ h5,h6{
 /* Paragraphs justified, with hyphens, paragraph must have at least 2 lines at start or end of page (widow/orphan) */
 p{
   word-wrap: break-word;
-  hyphens: auto;
-  text-align: justify;
+  hyphens: var(--hyphens);
+  text-align: var(--text-align);
   widows: 2;
   orphans: 2;
   margin-bottom: .8em;
 }
+
 
 /* indent all paragraphs except the first paragraph 
 p + p {
