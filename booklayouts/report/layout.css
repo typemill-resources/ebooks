@@ -140,7 +140,7 @@ p{
   text-align: var(--text-align);
   widows: 2;
   orphans: 2;
-  margin-bottom: .8em;
+  margin-bottom: 12px;
 }
 
 
@@ -510,6 +510,8 @@ sup:before{
 sup:after{
   content: ']';
 }
+
+/*
 .footnotes{
   font-size: 0.8em;
 }
@@ -533,7 +535,7 @@ sup:after{
   text-decoration: none;
 }
 
-/* span style footnotes */
+/* span style footnotes 
 span.footnote:first-child{
     border-top: solid black thin;  
 }
@@ -724,7 +726,7 @@ h2.cover-subtitle {
 img.logo{
   position: absolute;
   top: 40px;
-  right: 40px;
+  right: 60px;
   max-width: 210px;
   max-height: 70px;
 }

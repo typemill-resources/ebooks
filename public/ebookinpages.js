@@ -205,8 +205,8 @@ Vue.component('tab-ebooks', {
 			})
 			.catch(function (error)
 			{
-			});				
-		},		
+			});
+		},
 		markSelectedPages: function(navigation, selectedPages, markedNavigation)
 		{
 			for(let i = 0; i < navigation.length; i++)

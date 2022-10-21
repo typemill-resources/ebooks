@@ -1,12 +1,12 @@
 /**
- * @license Paged.js v0.2.0 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ * @license Paged.js v0.3.5 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
  */
 
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
 	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.PagedPolyfill = factory());
-}(this, (function () { 'use strict';
+})(this, (function () { 'use strict';
 
 	var eventEmitter = {exports: {}};
 
@@ -374,11 +374,12 @@
 				if(executing && typeof executing["then"] === "function") {
 					// Task is a function that returns a promise
 					promises.push(executing);
+				} else {
+					// Otherwise Task resolves immediately, add resolved promise with result
+					promises.push(new Promise((resolve, reject) => {
+						resolve(executing);
+					}));
 				}
-				// Otherwise Task resolves immediately, add resolved promise with result
-				promises.push(new Promise((resolve, reject) => {
-					resolve(executing);
-				}));
 			});
 
 
@@ -599,7 +600,7 @@
 		return node && node.nodeType === 3;
 	}
 
-	function *walk$2(start, limiter) {
+	function* walk$2(start, limiter) {
 		let node = start;
 
 		while (node) {
@@ -887,8 +888,20 @@
 		if (node.dataset && node.dataset.undisplayed) {
 			return false;
 		}
-		const previousSignificantNodePage = previousSignificantNode.dataset ? previousSignificantNode.dataset.page : undefined;
-		const currentNodePage = node.dataset ? node.dataset.page : undefined;
+		let previousSignificantNodePage = previousSignificantNode.dataset ? previousSignificantNode.dataset.page : undefined;
+		if (typeof previousSignificantNodePage === "undefined") {
+			const nodeWithNamedPage = getNodeWithNamedPage(previousSignificantNode);
+			if (nodeWithNamedPage) {
+				previousSignificantNodePage = nodeWithNamedPage.dataset.page;
+			}
+		}
+		let currentNodePage = node.dataset ? node.dataset.page : undefined;
+		if (typeof currentNodePage === "undefined") {
+			const nodeWithNamedPage = getNodeWithNamedPage(node, previousSignificantNode);
+			if (nodeWithNamedPage) {
+				currentNodePage = nodeWithNamedPage.dataset.page;
+			}
+		}
 		return currentNodePage !== previousSignificantNodePage;
 	}
 
@@ -899,7 +912,7 @@
 		let currentLetter;
 
 		let range;
-		const significantWhitespaces = node.parentElement && node.parentElement.nodeName === 'PRE';
+		const significantWhitespaces = node.parentElement && node.parentElement.nodeName === "PRE";
 
 		while (currentOffset < max) {
 			currentLetter = currentText[currentOffset];
@@ -1025,7 +1038,11 @@
 	}
 
 	function findRef(ref, doc) {
-		return doc.querySelector(`[data-ref='${ref}']`);
+		if (doc.indexOfRefs && doc.indexOfRefs[ref]) {
+			return doc.indexOfRefs[ref];
+		} else {
+			return doc.querySelector(`[data-ref='${ref}']`);
+		}
 	}
 
 	function validNode(node) {
@@ -1152,6 +1169,23 @@
 	function previousSignificantNode(sib) {
 		while ((sib = sib.previousSibling)) {
 			if (!isIgnorable(sib)) return sib;
+		}
+		return null;
+	}
+
+	function getNodeWithNamedPage(node, limiter) {
+		if (node && node.dataset && node.dataset.page) {
+			return node;
+		}
+		if (node.parentNode) {
+			while ((node = node.parentNode)) {
+				if (limiter && node === limiter) {
+					return;
+				}
+				if (node.dataset && node.dataset.page) {
+					return node;
+				}
+			}
 		}
 		return null;
 	}
@@ -1345,7 +1379,7 @@
 				this.hooks && this.hooks.layoutNode.trigger(node);
 
 				// Check if the rendered element has a break set
-				if (hasRenderedContent && this.shouldBreak(node)) {
+				if (hasRenderedContent && this.shouldBreak(node, start)) {
 					this.hooks && this.hooks.layout.trigger(wrapper, this);
 
 					let imgs = wrapper.querySelectorAll("img");
@@ -1443,17 +1477,17 @@
 			return newBreakToken;
 		}
 
-		shouldBreak(node) {
-			let previousSibling = previousSignificantNode(node);
+		shouldBreak(node, limiter) {
+			let previousNode = nodeBefore(node, limiter);
 			let parentNode = node.parentNode;
-			let parentBreakBefore = needsBreakBefore(node) && parentNode && !previousSibling && needsBreakBefore(parentNode);
+			let parentBreakBefore = needsBreakBefore(node) && parentNode && !previousNode && needsBreakBefore(parentNode);
 			let doubleBreakBefore;
 
 			if (parentBreakBefore) {
 				doubleBreakBefore = node.dataset.breakBefore === parentNode.dataset.breakBefore;
 			}
 
-			return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node, previousSibling);
+			return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node, previousNode);
 		}
 
 		forceBreak() {
@@ -1502,6 +1536,13 @@
 
 			} else {
 				dest.appendChild(clone);
+			}
+
+			if (clone.dataset && clone.dataset.ref) {
+				if (!dest.indexOfRefs) {
+					dest.indexOfRefs = {};
+				}
+				dest.indexOfRefs[clone.dataset.ref] = clone;
 			}
 
 			let nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
@@ -1748,6 +1789,13 @@
 							tableRow = parentOf(node, "TR", rendered);
 						}
 						if (tableRow) {
+							// honor break-inside="avoid" in parent tbody/thead
+							let container = tableRow.parentElement;
+							if (["TBODY", "THEAD"].includes(container.nodeName)) {
+								let styles = window.getComputedStyle(container);
+								if (styles.getPropertyValue("break-inside") === "avoid") prev = container;
+							}
+
 							// Check if the node is inside a row with a rowspan
 							const table = parentOf(tableRow, "TABLE", rendered);
 							if (table) {
@@ -1756,7 +1804,7 @@
 									columnCount += parseInt(cell.getAttribute("COLSPAN") || "1");
 								}
 								if (tableRow.cells.length !== columnCount) {
-									let previousRow = tableRow.previousSibling;
+									let previousRow = tableRow.previousElementSibling;
 									let previousRowColumnCount;
 									while (previousRow !== null) {
 										previousRowColumnCount = 0;
@@ -1766,7 +1814,7 @@
 										if (previousRowColumnCount === columnCount) {
 											break;
 										}
-										previousRow = previousRow.previousSibling;
+										previousRow = previousRow.previousElementSibling;
 									}
 									if (previousRowColumnCount === columnCount) {
 										prev = previousRow;
@@ -1984,7 +2032,7 @@
 	 * @class
 	 */
 	class Page {
-		constructor(pagesArea, pageTemplate, blank, hooks) {
+		constructor(pagesArea, pageTemplate, blank, hooks, options) {
 			this.pagesArea = pagesArea;
 			this.pageTemplate = pageTemplate;
 			this.blank = blank;
@@ -1993,6 +2041,8 @@
 			this.height = undefined;
 
 			this.hooks = hooks;
+
+			this.settings = options || {};
 
 			// this.element = this.create(this.pageTemplate);
 		}
@@ -2103,7 +2153,12 @@
 
 			this.startToken = breakToken;
 
-			this.layoutMethod = new Layout(this.area, this.hooks, maxChars);
+			let settings = this.settings;
+			if (!settings.maxChars && maxChars) {
+				settings.maxChars = maxChars;
+			}
+
+			this.layoutMethod = new Layout(this.area, this.hooks, settings);
 
 			let renderResult = await this.layoutMethod.renderTo(this.wrapper, contents, breakToken);
 			let newBreakToken = renderResult.breakToken;
@@ -2739,7 +2794,7 @@
 		// }
 
 		async render(parsed, startAt) {
-			let renderer = this.layout(parsed, startAt, this.settings);
+			let renderer = this.layout(parsed, startAt);
 
 			let done = false;
 			let result;
@@ -2913,7 +2968,7 @@
 		addPage(blank) {
 			let lastPage = this.pages[this.pages.length - 1];
 			// Create a new page from the template
-			let page = new Page(this.pagesArea, this.pageTemplate, blank, this.hooks);
+			let page = new Page(this.pagesArea, this.pageTemplate, blank, this.hooks, this.settings);
 
 			this.pages.push(page);
 
@@ -26034,7 +26089,7 @@
 	var _args = [
 		[
 			"css-tree@1.1.3",
-			"/home/gitlab-runner/builds/xUiosxA2/0/tools/pagedjs"
+			"/home/gitlab-runner/builds/BQJy2NwB/0/pagedjs/pagedjs"
 		]
 	];
 	var _from = "css-tree@1.1.3";
@@ -26059,7 +26114,7 @@
 	];
 	var _resolved = "https://registry.npmjs.org/css-tree/-/css-tree-1.1.3.tgz";
 	var _spec = "1.1.3";
-	var _where = "/home/gitlab-runner/builds/xUiosxA2/0/tools/pagedjs";
+	var _where = "/home/gitlab-runner/builds/BQJy2NwB/0/pagedjs/pagedjs";
 	var author = {
 		name: "Roman Dvornov",
 		email: "rdvornov@gmail.com",
@@ -26881,6 +26936,10 @@
 	column-fill: auto;
 }
 
+.pagedjs_pagebox > .pagedjs_area > .pagedjs_page_content > div {
+	height: inherit;
+}
+
 .pagedjs_pagebox > .pagedjs_area > .pagedjs_footnote_area {
 	position: relative;
 	overflow: hidden;
@@ -27148,6 +27207,8 @@
 	html {
 		width: 100%;
 		height: 100%;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
 	}
 	body {
 		margin: 0;
@@ -30324,11 +30385,8 @@
 		afterPageLayout(pageElement, page, breakToken, chunker) {
 			var orderedLists = pageElement.getElementsByTagName("ol");
 			for (var list of orderedLists) {
-				if (list.hasChildNodes()) {
+				if (list.firstElementChild) {
 					list.start = list.firstElementChild.dataset.itemNum;
-				}
-				else {
-					list.parentNode.removeChild(list);
 				}
 			}
 		}
@@ -30733,7 +30791,7 @@
 
 				if (node.dataset.note === "footnote") {
 					notes = [node];
-				} else if (node.dataset.hasNotes) {
+				} else if (node.dataset.hasNotes || node.querySelectorAll("[data-note='footnote']")) {
 					notes = node.querySelectorAll("[data-note='footnote']");
 				}
 
@@ -30937,7 +30995,7 @@
 			noteInnerContent.style.columnGap = "calc(var(--pagedjs-margin-right) + var(--pagedjs-margin-left))";
 
 			// Get overflow
-			let layout = new Layout(noteArea);
+			let layout = new Layout(noteArea, undefined, chunker.settings);
 			let overflow = layout.findOverflow(noteInnerContent, noteContentBounds);
 
 			if (overflow) {
@@ -31195,16 +31253,18 @@
 		afterPageLayout(fragment) {
 			for (let name of Object.keys(this.runningSelectors)) {
 				let set = this.runningSelectors[name];
-				let selected = fragment.querySelector(set.selector);
-				if (selected) {
-					// let cssVar;
-					if (set.identifier === "running") {
-						// cssVar = selected.textContent.replace(/\\([\s\S])|(["|'])/g,"\\$1$2");
-						// this.styleSheet.insertRule(`:root { --string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
-						// fragment.style.setProperty(`--string-${name}`, `"${cssVar}"`);
-						set.first = selected;
-					} else {
-						console.warn(set.value + "needs css replacement");
+				if (!set.first) {
+					let selected = fragment.querySelector(set.selector);
+					if (selected) {
+						// let cssVar;
+						if (set.identifier === "running") {
+							// cssVar = selected.textContent.replace(/\\([\s\S])|(["|'])/g,"\\$1$2");
+							// this.styleSheet.insertRule(`:root { --string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
+							// fragment.style.setProperty(`--string-${name}`, `"${cssVar}"`);
+							set.first = selected;
+						} else {
+							console.warn(set.value + "needs css replacement");
+						}
 					}
 				}
 			}
@@ -31254,7 +31314,7 @@
 
 			switch (parts.length) {
 				case 4:
-					if (parts[3] === "pagedjs_first_page") {
+					if (/^pagedjs_[\w-]+_first_page$/.test(parts[3])) {
 						weight = 7;
 					} else if (parts[3] === "pagedjs_left_page" || parts[3] === "pagedjs_right_page") {
 						weight = 6;
@@ -31561,7 +31621,7 @@
 		afterPageLayout(fragment, page, breakToken, chunker) {
 			Object.keys(this.counterTargets).forEach((name) => {
 				let target = this.counterTargets[name];
-				let split = target.selector.split("::");
+				let split = target.selector.split(/::?/g);
 				let query = split[0];
 
 				let queried = chunker.pagesArea.querySelectorAll(query + ":not([data-" + target.variable + "])");
@@ -32779,4 +32839,4 @@
 
 	return previewer;
 
-})));
+}));

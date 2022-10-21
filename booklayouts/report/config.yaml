@@ -28,6 +28,10 @@ customforms:
           type: image
           label: Upload your LOGO
           description: only jpg or png accepted. Will be added to the cover bottom area
+        logoleft:
+          type: checkbox
+          label: Position of logo
+          checkboxlabel: Left instead of right 
         coverimage:
           type: image
           label: Upload a cover image

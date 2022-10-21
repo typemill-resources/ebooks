@@ -23,6 +23,10 @@ class ComposerStaticInit5a57d5ff3e57b95aed80ed95a0230093
             'PHPePub\\' => 8,
             'PHPZip\\Zip\\' => 11,
         ),
+        'M' => 
+        array (
+            'Masterminds\\' => 12,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -48,23 +52,27 @@ class ComposerStaticInit5a57d5ff3e57b95aed80ed95a0230093
         ),
         'PHPePub\\' => 
         array (
-            0 => __DIR__ . '/..' . '/grandt/phpepub/src/PHPePub',
+            0 => __DIR__ . '/..' . '/wallabag/phpepub/src/PHPePub',
         ),
         'PHPZip\\Zip\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpzip/phpzip/src/Zip',
+        ),
+        'Masterminds\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/masterminds/html5/src',
         ),
     );
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'RelativePath' => __DIR__ . '/..' . '/grandt/relativepath/RelativePath.php',
-        'UUID' => __DIR__ . '/..' . '/grandt/phpepub/src/lib.uuid.php',
-        'UUIDException' => __DIR__ . '/..' . '/grandt/phpepub/src/lib.uuid.php',
-        'UUIDStorage' => __DIR__ . '/..' . '/grandt/phpepub/src/lib.uuid.php',
-        'UUIDStorageException' => __DIR__ . '/..' . '/grandt/phpepub/src/lib.uuid.php',
-        'UUIDStorageStable' => __DIR__ . '/..' . '/grandt/phpepub/src/lib.uuid.php',
-        'UUIDStorageVolatile' => __DIR__ . '/..' . '/grandt/phpepub/src/lib.uuid.php',
+        'UUID' => __DIR__ . '/..' . '/wallabag/phpepub/src/lib.uuid.php',
+        'UUIDException' => __DIR__ . '/..' . '/wallabag/phpepub/src/lib.uuid.php',
+        'UUIDStorage' => __DIR__ . '/..' . '/wallabag/phpepub/src/lib.uuid.php',
+        'UUIDStorageException' => __DIR__ . '/..' . '/wallabag/phpepub/src/lib.uuid.php',
+        'UUIDStorageStable' => __DIR__ . '/..' . '/wallabag/phpepub/src/lib.uuid.php',
+        'UUIDStorageVolatile' => __DIR__ . '/..' . '/wallabag/phpepub/src/lib.uuid.php',
         'com\\grandt\\BinString' => __DIR__ . '/..' . '/grandt/binstring/BinString.php',
         'com\\grandt\\BinStringStatic' => __DIR__ . '/..' . '/grandt/binstring/BinStringStatic.php',
     );

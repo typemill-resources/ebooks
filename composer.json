@@ -1,6 +1,11 @@
 {
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/trendschau/phpepub"
+        }
+    ],
     "require": {
-        "grandt/phpepub": ">=4.0.3",
-        "php": ">=5.3.0"
+        "wallabag/phpepub": "^4.0.3"
     }
 }

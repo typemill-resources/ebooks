@@ -376,6 +376,11 @@ class Ebooks extends Plugin
 			return $response->withJson(array('data' => false, 'errors' => $validatedParams['errors']), 422);
 		}
 
+		if(!isset($validatedParams['data']) OR empty($validatedParams['data']) OR !$validatedParams['data'])
+		{
+			return $response->withJson(array('data' => false, 'errors' => ['The data you send where empty']), 422);
+		}
+
 		# get the metadata from page
 		$meta = $writeYaml->getYaml($settings['contentFolder'], $item['pathWithoutType'] . '.yaml');
 
@@ -588,29 +593,34 @@ class Ebooks extends Plugin
 			# get the customfield configurations from booklayout folder			
 			$configfolder 	= 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $layout;
 			$bookconfig 	= $writeYaml->getYaml($configfolder, 'config.yaml');
-			$customforms	= $this->withoutFieldsets($bookconfig['customforms']['fields'], []);
-
-			# validation loop: code taken from metaApiController
-			foreach($formdata as $fieldName => $fieldValue)
+			
+			if($bookconfig && isset($bookconfig['customforms']['fields']))
 			{
-				# get the corresponding field definition from original plugin settings
-				$fieldDefinition = isset($customforms[$fieldName]) ? $customforms[$fieldName] : false;
+				$customforms	= $this->withoutFieldsets($bookconfig['customforms']['fields'], []);
 
-				if(!$fieldDefinition)
+				# validation loop: code taken from metaApiController
+				foreach($formdata as $fieldName => $fieldValue)
 				{
-					# we simply delete the params that are not defined to avoid errors. For example, if field-definitions have been changed in a new version
-					unset($params['data'][$fieldName]);
-				}
-				else
-				{
-					# validate user input for this field
-					$result = $validation->objectField($fieldName, $fieldValue, 'meta', $fieldDefinition);
+					# get the corresponding field definition from original plugin settings
+					$fieldDefinition = isset($customforms[$fieldName]) ? $customforms[$fieldName] : false;
 
-					if($result !== true)
+					if(!$fieldDefinition)
 					{
-						$errors[$fieldName] = $result[$fieldName][0];
+						# we simply delete the params that are not defined to avoid errors. For example, if field-definitions have been changed in a new version
+						unset($params['data'][$fieldName]);
+					}
+					else
+					{
+						# validate user input for this field
+						$result = $validation->objectField($fieldName, $fieldValue, 'meta', $fieldDefinition);
+
+						if($result !== true)
+						{
+							$errors[$fieldName] = $result[$fieldName][0];
+						}
 					}
 				}
+
 			}
 		}
 
@@ -1001,7 +1011,7 @@ class Ebooks extends Plugin
 		{
 			# only selected shortcodes will be rendered
 			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
-		}		
+		}
 		
 		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
 		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
@@ -1194,6 +1204,23 @@ class Ebooks extends Plugin
 		$titleName = (isset($ebookdata['epubtitlepage']) && $ebookdata['epubtitlepage'] != '' ) ? $ebookdata['epubtitlepage'] : 'Notices';
 		$book->addChapter($titleName, "Cover.xhtml", $cover);
 		$log->logLine("Cover added");
+
+		if(isset($ebookdata['imprint']) && $ebookdata['imprint'] != '')
+		{
+			$imprinttitle  	= (isset($ebookdata['imprinttitle']) && $ebookdata['imprinttitle'] != '') ? $ebookdata['imprinttitle'] : 'Imprint';
+			$imprintarray 	= $parsedown->text($ebookdata['imprint'], $itemUrl = false);
+			$imprinthtml 	= $parsedown->markup($imprintarray, $itemUrl = false);
+
+			$imprint = $content_start;
+			$imprint .= "<h1>" . $imprinttitle . "</h1>";
+			$imprint .= $imprinthtml;
+			$imprint .= $bookEnd;
+
+			$book->addChapter($imprinttitle, "Imprint.xhtml", $imprint);
+
+			# create the content here
+			$log->logLine("Imprint added");
+		}
 
 		# create the content here
 		$log->logLine("Build Chapters");
