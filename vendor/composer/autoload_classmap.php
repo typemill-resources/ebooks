@@ -8,12 +8,12 @@ $baseDir = dirname($vendorDir);
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'RelativePath' => $vendorDir . '/grandt/relativepath/RelativePath.php',
-    'UUID' => $vendorDir . '/wallabag/phpepub/src/lib.uuid.php',
-    'UUIDException' => $vendorDir . '/wallabag/phpepub/src/lib.uuid.php',
-    'UUIDStorage' => $vendorDir . '/wallabag/phpepub/src/lib.uuid.php',
-    'UUIDStorageException' => $vendorDir . '/wallabag/phpepub/src/lib.uuid.php',
-    'UUIDStorageStable' => $vendorDir . '/wallabag/phpepub/src/lib.uuid.php',
-    'UUIDStorageVolatile' => $vendorDir . '/wallabag/phpepub/src/lib.uuid.php',
+    'UUID' => $vendorDir . '/trendschau/phpepub/src/lib.uuid.php',
+    'UUIDException' => $vendorDir . '/trendschau/phpepub/src/lib.uuid.php',
+    'UUIDStorage' => $vendorDir . '/trendschau/phpepub/src/lib.uuid.php',
+    'UUIDStorageException' => $vendorDir . '/trendschau/phpepub/src/lib.uuid.php',
+    'UUIDStorageStable' => $vendorDir . '/trendschau/phpepub/src/lib.uuid.php',
+    'UUIDStorageVolatile' => $vendorDir . '/trendschau/phpepub/src/lib.uuid.php',
     'com\\grandt\\BinString' => $vendorDir . '/grandt/binstring/BinString.php',
     'com\\grandt\\BinStringStatic' => $vendorDir . '/grandt/binstring/BinStringStatic.php',
 );

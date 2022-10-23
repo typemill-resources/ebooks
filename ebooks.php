@@ -1306,7 +1306,53 @@ class Ebooks extends Plugin
 				}
 			}
 
-			$book->addChapter($prefix . $chapter['metadata']['meta']['title'], $filename, $chapterHtml, true, EPub::EXTERNAL_REF_IGNORE);
+
+		    /**
+		     * Add a chapter to the book, as a chapter should not exceed 250kB, you can parse an array with multiple parts as $chapterData.
+		     * These will still only show up as a single chapter in the book TOC.
+		     *
+		     * @param string $chapterName        Name of the chapter, will be use din the TOC
+		     * @param string $fileName           Filename to use for the chapter, must be unique for the book.
+		     * @param string $chapterData        Chapter text in XHTML or array $chapterData valid XHTML data for the chapter. File should NOT exceed 250kB.
+		     * @param bool   $autoSplit          Should the chapter be split if it exceeds the default split size? Default=FALSE, only used if $chapterData is a string.
+		     * @param int    $externalReferences How to handle external references, EPub::EXTERNAL_REF_IGNORE, EPub::EXTERNAL_REF_ADD or EPub::EXTERNAL_REF_REMOVE_IMAGES? See documentation for <code>processChapterExternalReferences</code> for explanation. Default is EPub::EXTERNAL_REF_IGNORE.
+		     * @param string $baseDir            Default is "", meaning it is pointing to the document root. NOT used if $externalReferences is set to EPub::EXTERNAL_REF_IGNORE.
+		     *
+		     * @return mixed $success            FALSE if the addition failed, else the new NavPoint.
+		     */
+
+		    /**
+		     * Process external references from a HTML to the book. The chapter itself is not stored.
+		     * the HTML is scanned for &lt;link..., &lt;style..., and &lt;img tags.
+		     * Embedded CSS styles and links will also be processed.
+		     * Script tags are not processed, as scripting should be avoided in e-books.
+		     *
+		     * EPub keeps track of added files, and duplicate files referenced across multiple
+		     *  chapters, are only added once.
+		     *
+		     * If the $doc is a string, it is assumed to be the content of an HTML file,
+		     *  else is it assumes to be a DOMDocument.
+		     *
+		     * Basedir is the root dir the HTML is supposed to "live" in, used to resolve
+		     *  relative references such as <code>&lt;img src="../images/image.png"/&gt;</code>
+		     *
+		     * $externalReferences determines how the function will handle external references.
+		     *
+		     * @param mixed  &$doc               (referenced)
+		     * @param int    $externalReferences How to handle external references, EPub::EXTERNAL_REF_IGNORE, EPub::EXTERNAL_REF_ADD or EPub::EXTERNAL_REF_REMOVE_IMAGES? Default is EPub::EXTERNAL_REF_ADD.
+		     * @param string $baseDir            Default is "", meaning it is pointing to the document root.
+		     * @param string $htmlDir            The path to the parent HTML file's directory from the root of the archive.
+		     *
+		     * @return bool  false if unsuccessful (book is finalized or $externalReferences == EXTERNAL_REF_IGNORE).
+		     */
+
+			$book->addChapter(
+				$chapterName 			= $prefix . $chapter['metadata']['meta']['title'], 
+				$fileName 				= $filename,
+				$chapterData 			= $chapterHtml,
+				$autoSplit 				= true,
+				$externalReferences 	= EPub::EXTERNAL_REF_ADD
+			);
 		}
 
 		$book->rootLevel();

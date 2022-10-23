@@ -11,7 +11,7 @@ return array(
     'grandt\\ResizeGif\\Debug\\' => array($vendorDir . '/grandt/phpresizegif/src/ResizeGif/Debug'),
     'grandt\\ResizeGif\\' => array($vendorDir . '/grandt/phpresizegif/src/ResizeGif'),
     'ZipMerge\\' => array($vendorDir . '/grandt/phpzipmerge/src/ZipMerge'),
-    'PHPePub\\' => array($vendorDir . '/wallabag/phpepub/src/PHPePub'),
+    'PHPePub\\' => array($vendorDir . '/trendschau/phpepub/src/PHPePub'),
     'PHPZip\\Zip\\' => array($vendorDir . '/phpzip/phpzip/src/Zip'),
     'Masterminds\\' => array($vendorDir . '/masterminds/html5/src'),
 );

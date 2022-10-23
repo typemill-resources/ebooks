@@ -2,10 +2,10 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/trendschau/phpepub"
+            "url": "https://github.com/trendschau/PHPePub"
         }
     ],
     "require": {
-        "wallabag/phpepub": "^4.0.3"
+        "trendschau/phpepub": "dev-master"
     }
 }

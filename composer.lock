@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2c4de7321ec5709e9bf74c9e8dbf65d9",
+    "content-hash": "b92d599395e563f5ba46ffee559a2883",
     "packages": [
         {
             "name": "grandt/binstring",
@@ -346,17 +346,17 @@
             "time": "2015-11-16T16:30:51+00:00"
         },
         {
-            "name": "wallabag/phpepub",
-            "version": "4.0.10",
+            "name": "trendschau/phpepub",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/wallabag/PHPePub.git",
-                "reference": "1f74a5c113ffbea199cfca34e6521a08e6f67445"
+                "url": "https://github.com/trendschau/PHPePub.git",
+                "reference": "0baac21bf60b691469e59613795fa69b48c3ffec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wallabag/PHPePub/zipball/1f74a5c113ffbea199cfca34e6521a08e6f67445",
-                "reference": "1f74a5c113ffbea199cfca34e6521a08e6f67445",
+                "url": "https://api.github.com/repos/trendschau/PHPePub/zipball/0baac21bf60b691469e59613795fa69b48c3ffec",
+                "reference": "0baac21bf60b691469e59613795fa69b48c3ffec",
                 "shasum": ""
             },
             "require": {
@@ -366,6 +366,7 @@
                 "php": ">=5.3.0",
                 "phpzip/phpzip": "~2.0.7"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -375,7 +376,6 @@
                     "src/lib.uuid.php"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "LGPL-2.1"
             ],
@@ -404,22 +404,23 @@
                 }
             ],
             "description": "Package to create and stream e-books in the ePub 2.0 and 3.0 formats.",
-            "homepage": "https://github.com/wallabag/PHPePub",
+            "homepage": "https://github.com/trendschau/PHPePub",
             "keywords": [
                 "e-book",
                 "epub"
             ],
             "support": {
-                "issues": "https://github.com/wallabag/PHPePub/issues",
-                "source": "https://github.com/wallabag/PHPePub/tree/4.0.10"
+                "source": "https://github.com/trendschau/PHPePub/tree/master"
             },
-            "time": "2022-03-21T19:27:18+00:00"
+            "time": "2022-10-21T20:23:43+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "trendschau/phpepub": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
