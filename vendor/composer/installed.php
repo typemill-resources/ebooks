@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '65527db80e27a28a5e2b9250f03f79fb29b67404',
+        'reference' => 'ba85c95aea08bde306a845816375c816cb5212bf',
         'name' => '__root__',
         'dev' => true,
     ),
@@ -16,7 +16,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '65527db80e27a28a5e2b9250f03f79fb29b67404',
+            'reference' => 'ba85c95aea08bde306a845816375c816cb5212bf',
             'dev_requirement' => false,
         ),
         'grandt/binstring' => array(
@@ -56,12 +56,12 @@
             'dev_requirement' => false,
         ),
         'masterminds/html5' => array(
-            'pretty_version' => '2.7.6',
-            'version' => '2.7.6.0',
+            'pretty_version' => '2.8.1',
+            'version' => '2.8.1.0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../masterminds/html5',
             'aliases' => array(),
-            'reference' => '897eb517a343a2281f11bc5556d6548db7d93947',
+            'reference' => 'f47dcf3c70c584de14f21143c55d9939631bc6cf',
             'dev_requirement' => false,
         ),
         'phpzip/phpzip' => array(

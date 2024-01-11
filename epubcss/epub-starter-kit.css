@@ -1,0 +1,732 @@
+/* https://github.com/mattharrison/epub-css-starter-kit */
+
+a,
+abbr,
+acronym,
+address,
+applet,
+article,
+aside,
+audio,
+b,
+big,
+blockquote,
+body,
+canvas,
+caption,
+center,
+cite,
+code,
+dd,
+del,
+details,
+dfn,
+div,
+dl,
+dt,
+em,
+embed,
+fieldset,
+figcaption,
+figure,
+footer,
+form,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+header,
+hgroup,
+html,
+i,
+iframe,
+img,
+ins,
+kbd,
+label,
+legend,
+mark,
+menu,
+nav,
+object,
+output,
+p,
+pre,
+q,
+ruby,
+s,
+samp,
+section,
+small,
+span,
+strike,
+strong,
+sub,
+summary,
+sup,
+table,
+tbody,
+td,
+tfoot,
+th,
+thead,
+time,
+tr,
+tt,
+u,
+var,
+video{
+	margin-right:0;
+	padding:0;
+	border:0;
+	font-size:100%;
+	vertical-align:baseline
+}
+table{
+	border-collapse:collapse;
+	border-spacing:0
+}
+@page{
+	margin-top:30px;
+	margin-bottom:20px
+}
+div.cover{
+	text-align:center;
+	page-break-after:always;
+	padding:0;
+	margin:0
+}
+div.cover img{
+	height:100%;
+	max-width:100%;
+	padding:10px;
+	margin:0;
+	background-color:#cccccc
+}
+.half{
+	max-width:50%
+}
+.tenth{
+	max-width:10%;
+	width:10%
+}
+.cover-img{
+	height:100%;
+	max-width:100%;
+	padding:0;
+	margin:0
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6{
+	hyphens:none !important;
+	-moz-hyphens:none !important;
+	-webkit-hyphens:none !important;
+	adobe-hyphenate:none !important;
+	page-break-after:avoid;
+	page-break-inside:avoid;
+	text-indent:0;
+	text-align:left;
+	font-family:Helvetica, Arial, sans-serif
+}
+h1{
+	font-size:1.6em;
+	margin-bottom:3.2em
+}
+.title h1{
+	margin-bottom:0;
+	margin-top:3.2em
+}
+h2{
+	font-size:1em;
+	margin-top:0.5em;
+	margin-bottom:0.5em
+}
+h3{
+	font-size:0.625em
+}
+h4{
+	font-size:0.391em
+}
+h5{
+	font-size:0.244em
+}
+h6{
+	font-size:0.153em
+}
+h1 + p,
+h2 + p,
+h3 + p,
+h4 + p,
+h5 + p,
+h6 + p{
+	text-indent:0
+}
+p{
+	font-family:"Palatino", "Times New Roman", Caecilia, serif;
+	-webkit-hyphens:auto;
+	-moz-hyphens:auto;
+	hyphens:auto;
+	hyphenate-after:3;
+	hyphenate-before:3;
+	hyphenate-lines:2;
+	-webkit-hyphenate-after:3;
+	-webkit-hyphenate-before:3;
+	-webkit-hyphenate-lines:2;
+	line-height:1.5em;
+	margin:0;
+	text-align:justify;
+	text-indent:1em;
+	orphans:2;
+	widows:2
+}
+p.first-para,
+p.first-para-chapter,
+p.note-p-first{
+	text-indent:0
+}
+p.first-para-chapter::first-line{
+	font-variant:small-caps
+}
+p.no-indent{
+	text-indent:0
+}
+.no-hyphens{
+	hyphens:none !important;
+	-moz-hyphens:none !important;
+	-webkit-hyphens:none !important;
+	adobe-hyphenate:none !important
+}
+.rtl{
+	direction:rtl;
+	float:right
+}
+.drop{
+	overflow:hidden;
+	line-height:89%;
+	height:0.8em;
+	font-size:281%;
+	margin-right:0.075em;
+	float:left
+}
+.dropcap{
+	line-height:100%;
+	font-size:341%;
+	margin-right:0.075em;
+	margin-top:-0.22em;
+	float:left;
+	height:0.8em
+}
+dl,
+ol,
+ul{
+	margin:1em 0;
+	text-align:left
+}
+li{
+	font-family:"Palatino", "Times New Roman", Caecilia, serif;
+	line-height:1.5em;
+	orphans:2;
+	widows:2;
+	text-align:justify;
+	text-indent:0;
+	margin:0
+}
+li p{
+	text-indent:0
+}
+dt{
+	font-weight:bold;
+	font-family:Helvetica, Arial, sans-serif
+}
+dd{
+	line-height:1.5em;
+	font-family:"Palatino", "Times New Roman", Caecilia, serif
+}
+dd p{
+	text-indent:0
+}
+blockquote{
+	margin-left:1em;
+	margin-right:1em;
+	line-height:1.5em;
+	font-style:italic
+}
+blockquote p,
+blockquote p.first-para{
+	text-indent:0
+}
+code,
+kbd,
+pre,
+samp,
+tt{
+	font-family:"Courier New", Courier, monospace;
+	word-wrap:break-word
+}
+pre{
+	font-size:0.8em;
+	line-height:1.2em;
+	margin-left:1em;
+	margin-bottom:1em;
+	white-space:pre-wrap;
+	display:block
+}
+img{
+	border-radius:0.3em;
+	-webkit-border-radius:0.3em;
+	-webkit-box-shadow:rgba(0, 0, 0, 0.15) 0 1px 4px;
+	box-shadow:rgba(0, 0, 0, 0.15) 0 1px 4px;
+	box-sizing:border-box;
+	border:white 0.5em solid;
+	max-width:80%;
+	max-height:80%
+}
+img.pwhack{
+	width:100%
+}
+.group{
+	page-break-inside:avoid
+}
+.caption{
+	text-align:center;
+	font-size:0.8em;
+	font-weight:bold
+}
+p img{
+	border-radius:0;border:none
+}
+figure{
+	padding:1em;
+	background-color:#cccccc;
+	border:1px solid black;
+	text-align:center
+}
+figure figcaption{
+	text-align:center;
+	font-size:0.8em;
+	font-weight:bold
+}
+div.div-literal-block-admonition{
+	margin-left:1em;
+	background-color:#cccccc
+}
+div.hint,
+div.note,
+div.tip{
+	margin:1em 0 1em 0 !important;
+	background-color:#cccccc;
+	padding:1em !important;
+	border-top:0 solid #cccccc;
+	border-bottom:0 dashed #cccccc;
+	page-break-inside:avoid
+}
+.admonition-title,
+p.note-title{
+	margin-top:0;
+	font-variant:small-caps;
+	font-size:0.9em;
+	text-align:center;
+	font-weight:bold;
+	font-style:normal;
+	-webkit-hyphens:none;
+	-moz-hyphens:none;
+	hyphens:none
+}
+.note-p,
+div.note p{
+	text-indent:1em;
+	margin-left:0;
+	margin-right:0
+}
+div.note p.note-p-first{
+	text-indent:0;
+	margin-left:0;
+	margin-right:0
+}
+table{
+	page-break-inside:avoid;
+	border:1px;
+	margin:1em auto;
+	border-collapse:collapse;
+	border-spacing:0
+}
+th{
+	font-variant:small-caps;
+	padding:5px !important;
+	vertical-align:baseline;
+	border-bottom:1px solid black
+}
+td{
+	font-family:"Palatino", "Times New Roman", Caecilia, serif;
+	font-size:small;
+	hyphens:none;
+	-moz-hyphens:none;
+	-webkit-hyphens:none;
+	padding:5px !important;
+	page-break-inside:avoid;
+	text-align:left;
+	text-indent:0;
+	vertical-align:baseline
+}
+td:nth-last-child{
+	border-bottom:1px solid black
+}
+.zebra{}
+.zebra tr th{
+	background-color:white
+}
+.zebra tr:nth-child(6n+0),
+.zebra tr:nth-child(6n+1),
+.zebra tr:nth-child(6n-1){
+	background-color:#cccccc
+}
+sup{
+	vertical-align:super;
+	font-size:0.5em;
+	line-height:0.5em
+}
+sub{
+	vertical-align:sub;
+	font-size:0.5em;
+	line-height:0.5em
+}
+table.footnote{
+	margin:0.5em 0 0
+}
+.footnote{
+	font-size:0.8em
+}
+.footnote-link{
+	font-size:0.8em;
+	vertical-align:super
+}
+.tocEntry-1 a{
+	font-weight:bold;
+	text-decoration:none;
+	color:black
+}
+.tocEntry-2 a{
+	margin-left:1em;
+	text-indent:1em;
+	text-decoration:none;
+	color:black
+}
+.tocEntry-3 a{
+	text-indent:2em;
+	text-decoration:none;
+	color:black
+}
+.tocEntry-4 a{
+	text-indent:3em;
+	text-decoration:none;
+	color:black
+}
+.copyright-top{
+	margin-top:6em
+}
+.page-break-before{
+	page-break-before:always
+}
+.page-break-after{
+	page-break-after:always
+}
+.center{
+	text-indent:0;
+	text-align:center;
+	margin-left:auto;
+	margin-right:auto;
+	display:block
+}
+.right{
+	text-align:right
+}
+.left{
+	text-align:left
+}
+.f-right{
+	float:right
+}
+.f-left{
+	float:left
+}
+.ingredient{
+	page-break-inside:avoid
+}
+.box-example{
+	background-color:#8ae234;
+	margin:2em;
+	padding:1em;
+	border:2px dashed #ef2929
+}
+.blue{
+	background-color:blue
+}
+.dashed{
+	border:2px dashed #ef2929
+}
+.padding-only{
+	padding:1em
+}
+.margin-only{
+	margin:2em
+}
+.smaller{
+	font-size:0.8em
+}
+.em1{
+	font-size:0.5em
+}
+.em2{
+	font-size:0.75em
+}
+.em3{
+	font-size:1em
+}
+.em4{
+	font-size:1.5em
+}
+.em5{
+	font-size:2em
+}
+.per1{
+	font-size:50%
+}
+.per2{
+	font-size:75%
+}
+.per3{
+	font-size:100%
+}
+.per4{
+	font-size:150%
+}
+.per5{
+	font-size:200%
+}
+.mousepoem p{
+	line-height:0;
+	margin-left:1em
+}
+.per100{
+	font-size:100%;
+	line-height:0.9em
+}
+.per90{
+	font-size:90%;
+	line-height:0.9em
+}
+.per80{
+	font-size:80%;
+	line-height:0.9em
+}
+.per70{
+	font-size:70%;
+	line-height:0.9em
+}
+.per60{
+	font-size:60%;
+	line-height:0.9em
+}
+.per50{
+	font-size:50%;
+	line-height:1.05em
+}
+.per40{
+	font-size:40%;
+	line-height:0.9em
+}
+.size1{
+	font-size:x-small
+}
+.size2{
+	font-size:small
+}
+.size3{
+	font-size:medium
+}
+.size4{
+	font-size:large
+}
+.size5{
+	font-size:x-large
+}
+.stanza{
+	margin-top:1em;
+	font-family:serif;
+	padding-left:1em
+}
+.stanza p{
+	padding-left:1em
+}
+.poetry{
+	margin:1em
+}
+.ln{
+	float:left;
+	color:#999999;
+	font-size:0.8em;
+	font-style:italic
+}
+.pos1{
+	margin-left:1em;
+	text-indent:-1em
+}
+.pos2{
+	margin-left:2em;
+	text-indent:-1em
+}
+.pos3{
+	margin-left:3em;
+	text-indent:-1em
+}
+.pos4{
+	margin-left:4em;
+	text-indent:-1em
+}
+@font-face{
+	font-family:Inconsolata Mono;
+	font-style:normal;
+	font-weight:normal;
+	src:url("Inconsolata.otf")
+}
+.normal-mono{
+	font-family:"Courier New", Courier, monospace
+}
+.mono,pre,tt{
+	font-family:"Inconsolata Mono", "Courier New", Courier, monospace;
+	font-style:normal
+}
+@font-face{
+	font-family:mgopen modata;
+	font-style:normal;
+	font-weight:normal;
+	font-size:0.5em;
+	src:url("MgOpenModataRegular.ttf")
+}
+.modata{
+	font-family:"mgopen modata"
+}
+@font-face{
+	font-family:hidden;
+	font-style:normal;
+	font-weight:normal;
+	font-size:1em;
+	src:url("invisible1.ttf")
+}
+.hidden-font{
+	font-family:"hidden"
+}
+@media (min-width: 200px){
+	.px200{color:#8ae234}
+}
+@media (min-width: 400px){
+	.px400{color:#8ae234}
+}
+@media (min-width: 800px){
+	.px800{color:#8ae234}
+}
+@media (min-width: 1200px){
+	.px1200{color:#8ae234}
+}
+* WIP device specific... */* 
+@media (min-width: 768px) and (height: 1024px) and (amzn-kf8) */* Retina iPad */
+@media amzn-kf8{
+	span.dropcapold{
+		font-size:300%;
+		font-weight:bold;
+		height:1em;
+		float:left;
+		margin:-0.2em 0.1em 0
+	}
+	.dropcap{
+		line-height:100%;
+		font-size:341%;
+		margin-right:0.075em;
+		margin-top:-0.22em;
+		float:left;
+		height:0.8em
+	}
+}
+@media amzn-mobi{
+	span.dropcap{
+		font-size:1.5em;
+		font-weight:bold
+	}
+	tt{
+		font-family:"Courier New", Courier, monospace
+	}
+	pre{
+		margin-left:1em;
+		margin-bottom:1em;
+		font-size:x-small;
+		font-family:"Courier New", Courier, monospace;
+		white-space:pre-wrap;
+		display:block
+	}
+	pre .no-indent{
+		margin-left:0;
+		text-indent:0
+	}
+	div.no-indent{
+		margin-left:0;
+		text-indent:0
+	}
+	h1{
+		font-size:2em
+	}
+	h2{
+		font-size:1em
+	}
+	h3{
+		font-size:2em
+	}
+	h4{
+		font-size:1em
+	}
+	blockquote{
+		font-style:italics;
+		margin-left:0;
+		margin-right:0
+	}
+	div.note{
+		border:1px solid black
+	}
+	.note-p,
+	div.note{
+		text-indent:1em;
+		margin-left:0;
+		margin-right:0;
+		font-style:italic
+	}
+	.note-p-first{
+		text-indent:0;
+		margin-left:1em;
+		margin-right:1em
+	}
+	.note-p{
+		text-indent:1em;
+		margin-left:1em;
+		margin-right:1em
+	}
+	.pos1{
+		text-indent:-1em
+	}
+	.pos2{
+		text-indent:-1em
+	}
+	.pos3{
+		text-indent:-1em
+	}
+	.pos4{
+		text-indent:-1em
+	}
+}
+.green{
+	color:#8ae234
+}

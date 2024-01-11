@@ -45,22 +45,22 @@ customforms:
           type: text 
           label: Primary Background Color
           description: The background color of the top area. Will also be used for the active thumb register, links, text-backgrounds and more.
-          class: medium
+          css: w-half
         primaryfontcolor:
           type: text
           label: Primary Font Color
           description: The font color of the top area. Will also be used for the active thumb register.
-          class: medium
+          css: w-half
         secondarycolor:
           type: text
           label: Secondary Background Color
           description: The background color of the bottom area. Will also be used of the inactive thumb register.
-          class: medium
+          css: w-half
         secondaryfontcolor:
           type: text
           label: Secondary Font Color
           description: The font color of the bottom area. Will also be used for the inactive thumb register.
-          class: medium
+          css: w-half
     fieldsetfonts:
       type: fieldset
       legend: Text
@@ -68,6 +68,7 @@ customforms:
         fontheadline:
           type: select
           label: font for headlines
+          css: w-half
           options:
             'Noto Serif': Noto Serif
             'Open Sans': Open Sans
@@ -75,6 +76,7 @@ customforms:
         fontbody:
           type: select
           label: font for body text
+          css: w-half
           options:
             'Noto Serif': Noto Serif
             'Open Sans': Open Sans
@@ -82,15 +84,18 @@ customforms:
         fontsize:
           type: number
           label: General font size for body text
+          css: w-half
         textalign:
           type: select
           label: text alignment 
+          css: w-half
           options:
             justify: justify
             left: left
         hyphens:
           type: select
           label: hyphens 
+          css: w-half
           options:
             auto: auto
             none: none

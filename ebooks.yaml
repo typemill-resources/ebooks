@@ -1,11 +1,9 @@
 name: eBooks
-version: 1.5.1
-description: Transform your typemill installation into a micro-publishing studio.
+version: 2.1.0
+description: Transform your typemill installation into a publishing studio.
 author: Sebastian Schürmanns
 homepage: https://trendschau.net
-licence: MIT
-paypal: https://paypal.me/typemill
-amount: 30
+license: MIT/MIXED
 
 forms:
   fields:
@@ -40,19 +38,166 @@ forms:
 metatabs:
   thumbindex:
     fields:
-      language: 
-        type: select
-        label: Select a language
-        description: Please select the language of this chapter. The language is used for the thumb index.
-        class: large
-        options:
-      lang:
-        type: text
-        label: Language Code
-        readonly: true
-        class: medium
-      thumb:
-        type: text
-        label: Thumb Index
-        readonly: true
-        class: medium
+      thumbfields:
+        type: fieldset
+        legend: Multilanguage Thumb Index
+        fields:
+          language: 
+            type: select
+            label: Select a language
+            description: Please select the language of this chapter. The language is used for the thumb index.
+            css: w-full
+            options:
+          lang:
+            type: text
+            label: Language Code
+            readonly: true
+            css: w-half
+          thumb:
+            type: text
+            label: Thumb Index
+            readonly: true
+            css: w-half
+
+epub:
+  fields:
+    fieldsetepubidentifier:
+      type: fieldset
+      legend: ePub Identifier
+      fields:
+        epubidentifierisbn:
+          type: text
+          label: ISBN
+          css: w-full
+          maxlength: 200
+          description: Usually used for published books, where the books unique ISBN number are available.
+        epubidentifieruuid:
+          type: text
+          label: UUID
+          description: You can generate an UUID version 4 with the button. Do not change it after you published a book.
+          css: w-full relative
+          maxlength: 200
+        epubidentifieruri:
+          type: text
+          label: URI
+          description: The URI should be a unique address (e.g an url) where the book is published.
+          css: w-full
+          maxlength: 200
+    fieldsetepubcover:
+      type: fieldset
+      legend: ePub Cover Page
+      fields:
+        epubcover:
+          type: image
+          label: ePub Cover-Image
+          description: Maximum size 5 MB. Must be jpeg format. Ideal size is 2,560 x 1,600 pixels.        
+        epubtitle:
+          type: text
+          label: ePub Title
+          css: w-full
+        epubsubtitle:
+          type: text
+          label: ePub Subtitle
+          css: w-full
+        epubauthorline:
+          type: text
+          label: Authorline
+          css: w-full
+          description: This is a free authorline added to the cover. Any string allowed, but it is not added to the meta-data of the epub.
+    fieldsetepubimprint:
+      type: fieldset
+      legend: ePub Imprint
+      fields:
+        epubimprinttitle:
+          type: text
+          label: Title for imprint
+          css: w-full
+          maxlength: 200
+        epubimprint:
+          type: textarea
+          label: Imprint for the ePub
+          css: w-full
+          maxlength: 1500
+    fieldsetepubnavigation:
+      type: fieldset
+      legend: ePUP Navigation Details
+      fields:
+        epubtocname: 
+          type: text
+          label: 'Name for "Table of Contents"'
+          css: w-half
+          maxlength: 200
+        epubtitlepage: 
+          type: text
+          label: Name for the titlepage
+          css: w-half
+          maxlength: 200
+        epubchaptername: 
+          type: text
+          label: Name for chapter in prefix
+          css: w-half
+          maxlength: 200
+        epubchapternumber:
+          type: checkbox
+          label: Chapter Prefix
+          checkboxlabel: Prefix chapters with numbers automatically
+    fieldsetepubmeta:
+      type: fieldset
+      legend: ePub Meta Details
+      fields:
+        epubdescription:
+          type: textarea
+          label: Short Description for the ePub
+          css: w-full
+          maxlength: 1500
+          description: Used for the dc:source
+        epubsubjects:
+          type: text
+          label: Subjects/Tags
+          description: Separate several subjects with comma.
+          css: w-full
+          maxlength: 200
+        epubpublishername:
+          type: text
+          label: Publisher Name
+          css: w-half
+          maxlength: 200
+          description: Examples of a Publisher include a person, an organization, or a service (used for dc:publisher and dc:relation).
+        epubpublisherurl:
+          type: text
+          label: Publisher URL
+          css: w-half
+          maxlength: 200
+          description: The url of the publishers website (used for dc:publisher and dc:relation).
+        epubauthorfirstname:
+          type: text
+          label: Author First Name
+          css: w-half
+          maxlength: 200
+          description: A person, an organization, or a service primarily responsible for the book (used for dc:creator and docAuthor)
+        epubauthorlastname:
+          type: text
+          label: Author Last Name
+          css: w-half
+          maxlength: 200
+          description: A person, an organization, or a service primarily responsible for the book (used for dc:creator and docAuthor)
+        epubrights:
+          type: text
+          label: ePub Rights
+          description: licence and copyrights that may apply to the book (used for dc:rights).
+          css: w-full
+          maxlength: 200
+        epubsourceurl:
+          type: text
+          label: ePub Source URL
+          description: URL where the book can be downloaded. If an URI is used as an identifier, use the same url here (used for the dc:source)
+          css: w-full
+          maxlength: 200
+    fieldsetdebugepub:
+      type: fieldset
+      legend: Debug
+      fields:
+        epubdebug:
+          type: checkbox
+          label: Debug ePub
+          checkboxlabel: Append a debug report as last chapter to the epub

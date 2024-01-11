@@ -1,226 +1,289 @@
-Vue.component('tab-ebooks', {
-    props: ['saved', 'errors', 'data', 'schema', 'item'],
-    template: '<section>' +
-				'<div class="progressnav">' +
-	    			'<button class="progressbutton"' +
-	    				'v-for="tab in tabs"' +
-	        			'v-bind:key="tab"' +
-	        			'v-bind:class="getTabClass(tab)"' +
-	        			'v-on:click="triggersubmit(tab)">' +
-	        			'{{ tab }} <span v-if="tabErrors[tab]" class="tabalert">!</span>' +
-	    			'</button>' +
-				'</div>' +
-				'<div class="large" v-if="message"><div class="w-100 tc pv2 mv2 white" :class="messagecolor">{{ message }}</div></div>' +
-				'<component v-if="dataLoaded"' +
-					'v-bind:is="currentTabComponent"' +
-					'v-bind:formdata="formData"' +
-					'v-bind:errors="errors"' +
-				    'v-bind:layouts="layoutData"' +
-				    'v-bind:navigation="navigation">' +
-				'</component>' +
-    		'</section>',
+app.component('tab-ebooks', {
+	props: ['item', 'formData', 'formDefinitions', 'saved', 'errors', 'message', 'messageClass'],
+	template: `<section class="dark:bg-stone-700 dark:text-stone-200">
+					<h1 class="text-3xl font-bold mb-4">eBook Studio</h1>
+					<div v-if="home">
+						<p class="font-bold py-3">Welcome the eBook studio of Typemill.</p>
+						<p class="py-3">You can generate eBooks from each chapter and each page of your website. If you want to create (multiple) eBook-projects with all pages, then use the eBook-feature in the settings-area.</p>
+						<p class="py-3">Happy publishing!</p>
+					</div>
+					<form v-else class="inline-block w-full">
+						<ul class="flex flex-wrap mt-4 mb-4">
+							<li v-for="tab in tabs">
+								<button 
+									class="px-2 py-2 border-b-2 border-stone-200 dark:border-stone-900 hover:border-stone-700 hover:dark:border-stone-200 hover:bg-stone-200 hover:dark:bg-stone-900 transition duration-100" 
+									:class="(tab == currentTab) ? 'border-stone-700 bg-stone-200 dark:bg-stone-900 dark:border-stone-200' : ''" 
+									@click.prevent="activateTab(tab)"
+								>{{ $filters.translate(tab) }}</button>
+							</li>
+						</ul>
+						<div>
+							<component
+								:is 				= "currentTabComponent"
+								:errors 			= "formErrors"
+								:formdata 			= "formData"
+								:layouts 			= "layoutData"
+								:navigation 		= "navigation"
+								:ebookprojects 		= "ebookprojects"
+								:currentproject 	= "currentproject"
+								:message  			= "message"
+								:messageClass 		= "messageClass"
+								:previewUrl 		= "previewUrl"
+								:epubUrl 			= "epubUrl"
+								@change-project 	= "setCurrentProject"
+								@create-project 	= "createEbookProject"
+								@delete-project 	= "deleteEbookProject"
+								@save-project		= "storeEbookData"
+								@reset-navigation 	= "resetNavigation"
+								@generate-uuid 		= "setUuid"
+								@toggle-basefolder 	= "toggleBaseFolder"
+								@store-tmp-item 	= "storeTmpItem"
+							></component>
+						</div>
+					</form>
+				</section>`,
 	data: function () {
 		return {
-			root: document.getElementById("main").dataset.url, /* get url of current page */
-			currentTabComponent: "ebook-layout",
-	       	currentTab: "layout",
-	       	nextStep: false,
-    	   	tabs: ["layout", "settings", "content", "epub", "create"],
-			dataLoaded: false,
+			home: false,
+			tabs: ["content", "pdf", "epub"],
+			currentTab: "content",
+			currentTabComponent: "ebook-content",
+
 			navigation: {}, 
-			standardForms: {}, /* holds the standard forms from layout that user has choosen from layoutData */
-			customForms: {}, /* holds the custom forms from layout that user has choosen from layoutData */
 			layoutData: {}, /* holds all the different eBook layouts */
 			formData: {}, /* holds the input data for the forms */
 			formErrors: {},
-			formErrorsReset: {},
-			tabErrors: {},
+			ebookprojects: ['ebookdata.yaml'],
+			currentproject: false,
+			shortcodes: false,
 			message: '',
-			messagecolor: '',
-			initialize: true,
+			messageClass: '',
+
+			previewUrl:  data.urlinfo.baseurl + '/tm/ebooks/preview?itempath=' + this.item.pathWithoutType,
+			epubUrl:  data.urlinfo.baseurl + '/tm/ebooks/epub?itempath=' + this.item.pathWithoutType,
 		}
 	},
 	mounted: function(){
 
+		eventBus.$on('forminput', formdata => {
+			this.formData[formdata.name] = formdata.value;
+		});
+
 		/* use item of page as default navigation */
+
 		this.navigation = [this.item];
 
 		var self = this;
 
-        /* get the latest book data from ebook plugin api */
-        /* we cannot use the "data" object of the tabs for this because the code strips out all metadata that are not defined with tab-forms in the plugin yaml file */
-        /* In the ebook plugin we do not use form definitions in the plugin yaml, instead we use individual yamls for each layout */
-        myaxios.get('/api/v1/ebooktabdata',{
-        	params: {
-				'url':			document.getElementById("path").value,
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
+		/* get the latest book data from ebook plugin api */
+		/* we cannot use the "data" object of the tabs for this because the code strips out all metadata that are not defined with tab-forms in the plugin yaml file */
+		/* In the ebook plugin we do not use form definitions in the plugin yaml, instead we use individual yamls for each layout */
+		tmaxios.get('/api/v1/ebooktabdata',{
+			params: {
+				'url':			data.urlinfo.route,
 				'itempath': 	self.item.pathWithoutType,
-        	}
+			}
 		})
-        .then(function (response)
-        {
-        	var ebookdata 		= response.data;
+		.then(function (response)
+		{
+			var ebookdata 		= response.data;
 
-        	self.formData 		= ebookdata['formdata'];
-        	self.layoutData 	= ebookdata['layoutdata'];
+			self.formData 		= ebookdata['formdata'];
+			self.layoutData 	= ebookdata['layoutdata'];
 
-        	if(typeof self.formData.activeshortcodes == 'undefined')
-        	{
-	        	self.formData.activeshortcodes = [];
-        	}
+			if(typeof self.formData.activeshortcodes == 'undefined')
+			{
+				self.formData.activeshortcodes = [];
+			}
 
-        	/* if there are no stored formdata yet */
-        	if(!self.formData)
-        	{
-        		/* use the first layout in folder as the default layout and store it in formData */
+			/* if there are no stored formdata yet */
+			if(!self.formData)
+			{
+				/* use the first layout in folder as the default layout and store it in formData */
 				var defaultlayout = Object.keys(self.layoutData)[0];
-        		self.formData = { 'layout': defaultlayout };
+				self.formData = { 'layout': defaultlayout };
 
-        		/* use the default item for content tree */
-        		self.navigation = [self.item];
+				/* use the default item for content tree */
+				self.navigation = [self.item];
 
-        	}
-        	else if(self.formData.content && Object.keys(self.formData.content).length > 0)
-        	{
-        		/* use original item and mark all content as excluded that is not insode of stored formData */        		
-        		var markedNavigation = self.markSelectedPages(self.navigation, self.formData.content, []);
+			}
+			else if(self.formData.content && Object.keys(self.formData.content).length > 0)
+			{
+				/* use original item and mark all content as included that are part of stored formData */
+				var markedNavigation = self.markSelectedPages(self.navigation, self.formData.content, []);
 
-        		self.navigation = markedNavigation;
-        	}
+				self.navigation = markedNavigation;
+			}
 
-        	self.dataLoaded = true;
-        })
-        .catch(function (error)
-        {
-	        self.message = error.response.data.errors.message;
-        	self.messagecolor = 'bg-tm-red';
-        });
+			self.toggleBaseFolder();
 
-		FormBus.$on('forminput', formdata => {
-			this.$set(this.formData, formdata.name, formdata.value);
+			self.dataLoaded = true;
+		})
+		.catch(function (error)
+		{
+			if(error.response)
+			{
+				self.message = handleErrorMessage(error);
+				self.messageClass = 'bg-rose-500';
+				if(error.response.data.errors !== undefined)
+				{
+					self.formErrors = error.response.data.errors;
+				}
+				if(error.response.data.home)
+				{
+					self.home = true;
+				}
+			}
 		});
 
 		if (navigator.userAgent.indexOf('Chrome') == -1 || parseFloat(navigator.userAgent.substring(navigator.userAgent.indexOf('Chrome') + 7).split(' ')[0]) <= 88)
 		{
-	        this.message = 'For optimal results of the pdf-preview we recommend the browser chrome version 88 (minimum).';
-        	this.messagecolor = 'bg-tm-red';
+			this.message = 'For optimal results of the pdf-preview we recommend the browser chrome version 88 (minimum).';
+			this.messagecolor = 'bg-tm-red';
 		}
 	},
 	methods: {
-        selectComponent: function(field)
-        {
-            return 'component-'+field.type;
-        },
-        saveInput: function()
-        {
-            this.$emit('saveform');
-        },
-		triggersubmit: function(tab)
+		activateTab(tab)
 		{
-			/* triggered by navigation */
-			if(this.currentTab == 'layout')
-			{
-				this.storeCustomCSS();
-			}
-
 			this.currentTab = tab;
 			this.currentTabComponent = 'ebook-' + tab;
-			this.moveUp();
+			this.reset();
 		},
-		submit: function(tab)
+		reset()
 		{
-			/* triggered by navigation */
-			if(this.currentTab == 'layout')
-			{
-				this.storeCustomCSS();
-			}
-			this.currentTab = tab;
-			this.currentTabComponent = 'ebook-' + tab;
-			this.moveUp();
+			this.errors 			= {};
+			this.message 			= '';
+			this.messageClass		= '';
 		},
-		moveUp()
+		storeEbookData(css)
 		{
-			setTimeout(function(){ 
-	       		window.scrollTo({
-				  top: 0,
-				  left: 0,
-				  behavior: 'smooth'
-				});
-
-			}, 100);
-      	},
-		storeEbookData: function()
-		{
-			this.message = false;
-			this.messagecolor = '';
+			this.reset();
 			
 			/* we only want to store a simple (and readable) tree of selected page names in the yaml file, not the whole item object */
 			this.formData.content = this.extractSelectedContent(this.navigation,[]);
 
 			var self = this;
 
-	        myaxios.post('/api/v1/ebooktabdata',{
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
+			tmaxios.post('/api/v1/ebooktabdata',{
+				'url':			data.urlinfo.route,
 				'data': 		this.formData,
-				'navigation': 	this.navigation,
 				'item': 		this.item
 			})
-	        .then(function (response) {
-	        	self.tabErrors = {};
-	        })
-	        .catch(function (error)
-	        {
-	        	if(error.response.status == 400)
-	        	{
-	        		self.message = 'You are probably logged out, please login again.';
-        			self.messagecolor = 'bg-tm-red';
-	        	}
-	           	if(error.response.data.errors)
-	            {
-	        		self.message = 'We did not safe the book-data. Please correct the errors.';
-        			self.messagecolor = 'bg-tm-red';
-	        		self.formErrors = error.response.data.errors;
-	        		self.checkTabStatus();
-	            }
-	        });
+			.then(function (response) {
+				self.messageClass = "bg-teal-500";
+				self.message = "Data stored successfully";
+				self.formErrors = {};
+				if(css)
+				{
+					self.storeCustomCSS();
+				}				
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
 		},
-		storeCustomCSS: function()
+		storeCustomCSS()
 		{
 			var customcss = this.layoutData[this.formData.layout].customcss;
 
 			var self = this;
 
-			myaxios.post('/api/v1/ebooklayoutcss',{
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
-					'css': 			customcss,
-					'layout': 		this.formData.layout
+			tmaxios.post('/api/v1/ebooklayoutcss',{
+				'url':			data.urlinfo.route,
+				'css': 			customcss,
+				'layout': 		this.formData.layout
+			})
+			.then(function (response) {
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = 'Could not store the custom css';
+					self.messageClass = 'bg-rose-500';
+				}
+			});
+		},
+		storeTmpItem: function(format)
+		{
+			/* store the item inside array for compatibility with navigation structure */
+			var storeitem = [this.item];
+
+			self = this;
+
+			/* temporary store the item here */
+			tmaxios.post('/api/v1/ebooktabitem',{
+				'url':	data.urlinfo.route,
+				'item': storeitem
 			})
 			.then(function (response) {
 
 			})
 			.catch(function (error)
 			{
+
 			});
 		},
-		markSelectedPages: function(navigation, selectedPages, markedNavigation)
+		setUuid()
+		{
+			if(this.formData.epubidentifieruuid && this.formData.epubidentifieruuid != '')
+			{
+				this.formErrors.epubidentifieruuid = 'You already have an uuid. Please delete it before you create a new one.';
+
+				return;
+			}
+
+			delete this.formErrors.epubidentifieruuid;
+
+			self = this;
+
+			tmaxios.get('/api/v1/epubuuid',{
+				'url':	data.urlinfo.route,
+			})
+			.then(function (response) {
+				self.formData.epubidentifieruuid = response.data.uuid;
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
+		},
+		toggleBaseFolder()
+		{
+			/* endable/disable basefolder in navigation according to basefolder setting (true/false) */
+			this.navigation[0].disabled = this.formData.excludebasefolder;
+
+			/* regenerate headline preview */
+			eventBus.$emit('createHeadlinePreview');			
+		},
+		markSelectedPages(navigation, selectedPages, markedNavigation)
 		{
 			for(let i = 0; i < navigation.length; i++)
 			{
+				/* do not include by default */
+				navigation[i].include = false;
+
 				if(navigation[i].status == 'published')
 				{
 					/* find the item name in the selected pages */
 					var selectIndex = this.findInObject(navigation[i].name, selectedPages);
 
-					/* if page name is not in the selecte pages */					
-					if(selectIndex === false)
+					/* if page name is in the selecte pages */					
+					if(selectIndex !== false)
 					{
-						/* then exclude the page */
-						navigation[i].exclude = "true";
+						/* then include the page */
+						navigation[i].include = true;
 					}
 
 					/* check if published, check if something in folder */
@@ -242,12 +305,12 @@ Vue.component('tab-ebooks', {
 			}
 			return navigation;
 		},
-		extractSelectedContent: function(navigation, selectedPages)
+		extractSelectedContent(navigation, selectedPages)
 		{
 			for(let i = 0; i < navigation.length; i++)
-			{
+			{				
 				/* check if published and if not excluded */
-				if(navigation[i].status == 'published' && (typeof navigation[i].exclude === 'undefined' || navigation[i].exclude === false ))
+				if(navigation[i].status == 'published' && (navigation[i].include == true))
 				{
 					var item = {  };
 					item.name = navigation[i].name; 
@@ -264,146 +327,27 @@ Vue.component('tab-ebooks', {
 
 			return selectedPages; 
 		},
-		excludeBaseFolder: function(exclude = null)
-		{
-			if(exclude)
-			{
-				this.$set(this.navigation[0], 'disabled', true)
-			}
-			else if(this.navigation[0].disabled)
-			{
-				this.$set(this.navigation[0], 'disabled', false)
-			}
-			else
-			{
-				this.$set(this.navigation[0], 'disabled', true)
-			}
-		},
 		findInObject: function(name, myArray)
 		{
-		 	for (var i = 0; i < myArray.length; i++)
-		 	{
-		    	if (myArray[i].name === name)
-		    	{
-		    		return i;
-		    	}
+			for (var i = 0; i < myArray.length; i++)
+			{
+				if (myArray[i].name === name)
+				{
+					return i;
+				}
 			}
 			return false;
 		},
-		getTabClass: function(tab)
-		{
-			active = (this.currentTab === tab) ? ' active' : '';
-			error = (this.tabErrors[tab]) ? ' error' : '';
-			return 'tab-button ' + tab + active + error;
-		},
-		checkTabStatus: function()
-		{
-			this.tabErrors = {};
-
-			var fronttab = ['title', 'subtitle', 'author', 'edition', 'imprint', 'dedication'];
-			var contenttab = ['content'];
-			var backtab = ['blurb'];
-			var designtab = ['layout', 'primarycolor', 'secondarycolor', 'coverimage'];
-
-			for(var error in this.formErrors)
-			{
-				if(fronttab.indexOf(error) > -1){ this.tabErrors.front = true; }
-				if(backtab.indexOf(error) > -1){ this.tabErrors.back = true; }
-				if(contenttab.indexOf(error) > -1){ this.tabErrors.content = true; }
-				if(designtab.indexOf(error) > -1){ this.tabErrors.design = true; }
-			}
-		},
-		getPreviewUrl: function()
-		{
-			return this.root + '/tm/ebooks/preview?itempath=' + this.item.pathWithoutType;
-		},
-		getEpubUrl: function()
-		{
-			return this.root + '/tm/ebooks/epub?itempath=' + this.item.pathWithoutType;
-		},
-		tmpStoreItem: function(format)
-		{
-			/* store the item inside array for compatibility with navigation structure */
-			var storeitem = [this.item];
-
-			self = this;
-
-			/* temporary store the item here */
-	        myaxios.post('/api/v1/ebooktabitem',{
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-				'item': 		storeitem
-			})
-	        .then(function (response) {
-
-	        })
-	        .catch(function (error)
-	        {
-	        	if(error.response.status == 400)
-	        	{
-	        		self.message = 'You are probably logged out, please login again.';
-        			self.messagecolor = 'bg-tm-red';
-	        	}
-	           	if(error.response.data.errors)
-	            {
-	        		self.message = 'We could not store the temporary content file for the ebook.';
-        			self.messagecolor = 'bg-tm-red';
-	        		self.formErrors = error.response.data.errors;
-	        		self.checkTabStatus();
-	            }
-	        });
-		},
-		setUuid: function()
-		{
-			self = this;
-
-	        myaxios.get('/api/v1/epubuuid',{
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-			})
-	        .then(function (response) {
-				self.$set(self.formData, 'epubidentifieruuid', response.data.uuid);
-	        })
-	        .catch(function (error)
-	        {
-	        	if(error.response.status == 400)
-	        	{
-	        		self.message = 'You are probably logged out, please login again.';
-        			self.messagecolor = 'bg-tm-red';
-	        	}
-	           	if(error.response.data.errors)
-	            {
-	        		self.message = 'We did not safe the book-data. Please correct the errors.';
-        			self.messagecolor = 'bg-tm-red';
-	        		self.formErrors = error.response.data.errors;
-	        		self.checkTabStatus();
-	            }
-	        });
-		},
 		resetNavigation: function()
 		{
-			var self = this;
+			/* only reset, because the item is already fresh */
+			this.formData.content = [];
+			this.formData.excludebasefolder = false;
+			var test = this.markSelectedPages(this.navigation, this.formData.content, []);
 
-	        myaxios.get('/api/v1/article/metaobject',{
-	        	params: {
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
-	        	}
-			})
-	        .then(function (response) {
+			console.info(test);
 
-				self.item = response.data.item;
-	        	self.navigation = [self.item];
-	        })
-	        .catch(function (error)
-	        {
-	           	if(error.response)
-	            {
-	            }
-	        });
+			this.toggleBaseFolder();
 		},		
 	}
 });

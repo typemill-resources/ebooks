@@ -3,7 +3,7 @@ function endnotes(config)
 	let fnsups 			= config.content.querySelectorAll("[id^='fnref']");
 	let enplaceholder	= config.content.querySelector(config.enElement);
 	let endnotes 		= document.createElement("ol");
-		    	
+				
 	fnLength = fnsups.length;
 	for (let i = 0; i < fnLength; i++)
 	{

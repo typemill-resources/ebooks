@@ -4,13 +4,16 @@ namespace Plugins\Ebooks;
 
 include 'vendor/autoload.php';
 
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
 use Typemill\Plugin;
-use Typemill\Models\WriteYaml;
-use Typemill\Models\WriteCache;
 use Typemill\Models\Validation;
-use Typemill\Controllers\MetaApiController;
+use Typemill\Models\Navigation;
+use Typemill\Models\StorageWrapper;
 use Typemill\Extensions\ParsedownExtension;
-use Valitron\Validator;
+use Typemill\Events\OnTwigLoaded;
+use Typemill\Events\onMetaDefinitionsLoaded;
+use Typemill\Events\onSystemnaviLoaded;
 use PHPePub\Core\EPub;
 use PHPePub\Core\Logger;
 use PHPePub\Core\Structure\OPF\DublinCore;
@@ -20,114 +23,194 @@ use PHPePub\Helpers\Rendition\RenditionHelper;
 use PHPePub\Helpers\URLHelper;
 use PHPZip\Zip\File\Zip;
 
+
 class Ebooks extends Plugin
 {
-    public static function getSubscribedEvents()
-    {
+	public static function getSubscribedEvents()
+	{
 		return [
-			'onTwigLoaded'				=> ['onTwigLoaded',0],			
-			'onMetaDefinitionsLoaded'	=> ['onMetaDefinitionsLoaded',0],
-			'onSystemnaviLoaded'		=> ['onSystemnaviLoaded',0],
-			'onPageReady'				=> ['onPageReady',0],
+			'onTwigLoaded'				=> 'onTwigLoaded',			
+			'onMetaDefinitionsLoaded'	=> 'onMetaDefinitionsLoaded',
+			'onSystemnaviLoaded'		=> 'onSystemnaviLoaded'
 		];
-    }
+	}
 	
 	public static function addNewRoutes()
 	{
 		return [
-			['httpMethod' => 'get', 'route' => '/tm/ebooks', 'name' => 'ebooks.show', 'class' => 'Typemill\Controllers\ControllerSettings:showBlank', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebooklayouts', 'name' => 'ebooklayouts.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookLayouts', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'post', 'route' => '/api/v1/ebooklayoutcss', 'name' => 'ebooklayoutcss.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookLayoutCSS', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabdata', 'name' => 'ebooktabdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabData', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'post', 'route' => '/api/v1/ebooktabitem', 'name' => 'ebooktabitem.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebookprojects', 'name' => 'ebookprojects.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookProjects', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookData', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'post', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.store', 'class' => 'Plugins\Ebooks\Ebooks:storeEbookData', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'delete', 'route' => '/api/v1/ebookdata', 'name' => 'ebookdata.delete', 'class' => 'Plugins\Ebooks\Ebooks:deleteEbookData', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'get', 'route' => '/api/v1/ebooknavi', 'name' => 'ebooknavi.get', 'class' => 'Plugins\Ebooks\Ebooks:getEbookNavi', 'resource' => 'system', 'privilege' => 'view'],
-			['httpMethod' => 'post', 'route' => '/api/v1/headlinepreview', 'name' => 'headline.preview', 'class' => 'Plugins\Ebooks\Ebooks:generateHeadlinePreview', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'get', 'route' => '/api/v1/epubuuid', 'name' => 'epub.uuid', 'class' => 'Plugins\Ebooks\Ebooks:generateUuidV4', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'get', 'route' => '/tm/ebooks/preview', 'name' => 'ebook.preview', 'class' => 'Plugins\Ebooks\Ebooks:ebookPreview', 'resource' => 'content', 'privilege' => 'create'],
-			['httpMethod' => 'get', 'route' => '/tm/ebooks/epub', 'name' => 'ebook.epub', 'class' => 'Plugins\Ebooks\Ebooks:createEpub', 'resource' => 'content', 'privilege' => 'create'],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/tm/ebooks', 
+				'name' 			=> 'ebooks.show', 
+				'class' 		=> 'Typemill\Controllers\ControllerWebSystem:blankSystemPage', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/ebooklayouts', 
+				'name' 			=> 'ebooklayouts.get', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookLayouts', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/ebooklayoutcss', 
+				'name' 			=> 'ebooklayoutcss.store', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:storeEbookLayoutCSS', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/ebookprojects', 
+				'name' 			=> 'ebookprojects.get', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookProjects', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/ebookproject', 
+				'name' 			=> 'ebookproject.create', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:createEbookProject', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'delete', 
+				'route' 		=> '/api/v1/ebookproject', 
+				'name' 			=> 'ebookdata.delete', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:deleteEbookProject', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/ebookdata', 
+				'name' 			=> 'ebookdata.get', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookData', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/ebookdata', 
+				'name' 			=> 'ebookdata.store', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:storeEbookData', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/ebooknavi', 
+				'name' 			=> 'ebooknavi.get', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookNavi', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/ebooknewdraftnavi', 
+				'name' 			=> 'ebooknewdraftnavi.get', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookNewDraftNavi', 
+				'resource' 		=> 'system', 
+				'privilege' 	=> 'view'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/ebooktabdata', 
+				'name' 			=> 'ebooktabdata.get', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookTabData', 
+				'resource' 		=> 'content', 'privilege' => 'create'
+			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/ebooktabdata', 
+				'name' 			=> 'ebooktabdata.store', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:storeEbookTabData', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/ebooktabitem', 
+				'name' 			=> 'ebooktabitem.store', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:storeEbookTabItem', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/headlinepreview', 
+				'name' 			=> 'headline.preview', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:generateHeadlinePreview', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/api/v1/epubuuid', 
+				'name' 			=> 'epub.uuid', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:generateUuidV4', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/tm/ebooks/preview', 
+				'name' 			=> 'ebook.preview', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:ebookPreview', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
+			[
+				'httpMethod' 	=> 'get', 
+				'route' 		=> '/tm/ebooks/epub', 
+				'name' 			=> 'ebook.epub', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:createEpub', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],
 		];
 	}
 
-	# ebooks in pages
-    public function onTwigLoaded($metadata)
-   	{
-		$this->config = $this->getPluginSettings('ebooks');
+	# Add ebook-application in pages and settings
+	public function onTwigLoaded($metadata)
+	{
+		$config = $this->getPluginSettings();
 
-		if($this->adminpath)
+		if($this->editorroute)
 		{
-			if( isset($this->config['ebooksinpages']) && (strpos($this->path, 'tm/content') !== false) )
+			if( isset($config['ebooksinpages']) && $config['ebooksinpages'] )
 			{
-				$this->addEditorCSS('/ebooks/public/ebooks.css?20220215');
-				$this->addEditorJS('/ebooks/public/ebookcomponents.js?20220215');
-				$this->addEditorJS('/ebooks/public/ebookinpages.js?20220215');
+				$this->addJS('/ebooks/public/ebookcomponents.js?20231201');
+				$this->addJS('/ebooks/public/ebookinpages.js?20231201');
 
 				# inject thumbindex.js into pages if activated
-				if(isset($this->config['thumbindex']))
+				if(isset($config['thumbindex']) && $config['thumbindex'])
 				{
-			        $this->addEditorJS('/ebooks/public/thumbindex.js?20220215');
+					$this->addJS('/ebooks/public/thumbindex.js?20231201');
 				}
 			}
 		}
-   	}
-
-    public function onMetaDefinitionsLoaded($metadata)
-    {
-		$meta = $metadata->getData();
-
-		$thumbindex = false;
-
-		if(isset($this->config['ebooksinpages']))
+		elseif($this->adminroute && (trim($this->route,"/") == 'tm/ebooks'))
 		{
-			# add a tab called "ebook" into pages with no fields, because we will use the fields of the ebook plugin.
-			$meta['ebooks'] = ['fields'=> []];
-
-			if(isset($this->config['thumbindex']))
+			if( isset($config['ebooksinsettings']) && $config['ebooksinsettings'] )
 			{
-				$thumbindex = true;
-
-				$languageString = $this->config['languages'];
-
-		        # standardize line breaks
-        		$text = str_replace(array("\r\n", "\r"), "\n", $languageString);
-
-		        # remove surrounding line breaks
-        		$text = trim($text, "\n");
-
-		        # split text into lines
-        		$lines = explode("\n", $text);
-
-        		# set initial value that will clear the values
-        		$languages = ['clear' => ''];
-
-        		# add values from textarea-field in the settings
-        		foreach($lines as $line)
-        		{
-        			$keyvalue = explode(':', $line);
-        			if(isset($keyvalue[0]) && isset($keyvalue[1]))
-        			{
-        				$languages[trim($keyvalue[0])] = trim($keyvalue[1]);	
-        			}
-        		}
-
-				$meta['thumbindex']['fields']['language']['options'] = $languages;
+				$this->addJS('/ebooks/public/ebookinsettings.js?20231201');
+				$this->addJS('/ebooks/public/ebookcomponents.js?20231201');
 			}
 		}
-		if(!$thumbindex)
-		{
-			unset($meta['thumbindex']);
-		}
-		
-		$metadata->setData($meta);
-    }
+	}
 
+	# Add ebook-item to system navigation
 	public function onSystemnaviLoaded($navidata)
 	{
-		if(isset($this->config['ebooksinsettings']))
+		$config = $this->getPluginSettings();
+
+		if(isset($config['ebooksinsettings']) && $config['ebooksinsettings'])
 		{
 			$this->addSvgSymbol('<symbol id="icon-book" viewBox="0 0 32 32">
 				<path d="M28 4v26h-21c-1.657 0-3-1.343-3-3s1.343-3 3-3h19v-24h-20c-2.2 0-4 1.8-4 4v24c0 2.2 1.8 4 4 4h24v-28h-2z"></path>
@@ -136,10 +219,19 @@ class Ebooks extends Plugin
 
 			$navi = $navidata->getData();
 
-			$navi['Ebooks'] = ['routename' => 'ebooks.show', 'icon' => 'icon-book', 'aclresource' => 'system', 'aclprivilege' => 'view'];
+			$navi['Ebooks'] = [
+				'title' 		=> 'eBooks',
+				'routename' 	=> 'ebooks.show', 
+				'icon' 			=> 'icon-book', 
+				'aclresource' 	=> 'system', 
+				'aclprivilege' 	=> 'view'
+			];
 
-			if($this->getPath() == 'tm/ebooks')
+
+			# if the use visits the system page of the plugin
+			if(trim($this->route,"/") == 'tm/ebooks')
 			{
+				# set the navigation item active
 				$navi['Ebooks']['active'] = true;
 			}
 
@@ -147,50 +239,209 @@ class Ebooks extends Plugin
 		}
 	}
 
-	# ebooks in settings
-	public function onPageReady($data)
+	# Add ebook-tab to pages
+	public function onMetaDefinitionsLoaded($metadefinitions)
 	{
-		if($this->adminpath)
-		{
-			# inject ebook template into the settings page
-			if( isset($this->config['ebooksinsettings']) && (strpos($this->getPath(), 'tm/ebooks') !== false) )
-			{
-				# add the css and vue application
-			    $this->addCSS('/ebooks/public/ebooks.css');
-			    $this->addJS('/ebooks/public/ebookcomponents.js');
-			    $this->addJS('/ebooks/public/ebookinsettings.js');
-				
-				$pagedata = $data->getData();
-				
-				$twig 	= $this->getTwig();
-				$loader = $twig->getLoader();
-				$loader->addPath(__DIR__ . '/templates');
-				
-				# fetch the template and render it with twig
-				$content = $twig->fetch('/ebooks.twig', []);
+		$config = $this->getPluginSettings();
 
-				$pagedata['content'] = $content;
-				
-				$data->setData($pagedata);
+		$meta = $metadefinitions->getData();
+
+		$thumbindex = false;
+
+		if(isset($config['ebooksinpages']) && $config['ebooksinpages'] == true)
+		{
+			# add a tab called "ebook" into pages with no fields, because we will use the fields of the ebook plugin.
+			$meta['ebooks'] = ['fields'=> []];
+
+			if(isset($config['thumbindex']) && $config['thumbindex'] == true)
+			{
+				$thumbindex = true;
+
+				$languageString = $config['languages'];
+
+				# standardize line breaks
+				$text = str_replace(array("\r\n", "\r"), "\n", $languageString);
+
+				# remove surrounding line breaks
+				$text = trim($text, "\n");
+
+				# split text into lines
+				$lines = explode("\n", $text);
+
+				# add values from textarea-field in the settings
+				foreach($lines as $line)
+				{
+					$keyvalue = explode(':', $line);
+					if(isset($keyvalue[0]) && isset($keyvalue[1]))
+					{
+						$languages[trim($keyvalue[0])] = trim($keyvalue[1]);	
+					}
+				}
+
+				$meta['thumbindex']['fields']['thumbfields']['fields']['language']['options'] = $languages;
 			}
 		}
+		if(!$thumbindex)
+		{
+			unset($meta['thumbindex']);
+		}
+
+		$metadefinitions->setData($meta);
 	}
 
-	public function getEbookProjects($request, $response, $args)
+
+	#################################
+	# 		 ebook layouts 			#
+	#################################
+
+	# single endpoint to get only the layouts. Not in use right now
+	public function getEbookLayouts(Request $request, Response $response, $args)
+	{
+		$booklayouts = $this->scanEbookLayouts();
+
+		$response->getBody()->write(json_encode([
+			'layoutdata' => $booklayouts
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	# scans the folder with the ebooklayouts and returns layout-names as array
+	private function scanEbooklayouts()
 	{
 		$settings 		= $this->getSettings();
 
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		# scan the ebooklayouts folder
+		$layoutpath 	= __DIR__ . DIRECTORY_SEPARATOR . 'booklayouts';
+		$cachepath		= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR;
+		$layoutfolders 	= array_diff(scandir($layoutpath), array('..', '.'));
+		$booklayouts 	= [];
+
+		# load the epub forms from ebook.yaml for all layouts
+		$ebookconfig 	= file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'ebooks.yaml');
+		$ebookconfig 	= \Symfony\Component\Yaml\Yaml::parse($ebookconfig);
+		$epubforms 		= $ebookconfig['epub'];
+
+		foreach($layoutfolders as $layout)
+		{
+			# load config files from ebook layout
+			$layoutconfig = false;
+			if(file_exists($layoutpath . DIRECTORY_SEPARATOR . $layout . DIRECTORY_SEPARATOR . 'config.yaml'))
+			{
+				$layoutconfig = file_get_contents($layoutpath . DIRECTORY_SEPARATOR . $layout . DIRECTORY_SEPARATOR . 'config.yaml');
+				$layoutconfig = \Symfony\Component\Yaml\Yaml::parse($layoutconfig);
+			}
+
+			# load customcss
+			if(file_exists($cachepath . 'ebooklayout-' . $layout . '-custom.css'))
+			{
+				$layoutconfig['customcss'] = file_get_contents($cachepath . 'ebooklayout-' . $layout . '-custom.css');
+			}
+
+			$booklayouts[$layout] = $layoutconfig;
+			$booklayouts[$layout]['epubforms'] = $epubforms;
+		}
+
+		return $booklayouts;
+	}
+
+	public function storeEbookLayoutCSS(Request $request, Response $response, $args)
+	{
+		$params 		= $request->getParsedBody();
+		$layout 		= $params['layout'] ?? false;
+		$css 			= $params['css'] ?? false;
+		$css 			= trim($css);
+		$settings 		= $this->getSettings();
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		if(!$layout OR $layout == '')
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'Layout name is missing.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+		}
+
+		if($css === false)
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'CSS parameter is missing.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+		}
+
+		if($css == '')
+		{
+			$storage->deleteFile('cacheFolder', '', 'ebooklayout-' . $layout . '-custom.css');
+
+			$response->getBody()->write(json_encode([
+				'message' => 'css-file deleted.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json');
+		}
+
+		if($css != strip_tags($css))
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'css contains html or invalid.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+		}
+
+		$result = $storage->writeFile('cacheFolder', '', 'ebooklayout-' . $layout . '-custom.css', $css);
+
+		if(!$result)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> 'We could not store the css-file', 
+				'error' 	=> $storage->getError()
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(404);			
+		}
+
+		$response->getBody()->write(json_encode([
+			'message' 	=> 'CSS successfully stored'
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	######################################
+	# settings-version: ebook projects 	 #
+	######################################
+
+	public function getEbookProjects(Request $request, Response $response, $args)
+	{
+		$settings 		= $this->getSettings();
+
+		$folderName 	= DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'ebooks';
 		$folder 		= $settings['rootPath'] . $folderName;
 
 		if(!$this->checkEbookFolder($folder))
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
+			$response->getBody()->write(json_encode([
+				'message' => 'Please make sure that the folder data/ebooks exists and is writable.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
 		}
 
 		$folderContent = array_diff(scandir($folder), array('..', '.'));
-		$ebookprojects = [];
+		if(empty($folderContent))
+		{
+			# create a default project
+			$storage 		= new StorageWrapper($settings['storage']);
+			$ebookdata 		= $storage->writeFile('dataFolder', 'ebooks', 'ebookdata-firstebook.yaml', '');
+			$navigation 	= $storage->writeFile('dataFolder', 'ebooks', 'navigation-firstebook.txt', '');
+			$folderContent 	= array_diff(scandir($folder), array('..', '.'));		
+		}
 
+		$ebookprojects = [];
 		foreach($folderContent as $file)
 		{
 			if(substr($file,0,9) == 'ebookdata')
@@ -199,664 +450,477 @@ class Ebooks extends Plugin
 			}
 		}
 
-		return $response->withJson(array('ebookprojects' => $ebookprojects, 'errors' => false), 200);
+		$response->getBody()->write(json_encode([
+			'ebookprojects' => $ebookprojects
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
-	# single endpoint to get only the layouts. Not in use right now
-	public function getEbookLayouts($request, $response, $args)
+	private function checkEbookFolder($folder)
 	{
-		$booklayouts = $this->scanEbookLayouts();
-
-		return $response->withJson(array('layoutdata' => $booklayouts, 'errors' => false), 200);
-	}
-
-	# gets the centrally stored ebook-data for ebook-plugin in settings-area
-	public function getEbookData($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$settings 		= $this->getSettings();
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
-
-		if(!$this->checkEbookFolder($folder))
+		if(!file_exists($folder) && !is_dir( $folder ))
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
+			if(!mkdir($folder, 0755, true))
+			{
+				return false;
+			}
 		}
+		elseif(!is_writeable($folder) OR !is_readable($folder))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public function createEbookProject(Request $request, Response $response, $args)
+	{
+		$params 		= $request->getParsedBody();
+		$settings 		= $this->getSettings();
+#		$base_url		= $this->urlinfo['baseurl'];
+		$storage 		= new StorageWrapper($settings['storage']);
 
 		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'The projectname is not valid.']), 500);
+			$response->getBody()->write(json_encode([
+				'message' => 'The projectname is not valid.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 		}
 
-		# write params
-		$writeYaml 	= new WriteYaml();
+		$projectname 	= str_replace('.yaml', '', $params['projectname']);
+		$projectname 	= str_replace('ebookdata-', '', $projectname);
 
-		# get the stored ebook-data
-		$formdata = $writeYaml->getYaml($folderName, $params['projectname']);
+		$ebookdata 		= $storage->writeFile('dataFolder', 'ebooks', 'ebookdata-' . $projectname . '.yaml', '');
+		$navigation 	= $storage->writeFile('dataFolder', 'ebooks', 'navigation-' . $projectname . '.txt', '');
 
-		return $response->withJson(array('formdata' => $formdata, 'errors' => false), 200);
+		if(!$ebookdata OR !$navigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 		=> 'We could not store the new project.',
+				'ebookdata' 	=> $ebookdata,
+				'navigation'	=> $navigation,
+				'error' 		=> $storage->getError()
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);			
+		}
+
+		$response->getBody()->write(json_encode([
+			'ebookdata' => $ebookdata,
+			'navigation' => $navigation
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	public function deleteEbookProject(Request $request, Response $response, $args)
+	{
+		$params 		= $request->getParsedBody();
+		$settings 		= $this->getSettings();
+#		$base_url		= $this->urlinfo['baseurl'];
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'The projectname is not valid.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+		}
+
+		$projectname 	= str_replace('.yaml', '', $params['projectname']);
+		$projectname 	= str_replace('ebookdata-', '', $projectname);
+
+		$ebookdata 		= $storage->deleteFile('dataFolder', 'ebooks', 'ebookdata-' . $projectname . '.yaml');
+		$navigation 	= $storage->deleteFile('dataFolder', 'ebooks', 'navigation-' . $projectname . '.txt');
+
+		if(!$ebookdata OR !$navigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 		=> 'We could not store the new project.',
+				'ebookdata' 	=> $ebookdata,
+				'navigation'	=> $navigation,
+				'error' 		=> $storage->getError()
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);			
+		}
+
+		$response->getBody()->write(json_encode([
+			'ebookdata' => $ebookdata,
+			'navigation' => $navigation
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 
-	# gets the stored ebook-data from page yaml for the ebook-plugin in page tab. We have to do it separately because fields are stripped out in tab.
-	public function getEbookTabData($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$itempath 		= $params['itempath'];
-		$settings 		= $this->getSettings();
+	##################################
+	# settings-version: ebook data 	 #
+	##################################
 
-		if($params['url'] == '/')
+	public function getEbookData(Request $request, Response $response, $args)
+	{
+		$projectname 	= $request->getQueryParams()['projectname'] ?? false;
+
+		if(!$projectname OR $projectname == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $projectname))
 		{
-			return $response->withJson(array('home' => true, 'errors' => ['message' => "The homepage does not support the ebook generation. Please go to the subpages or use the ebook tab in the settings if you want to create an ebook from the whole website."]), 422);
+			$response->getBody()->write(json_encode([
+				'message' => 'The projectname is not valid.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 		}
 
-		# get the metadata from page
-		$writeYaml 		= new WriteYaml();
+		# get the stored ebook-data
+		$formdata = $this->getPluginYamlData($projectname);
 
-		$meta = $writeYaml->getYaml($settings['contentFolder'], $itempath . '.yaml');
+		$response->getBody()->write(json_encode([
+			'formdata' => $formdata
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	public function storeEbookData(Request $request, Response $response, $args)
+	{
+		$params 		= $request->getParsedBody();
+		$settings 		= $this->getSettings();
+		$layoutpath 	= __DIR__ . DIRECTORY_SEPARATOR . 'booklayouts';
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		$data 			= $params['data'] ?? false;
+		$navigation 	= $params['navigation'] ?? false; 
+		$projectname 	= $params['projectname'] ?? false;
+		$layout 		= $params['data']['layout'] ?? false;
+
+		if(
+			!$projectname 
+			OR $projectname == '' 
+			OR !preg_match("/^[a-z\-]*\.yaml$/", $projectname)
+			OR !$data
+			OR !$layout
+		)
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'Projectname not valid or data empty.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+		}
+
+		# load the epub forms from ebook.yaml for all layouts
+		$ebookconfig 		= file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'ebooks.yaml');
+		$ebookconfig 		= \Symfony\Component\Yaml\Yaml::parse($ebookconfig);
+		$formdefinitions 	= $ebookconfig['epub']['fields'] ?? [];
+
+		# get the customfield configurations from booklayout folder
+		if(file_exists($layoutpath . DIRECTORY_SEPARATOR . $layout . DIRECTORY_SEPARATOR . 'config.yaml'))
+		{
+			$layoutconfig = file_get_contents($layoutpath . DIRECTORY_SEPARATOR . $layout . DIRECTORY_SEPARATOR . 'config.yaml');
+			$layoutconfig = \Symfony\Component\Yaml\Yaml::parse($layoutconfig);
+
+			if(isset($layoutconfig['customforms']['fields']))
+			{
+				$formdefinitions = array_merge($layoutconfig['customforms']['fields'], $formdefinitions);
+			}
+		}
+
+		$validate 		= new Validation();
+		$data 			= $validate->recursiveValidation($formdefinitions, $data);
+		$errors 		= $validate->errors;
+		if(!empty($errors))
+		{
+			$errorstring = 'Errors in fields: ';
+			foreach($errors as $field => $error)
+			{
+				$errorstring .= $field . ', ';
+			}
+
+			$errorstring = rtrim(trim($errorstring), ',');
+
+			$response->getBody()->write(json_encode([
+				'message' 	=> $errorstring,
+				'errors' 	=> $errors
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);			
+		}
+
+		# add manual field values again
+		$data['layout'] 			= $params['data']['layout'];
+		$data['disableshortcodes'] 	= $params['data']['disableshortcodes'] ?? false;
+		$data['activeshortcodes'] 	= $params['data']['activeshortcodes'] ?? false;
+		$data['downgradeheadlines'] = $params['data']['downgradeheadlines'] ?? false;
+
+		# store
+		$projectname 	= str_replace('.yaml', '', $projectname);
+		$projectname 	= str_replace('ebookdata-', '', $projectname);
+		$ebookdata 		= $storage->updateYaml('dataFolder', 'ebooks', 'ebookdata-' . $projectname . '.yaml', $data);
+		$navigation 	= $storage->writeFile('dataFolder', 'ebooks', 'navigation-' . $projectname . '.txt', $navigation, 'serialize');
+
+		if(!$ebookdata OR !$navigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 		=> 'We could not store the new project.',
+				'ebookdata' 	=> $ebookdata,
+				'navigation'	=> $navigation,
+				'error' 		=> $storage->getError()
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);			
+		}
+
+		$response->getBody()->write(json_encode([
+			'ebookdata' => $ebookdata,
+			'navigation' => $navigation
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	# gets the ebook navigation from data folder or the general page navigation
+	public function getEbookNavi(Request $request, Response $response, $args)
+	{
+		$projectname 	= $request->getQueryParams()['projectname'] ?? false;
+
+		if(!$projectname OR $projectname == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $projectname))
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'The projectname is not valid.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+		}
+
+		$projectname 	= str_replace('.yaml', '', $projectname);
+		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
+
+		# get the stored ebook-data
+		$navigation 	= $this->getPluginData($naviname . '.txt');
+
+		if(!$navigation)
+		{
+			$navigation = $this->getPluginData('navi-draft.txt', 'navigation');
+		}
+
+		if(!$navigation OR trim($navigation) == '')
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+		}
+
+		$response->getBody()->write(json_encode([
+			'navigation' => unserialize($navigation)
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	# gets the ebook navigation from data folder or the general page navigation
+	public function getEbookNewDraftNavi(Request $request, Response $response, $args)
+	{
+		$navigation 	= new Navigation();
+		$urlinfo 		= $this->urlinfo;
+		$settings 		= $this->getSettings();
+		$langattr 		= $settings['langattr'];
+
+		$draftNavigation = $navigation->getDraftNavigation($urlinfo, $langattr);
+
+		if(!$draftNavigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' => 'We could not load the content navigation.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+		}
+
+		$response->getBody()->write(json_encode([
+			'navigation' => $draftNavigation
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+
+	##################################
+	# 	page-version: ebook data 	 #
+	##################################
+
+	# gets the stored ebook-data from page yaml for the ebook-plugin in page tab. We have to do it separately because fields are stripped out in tab.
+	public function getEbookTabData(Request $request, Response $response, $args)
+	{
+		$itempath 		= $request->getQueryParams()['itempath'];
+		$settings 		= $this->getSettings();
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		if($itempath == '/index')
+		{
+			$response->getBody()->write(json_encode([
+				'home' 		=> true, 
+				'message' 	=> "The homepage does not support the ebook generation. Please go to the subpages or use the ebook tab in the settings if you want to create an ebook from the whole website.",
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
+		}
+
+		$meta = $storage->getYaml('contentFolder', '', $itempath . '.yaml');
 
 		$formdata = isset($meta['ebooks']) ? $meta['ebooks'] : false;
 
 		# get the ebook layouts
 		$booklayouts = $this->scanEbooklayouts();
 
-		return $response->withJson(array('formdata' => $formdata, 'layoutdata' => $booklayouts, 'errors' => false), 200);
-	}
+		$response->getBody()->write(json_encode([
+			'formdata' 		=> $formdata,
+			'layoutdata' 	=> $booklayouts
+		]));
 
-	# stores the ebook-data (book-details and navigation) from central ebook in settings-area into the data-folder 
-	public function storeEbookData($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$settings 		= $this->getSettings();
-		$uri 			= $request->getUri()->withUserInfo('');
-		$base_url		= $uri->getBaseUrl();
-
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
-
-		if(!$this->checkEbookFolder($folder))
-		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
-		}
-
-		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
-		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'The projectname is not valid.']), 500);
-		}
-
-		$projectname 	= str_replace('.yaml', '', $params['projectname']);
-		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
-
-		# create objects to read and write data
-		$writeYaml 		= new WriteYaml();
-		$writeCache 	= new WriteCache();
-
-		$validatedParams = $this->validateEbookData($params, $writeYaml);
-
-		if(isset($validatedParams['errors']))
-		{
-			return $response->withJson(array('data' => false, 'errors' => $validatedParams['errors']), 422);
-		}
-		
-		# write params
-		$ebookstored 	= $writeYaml->updateYaml($folderName, $projectname . '.yaml', $validatedParams['data']);
-		$navistored 	= $writeCache->updateCache($folderName, $naviname . '.txt', false, $validatedParams['navigation']);
-		
-		if($ebookstored AND $navistored)
-		{
-			return $response->withJson(array("ebookdata" => $ebookstored, "navidata" => $navistored), 200);
-		}
-
-		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
-	}
-
-	# deletes the ebook-data (book-details and navigation) from central ebook in settings-area into the data-folder 
-	public function deleteEbookData($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$settings 		= $this->getSettings();
-		$uri 			= $request->getUri()->withUserInfo('');
-		$base_url		= $uri->getBaseUrl();
-
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
-
-		if(!$this->checkEbookFolder($folder))
-		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
-		}
-
-		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
-		{
-			return $response->withJson(array('data' => false, 'errors' => ['message' => 'The projectname is not valid.']), 422);
-		}
-
-		$projectname 	= str_replace('.yaml', '', $params['projectname']);
-		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
-
-		# create objects to read and write data
-		$writeYaml 		= new WriteYaml();
-
-
-		if(!$writeYaml->checkFile($folderName, $projectname . '.yaml') && !$writeYaml->checkFile($folderName, $naviname . '.txt'))
-		{
-			return $response->withJson(array(), 200);
-		}
-		
-		$ebookDeleted = $writeYaml->deleteFileWithPath($folderName . DIRECTORY_SEPARATOR . $projectname . '.yaml');
-		$naviDeleted = $writeYaml->deleteFileWithPath($folderName . DIRECTORY_SEPARATOR . $naviname . '.txt');
-		
-		if(!$ebookDeleted OR !$naviDeleted)
-		{
-			$folderContent = array_diff(scandir($folder), array('..', '.', 'tmpitem.txt'));
-			if(!empty($folderContent))
-			{
-				return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not delete all ebook-data. Please try again.']), 422);
-			}
-		}
-		
-		return $response->withJson(array("ebookdeleted" => $ebookDeleted, "navideleted" => $navideleted), 200);
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 	# stores the ebook data from a page tab into the page-yaml
-	public function storeEbookTabData($request, $response, $args)
+	public function storeEbookTabData(Request $request, Response $response, $args)
 	{
-		$params 		= $request->getParams();
-		$item 			= $params['item'];
-		$settings 		= $this->getSettings();
+		$params 		= $request->getParsedBody();
+		$item 			= $params['item'] ?? false;
+		$data 			= $params['data'] ?? false;
+		$layout 		= $params['data']['layout'] ?? false;
+		$layoutpath 	= __DIR__ . DIRECTORY_SEPARATOR . 'booklayouts';
 
-		# create object to read and write yaml-data
-		$writeYaml 		= new WriteYaml();
-
-		# validate the data
-		$validatedParams = $this->validateEbookData($params, $writeYaml);
-
-		if(isset($validatedParams['errors']))
+		if(
+			!$item 
+			OR !$data 
+			OR !$layout
+		)
 		{
-			return $response->withJson(array('data' => false, 'errors' => $validatedParams['errors']), 422);
+			$response->getBody()->write(json_encode([
+				'message' => 'Item, data or layout missing.'
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 		}
 
-		if(!isset($validatedParams['data']) OR empty($validatedParams['data']) OR !$validatedParams['data'])
+		$settings 			= $this->getSettings();
+		$storage 			= new StorageWrapper($settings['storage']);
+		$validate 			= new Validation();
+
+		# load the epub forms from ebook.yaml for all layouts
+		$ebookconfig 		= file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'ebooks.yaml');
+		$ebookconfig 		= \Symfony\Component\Yaml\Yaml::parse($ebookconfig);
+		$formdefinitions 	= $ebookconfig['epub']['fields'] ?? [];
+
+		# get the customfield configurations from booklayout folder
+		if(file_exists($layoutpath . DIRECTORY_SEPARATOR . $layout . DIRECTORY_SEPARATOR . 'config.yaml'))
 		{
-			return $response->withJson(array('data' => false, 'errors' => ['The data you send where empty']), 422);
+			$layoutconfig = file_get_contents($layoutpath . DIRECTORY_SEPARATOR . $layout . DIRECTORY_SEPARATOR . 'config.yaml');
+			$layoutconfig = \Symfony\Component\Yaml\Yaml::parse($layoutconfig);
+
+			if(isset($layoutconfig['customforms']['fields']))
+			{
+				$formdefinitions = array_merge($layoutconfig['customforms']['fields'], $formdefinitions);
+			}
 		}
+
+		$validate 		= new Validation();
+		$data 			= $validate->recursiveValidation($formdefinitions, $data);
+		$errors 		= $validate->errors;
+		if(!empty($errors))
+		{
+			$errorstring = 'Errors in fields: ';
+			foreach($errors as $field => $error)
+			{
+				$errorstring .= $field . ', ';
+			}
+
+			$errorstring = rtrim(trim($errorstring), ',');
+
+			$response->getBody()->write(json_encode([
+				'message' 	=> $errorstring,
+				'errors' 	=> $errors
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);			
+		}
+
+		# add manual field values again
+		$data['layout'] 			= $params['data']['layout'];
+		$data['disableshortcodes'] 	= $params['data']['disableshortcodes'] ?? false;
+		$data['activeshortcodes'] 	= $params['data']['activeshortcodes'] ?? false;
+		$data['downgradeheadlines'] = $params['data']['downgradeheadlines'] ?? false;
+		$data['excludebasefolder'] 	= $params['data']['excludebasefolder'] ?? false;
+		$data['content'] 			= $params['data']['content'] ?? false;
 
 		# get the metadata from page
-		$meta = $writeYaml->getYaml($settings['contentFolder'], $item['pathWithoutType'] . '.yaml');
+		$meta = $storage->getYaml('contentFolder', '', $itempath . '.yaml');
 
 		# add the tab-data for ebooks
-		$meta['ebooks'] = $validatedParams['data'];
+		$meta['ebooks'] = $data;
 
 		# store the metadata for page 
-		$writeYaml->updateYaml($settings['contentFolder'], $item['pathWithoutType'] . '.yaml', $meta);
+		$storage->updateYaml('contentFolder', '', $item['pathWithoutType'] . '.yaml', $meta);
 
-		return $response->withJson(array("ebookdata" => $meta['ebooks']), 200);
+		$response->getBody()->write(json_encode([
+			"ebookdata" => $meta['ebooks']
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 	# stores the navigation for the ebook from a tab into a temporary file
-	public function storeEbookTabItem($request, $response, $args)
+	public function storeEbookTabItem(Request $request, Response $response, $args)
 	{
-		$params 		= $request->getParams();
+		$params 		= $request->getParsedBody();
 		$item 			= $params['item'];
-		$settings 		= $this->getSettings();
 
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
+		if(!$item)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> 'Item is missing'
+			]));
 
-		# create object to read and write cache-data
-		$writeCache 	= new WriteCache();
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+		}
 
-		$tmpitem 		= $writeCache->updateCache($folderName, 'tmpitem.txt', false, $item);
+		$tmpitem 		= $this->storePluginData('tmpitem.txt', serialize($item));
 		
-		if($tmpitem)
+		if($tmpitem !== true)
 		{
-			return $response->withJson(array("tmpitem" => $tmpitem), 200);
+			$response->getBody()->write(json_encode([
+				'message' 	=> $tmpitem
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 		}
 
-		return $response->withJson(array('data' => false, 'errors' => ['message' => 'We could not store all data. Please try again.']), 500);
+		$response->getBody()->write(json_encode([
+			"tmpitem" => $tmpitem
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
-	# scans the folder with the ebooklayouts and returns layout-names as array
-	public function scanEbooklayouts()
+
+
+
+	#################################
+	# 		headlines and uuid 	 	#
+	#################################
+
+	# generate a headline preview of the current content selection
+	public function generateHeadlinePreview(Request $request, Response $response, $args)
 	{
-		# write params
-		$writeYaml 	= new WriteYaml();
-
-		# scan the ebooklayouts folder
-		$layoutfolders = array_diff(scandir(__DIR__ . '/booklayouts'), array('..', '.'));
-		$booklayouts = [];
-
-		foreach($layoutfolders as $layout)
-		{
-			# load config files from ebook layout
-			$configfolder = 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $layout;
-			$bookconfig = $writeYaml->getYaml($configfolder, 'config.yaml');
-
-			# load customcss
-			$customcss = $writeYaml->getFile('cache', 'ebooklayout-' . $layout . '-custom.css');
-			$bookconfig['customcss'] = $customcss ? $customcss : '';
-
-			$booklayouts[$layout] = $bookconfig;
-		}
-
-		return $booklayouts;
-	}
-
-	public function storeEbookLayoutCSS($request, $response, $args)
-	{
-		$params 		= $request->getParams();
+		$params 		= $request->getParsedBody();
 		$settings 		= $this->getSettings();
-
-		if(!isset($params['layout']) OR $params['layout'] == '')
-		{
-			return $response->withJson(array('result' => false, 'errors' => ['message' => 'Layout name is missing.']), 500);
-		}
-
-		if(!isset($params['css']))
-		{
-			return $response->withJson(array('result' => false, 'errors' => ['message' => 'CSS parameter is missing.']), 500);
-		}
-
-		$layout 		= $params['layout'];
-		$customcss 		= $params['css'];
-
-		# write params
-		$write 			= new WriteCache();
-
-		# make sure no file is set if there is no custom css
-		if($customcss == '')
-		{
-			# delete the css file if exists
-			$write->deleteFileWithPath('cache' . DIRECTORY_SEPARATOR . 'ebooklayout-' . $layout . '-custom.css');
-			return $response->withJson(array('result' => true, 'message' => 'deleted css file.'), 200);
-		}
-		else
-		{
-			if ( $customcss != strip_tags($customcss) )
-			{
-				return $response->withJson(array('result' => false, 'errors' => ['message' => 'CSS contains html.']), 500);
-			}
-			else
-			{
-				# store css
-				$write->writeFile('cache', 'ebooklayout-' . $layout . '-custom.css', $customcss);
-				return $response->withJson(array('result' => true), 200);
-			}
-		}
-	}
-
-	# gets the ebook navigation from data folder or the general page navigation
-	public function getEbookNavi($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$settings 		= $this->getSettings();
-
-		$folderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-		$folder 		= $settings['rootPath'] . $folderName;
-
-		if(!$this->checkEbookFolder($folder))
-		{
-			return $response->withJson(array('navigation' => false, 'errors' => ['message' => 'Please make sure that the folder data/ebooks exists and is writable.']), 500);
-		}
-
-		if(!isset($params['projectname']) OR $params['projectname'] == '' OR !preg_match("/^[a-z\-]*\.yaml$/", $params['projectname']))
-		{
-			return $response->withJson(array('navigation' => false, 'errors' => ['message' => 'The projectname is not valid.']), 500);
-		}
-
-		$projectname 	= str_replace('.yaml', '', $params['projectname']);
-		$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
-
-		# write params
-		$writeCache 	= new WriteCache();
-		$navigation 	= $writeCache->getCache($folderName, $naviname . '.txt');
-
-		if(!$navigation)
-		{
-			$navigation = $writeCache->getCache('cache', 'structure.txt');
-		}
-
-		if(!$navigation)
-		{
-			return $response->withJson(array('navigation' => false, 'errors' => ['message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.', 'disable' => true]), 422);
-		}
-
-		return $response->withJson(array('navigation' => $navigation, 'errors' => false), 200);
-	}
-
-	# validates the ebook-input data from both, the tab and the centrally used ebook-feature
-	private function validateEbookData($params, $writeYaml)
-	{
-		$formdata		= isset($params['data']) ? $params['data'] : false;
-		$layout 		= isset($params['data']['layout']) ? $params['data']['layout'] : false;
-		$errors			= false;
-
-		# return error if either formdata or layoutdata not present
-
-		# check if navigation is there
-		if(!isset($params['navigation']) OR empty($params['navigation']) OR !$params['navigation'])
-		{
-			$errors['content'] = ['Content is missing'];
-		}
-
-		# list all standardfields
-		$standardfields	= [
-			'layout',
-			'activeshortcodes',
-			'disableshortcodes',
-			'downgradeheadlines',
-			'excludebasefolder',
-			'epubidentifierisbn',
-			'epubidentifieruuid',
-			'epubidentifieruri',
-			'epubcover',
-			'epubdescription',
-			'epubsubjects',
-			'epubauthorfirstname',
-			'epubauthorlastname',
-			'epubpublishername',
-			'epubpublisherurl',
-			'epubtocname', 
-			'epubtitlepage', 
-			'epubchaptername', 
-			'epubchapternumber',
-			'epubdebug'
-		];
-
-		# create validation object
-		$validation	= new Validation();
-
-		# return standard valitron object for standardfields
-		$v = $validation->returnValidator($formdata);
-
-		$v->rule('noHTML', 'blurb');
-		$v->rule('noHTML', 'primarycolor');
-		$v->rule('noHTML', 'secondarycolor');
-
-		if(!$v->validate())
-		{
-			$errors = $v->errors();
-		}
-
-		# delete the standardfields from formdata
-		foreach($standardfields as $standardfield)
-		{
-			if(isset($formdata[$standardfield]))
-			{
-				unset($formdata[$standardfield]);
-			}
-		}
-
-		# validate the customforms: if formdata are not empty now, then we have customfields
-		if(!empty($formdata && $layout))
-		{
-			# get the customfield configurations from booklayout folder			
-			$configfolder 	= 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $layout;
-			$bookconfig 	= $writeYaml->getYaml($configfolder, 'config.yaml');
-			
-			if($bookconfig && isset($bookconfig['customforms']['fields']))
-			{
-				$customforms	= $this->withoutFieldsets($bookconfig['customforms']['fields'], []);
-
-				# validation loop: code taken from metaApiController
-				foreach($formdata as $fieldName => $fieldValue)
-				{
-					# get the corresponding field definition from original plugin settings
-					$fieldDefinition = isset($customforms[$fieldName]) ? $customforms[$fieldName] : false;
-
-					if(!$fieldDefinition)
-					{
-						# we simply delete the params that are not defined to avoid errors. For example, if field-definitions have been changed in a new version
-						unset($params['data'][$fieldName]);
-					}
-					else
-					{
-						# validate user input for this field
-						$result = $validation->objectField($fieldName, $fieldValue, 'meta', $fieldDefinition);
-
-						if($result !== true)
-						{
-							$errors[$fieldName] = $result[$fieldName][0];
-						}
-					}
-				}
-
-			}
-		}
-
-		if($errors)
-		{
-			return array('errors' => $errors);
-		}
-
-		# return the validated params which also hold optimized data for customfields
-		return $params;
-	}
-
-	# generates the ebook-preview
-	public function ebookPreview($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$settings 		= $this->getSettings();
-		$uri 			= $request->getUri()->withUserInfo('');
-		$base_url		= $uri->getBaseUrl();
-
-		$writeYaml 		= new WriteYaml();
-		$writeCache 	= new WriteCache();
-
-		$ebookFolderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
-
-		# check if call comes from a tab
-		if(!empty($params) && isset($params['itempath']))
-		{
-			# wait for a second to make super sure that the temporary item has been stored by vue-script
-			usleep(200000);
-
-			# get bookdata from the page
-			$meta 		= $writeYaml->getYaml($settings['contentFolder'], $params['itempath'] . '.yaml');
-			$ebookdata 	= isset($meta['ebooks']) ? $meta['ebooks'] : false;
-
-			$navigation = $writeCache->getCache($ebookFolderName, 'tmpitem.txt');
-
-			# should we delete the old tmpitem.txt here or simply let next overwrite it?
-		}
-		# otherwise it is from the settings
-		elseif(!empty($params) && isset($params['projectname']))
-		{	
-			$projectname 	= str_replace('.yaml', '', $params['projectname']);
-			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
-
-			# get bookdata
-			$ebookdata 		= $writeYaml->getYaml($ebookFolderName, $projectname .'.yaml');
-
-			# get navigationdata
-			$navigation = $writeCache->getCache($ebookFolderName, $naviname . '.txt');
-		}
-
-		# generate the book content from ebook-navigation
-		$parsedown 		= new ParsedownExtension($base_url, $settingsForHeadlineAnchors = false, $this->getDispatcher());
-		
-		# disable attributes for images because of bug in pagedjs
-		$parsedown->withoutImageAttributes();
-		
-		# the default mode is with footnotes, but user can activate endnotes too
-		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
-		{
-			# if default mode, then we get a different html from parsedown 
-			$parsedown->withSpanFootnotes();
-		}
-
-		# check if shortcodes should be rendered
-		if(isset($ebookdata['disableshortcodes']) && $ebookdata['disableshortcodes'])
-		{
-			# empty array will stop all shortcodes
-			$parsedown->setAllowedShortcodes(array());
-		}
-		elseif(isset($ebookdata['activeshortcodes']) && is_array($ebookdata['activeshortcodes']) && !empty($ebookdata['activeshortcodes']))
-		{
-			# only selected shortcodes will be rendered
-			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
-		}
-
-		# skip the base folder if activated
-		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
-		{
-			$navigation = $navigation[0]['folderContent'];
-		}
-
-		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
-		$book 			= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
-
-		# let us add the thumb index:
-		$thumbindex = false;
-
-		foreach($book as $chapter)
-		{
-			if( isset($chapter['metadata']['thumbindex']['language']) && ($chapter['metadata']['thumbindex']['language'] != 'clear'))
-			{
-				$thumbindex[$chapter['metadata']['thumbindex']['lang']] = ['lang' => $chapter['metadata']['thumbindex']['lang'], 'thumb' =>  $chapter['metadata']['thumbindex']['thumb'] ];
-			}
-		}
-
-		# we have to dispatch onTwigLoaded to get javascript from other plugins
-		$this->container->dispatcher->dispatch('onTwigLoaded');
-
-		$twig   		= $this->getTwig();
-		$loader 		= $twig->getLoader();
-		$loader->addPath(__DIR__ . '/templates', 'ebooks');
-		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
-	
-		$booklayouts = $this->scanEbooklayouts();
-
-		# load customcss
-		$customcss = $writeYaml->checkFile('cache', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
-		if($customcss)
-		{
-			$this->container->assets->addCSS($base_url . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
-		}
-
-		return $twig->render($response, '@booklayouts/index.twig', [
-			'settings' 		=> $settings, 
-			'ebookdata' 	=> $ebookdata, 
-			'booklayout'	=> $booklayouts[$ebookdata['layout']],
-			'book' 			=> $book,
-			'thumbindex'	=> $thumbindex
-		]);
-	}
-
-	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL)
-	{
-		# before we use this logic, we have to check if the current layout supports that feature.
-		# please check here
-		# or we should delete everything that is not related to the layout in the ebook-data first.
-
-		$originalimages 			= isset($ebookdata['originalimages']) ? $ebookdata['originalimages'] : false;
-		$downgradeheadlines 		= isset($ebookdata['downgradeheadlines']) ? $ebookdata['downgradeheadlines'] : 0;
-		$chapterlevel				= $chapterlevel ? $chapterlevel : 1;
-
-		foreach($navigation as $item)
-		{			
-			if($item['status'] == "published")
-			{
-				# if page or folder is excluded from book content
-				if(isset($item['exclude']) && $item['exclude'] == true)
-				{
-					continue;
-				}
-
-				# set the filepath
-				$filePath 	= $pathToContent . $item['path'];
-				$metaPath 	= $pathToContent . $item['pathWithoutType'] . '.yaml';
-				
-				# check if url is a folder and add index.md 
-				if($item['elementType'] == 'folder')
-				{
-					$filePath 	= $filePath . DIRECTORY_SEPARATOR . 'index.md';
-				}
-
-				# read the content of the file
-				$chapter 			= file_exists($filePath) ? file_get_contents($filePath) : false;
-				
-				# get the meta
-				$meta 				= file_exists($metaPath) ? file_get_contents($metaPath) : false;
-				if($meta)
-				{
-					$meta 			= \Symfony\Component\Yaml\Yaml::parse($meta);
-				}
-
-				# turn into an array
-				$chapterArray 		= $parsedown->text($chapter, $itemUrl = false);
-
-				# check the hierarchy of the current page within the navigation
-				# $chapterlevel = count($item['keyPathArray']);
-
-				# we have to overwrite headlines and/or image urls if user selected those options
-				# if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
-				if( $originalimages OR $chapterlevel >= ($downgradeheadlines+1)  )
-				{
-					# go through each content element
-					foreach($chapterArray as $key => $element)
-					{
-						# if user wants to use original images instead of small once
-						if($originalimages && isset($element['name']) && $element['name'] == 'figure')
-						{
-							# rewrite the image urls
-							$image = $element['elements'][0]['handler']['argument'];
-							$element['elements'][0]['handler']['argument'] = str_replace("media/live/", "media/original/", $image);
-							$chapterArray[$key] = $element;
-						}
-
-						/*
-						# by default and if user did not contradict to automatically adjust the headline levels
-						if(!$originalheadlinelevels AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
-						{
-							# lower the levels of headlines
-							$headlinelevel = $element['name'][1] + ($chapterlevel -1);
-							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
-							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
-						}
-						*/
-						if($downgradeheadlines == 0)
-						{
-							continue;
-						}
-
-						# adjust the headline levels
-						if( ($chapterlevel >= ($downgradeheadlines+1) ) AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
-						{
-							# lower the levels of headlines
-							$headlinelevel = $element['name'][1] + ($chapterlevel - $downgradeheadlines);
-							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
-							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
-						}
-					}
-				}
-
-				# turn into html
-				$chapterHTML		= $parsedown->markup($chapterArray, $itemUrl = false);
-
-				$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML, 'metadata' => $meta];
-
-				if($item['elementType'] == 'folder')
-				{
-					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1 );
-				}
-			}
-		}
-		return $book;
-	}
-
-	public function generateHeadlinePreview($request, $response, $args)
-	{
-		$params 		= $request->getParams();
-		$settings 		= $this->getSettings();
-		$uri 			= $request->getUri()->withUserInfo('');
-		$base_url		= $uri->getBaseUrl();
-
-		$writeYaml 		= new WriteYaml();
-		$writeCache 	= new WriteCache();
-
-		$ebookFolderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+		$base_url		= $this->urlinfo['baseurl'];
 
 		# check if call comes from a tab
 		if(isset($params['item']) && isset($params['ebookdata']))
@@ -868,11 +932,12 @@ class Ebooks extends Plugin
 		# otherwise it is from the settings
 		else
 		{
+			return false;
 			# get bookdata
-			$ebookdata 	= $writeYaml->getYaml($ebookFolderName, 'ebookdata.yaml');
+#			$ebookdata 	= $writeYaml->getYaml($ebookFolderName, 'ebookdata.yaml');
 
 			# get navigationdata
-			$navigation = $writeCache->getCache($ebookFolderName, 'navigation.txt');
+#			$navigation = $writeCache->getCache($ebookFolderName, 'navigation.txt');
 		}
 
 		# skip the base folder if activated
@@ -883,11 +948,26 @@ class Ebooks extends Plugin
 
 		# generate the book content from ebook-navigation
 		$parsedown 		= new ParsedownExtension($base_url);
-				
-		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
+
+# GET THAT FROM STORAGE
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
+
 		$headlines 		= $this->generateArrayOfHeadlineElements([], $navigation, $pathToContent, $parsedown, $ebookdata);
 
-		return $response->withJson(array('headlines' => $headlines, 'errors' => false), 200);
+		if(empty($headlines))
+		{
+			$headlines[] 	= [
+				'name' 		=> 'ERROR',
+				'level' 	=> 1,
+				'text' 		=> 'No headlines found. That page might not exist anymore. Please load the latest content tree.'
+			]; 
+		}
+
+		$response->getBody()->write(json_encode([
+			'headlines' => $headlines
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 	private function generateArrayOfHeadlineElements($headlines, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL)
@@ -897,22 +977,39 @@ class Ebooks extends Plugin
 
 		foreach($navigation as $item)
 		{
-			if($item['status'] == "published")
-			{
-				# if page or folder is excluded from book content
-				if(isset($item['exclude']) && $item['exclude'] == true)
-				{
-					continue;
-				}
 
+# OPTION FOR UNPUBLISHED AND DRAFTED PAGES
+
+			if(
+				$item['status'] == "published" &&
+				isset($item['include']) &&
+				$item['include'] == true
+			)
+			{
 				# set the filepath
-				$filePath 	= $pathToContent . $item['path'];
+				$filePath 	= $item['path'];
+				$metaPath 	= $pathToContent . $item['pathWithoutType'] . '.yaml';
 				
 				# check if url is a folder and add index.md 
 				if($item['elementType'] == 'folder')
 				{
 					$filePath 	= $filePath . DIRECTORY_SEPARATOR . 'index.md';
 				}
+				
+				# get the meta
+				$meta 				= file_exists($metaPath) ? file_get_contents($metaPath) : false;
+				if($meta)
+				{
+					$meta 			= \Symfony\Component\Yaml\Yaml::parse($meta);
+
+					# check for references
+					if(isset($meta['meta']['referencetype']) && $meta['meta']['referencetype'] == 'copy')
+					{
+						$filePath = $this->getFilepathForReference($meta, $filePath);
+					}
+				}
+
+				$filePath = $pathToContent . $filePath;
 
 				# read the content of the file
 				$chapter 			= file_exists($filePath) ? file_get_contents($filePath) : false;
@@ -945,8 +1042,181 @@ class Ebooks extends Plugin
 		return $headlines;
 	}
 
+	public function generateUuidV4(Request $request, Response $response, $args)
+	{
+
+		$uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+			# 32 bits for "time_low"
+			mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+			
+			#16 bits for "time_mid"
+			mt_rand(0, 0xffff),
+
+			# 16 bits for "time_hi_and_version",
+			# four most significant bits holds version number 4
+			mt_rand(0, 0x0fff) | 0x4000,
+
+			# 16 bits, 8 bits for "clk_seq_hi_res",
+			# 8 bits for "clk_seq_low",
+			# two most significant bits holds zero and one for variant DCE1.1
+			mt_rand(0, 0x3fff) | 0x8000,
+
+			# 48 bits for "node"
+			mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+		);
+
+		$response->getBody()->write(json_encode([
+			'uuid' => $uuid
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+
+	##########################################
+	# eBook Generation (pdf-preview / epub)  #
+	##########################################
+
+	# generates the ebook-preview
+	public function ebookPreview(Request $request, Response $response, $args)
+	{
+		$projectname 	= $request->getQueryParams()['projectname'];
+		$itempath 		= $request->getQueryParams()['itempath'];
+		$settings 		= $this->getSettings();
+		$baseurl 		= $this->urlinfo['baseurl'];
+		$dispatcher 	= $this->getDispatcher();
+
+		# if it is from the settings
+		if($projectname)
+		{
+			$projectname 	= str_replace('.yaml', '', $projectname);
+			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
+
+			# get bookdata
+			$ebookdata 		= $this->getPluginYamlData($projectname . '.yaml');
+			if(!$ebookdata)
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			# get the stored ebook-navigation
+			$navigation 	= $this->getPluginData($naviname . '.txt');
+			if(!$navigation OR trim($navigation) == '')
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			$navigation = unserialize($navigation);
+		}
+		elseif($itempath)
+		{
+			# wait for a second to make super sure that the temporary item has been stored by vue-script
+			usleep(200000);
+
+			$storage 	= new StorageWrapper($settings['storage']);
+			
+			# get the metadata from page
+			$meta 		= $storage->getYaml('contentFolder', '', $itempath . '.yaml');
+			$ebookdata 	= isset($meta['ebooks']) ? $meta['ebooks'] : false;
+
+			$navigation = $this->getPluginData('tmpitem.txt');
+			if(!$navigation OR trim($navigation) == '')
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We could not find the navigation for the eBook. Please make sure that you selected some pages for this book.'
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			$navigation = unserialize($navigation);			
+		}
+
+		# setup parsedown with individual settings
+		$parsedown = new ParsedownExtension($baseurl, $settingsForHeadlineAnchors = false, $dispatcher);
+		
+		# disable attributes for images because of bug in pagedjs
+#		$parsedown->withoutImageAttributes();
+		
+		# the default mode is with footnotes, but user can activate endnotes too
+		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
+		{
+			# if default mode, then we get a different html from parsedown 
+			$parsedown->withSpanFootnotes();
+		}
+
+		# check if shortcodes should be rendered
+		if(isset($ebookdata['disableshortcodes']) && $ebookdata['disableshortcodes'])
+		{
+			# empty array will stop all shortcodes
+			$parsedown->setAllowedShortcodes(array());
+		}
+		elseif(isset($ebookdata['activeshortcodes']) && is_array($ebookdata['activeshortcodes']) && !empty($ebookdata['activeshortcodes']))
+		{
+			# only selected shortcodes will be rendered
+			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
+		}
+
+		# skip the base folder if activated
+		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
+		{
+			$navigation = $navigation[0]['folderContent'];
+		}
+
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
+		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
+
+		# let us add the thumb index:
+		$thumbindex = false;
+
+		foreach($bookcontent as $chapter)
+		{
+			if( isset($chapter['metadata']['thumbindex']['language']) && ($chapter['metadata']['thumbindex']['language'] != 'clear'))
+			{
+				$thumbindex[$chapter['metadata']['thumbindex']['lang']] = ['lang' => $chapter['metadata']['thumbindex']['lang'], 'thumb' =>  $chapter['metadata']['thumbindex']['thumb'] ];
+			}
+		}
+
+		# we have to dispatch onTwigLoaded to get javascript from other plugins
+		$dispatcher->dispatch(new OnTwigLoaded(false), 'onTwigLoaded');
+
+		$twig   		= $this->getTwig();
+		$loader 		= $twig->getLoader();
+		$loader->addPath(__DIR__ . '/templates', 'ebooks');
+		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
+	
+		$booklayouts = $this->scanEbooklayouts();
+
+		/*
+		# load customcss
+		$customcss = $writeYaml->checkFile('cache', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		if($customcss)
+		{
+			$this->container->assets->addCSS($base_url . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		}
+		*/
+
+		return $twig->render($response, '@booklayouts/index.twig', [
+			'settings' 		=> $settings, 
+			'base_url' 		=> $baseurl, 			
+			'ebookdata' 	=> $ebookdata, 
+			'booklayout'	=> $booklayouts[$ebookdata['layout']],
+			'book' 			=> $bookcontent,
+			'thumbindex'	=> $thumbindex
+		]);
+	}
+
+
 	# generates and returns the epub file
-	public function createEpub($request, $response, $args)
+	public function createEpub(Request $request, Response $response, $args)
 	{
 		ob_end_flush();
 
@@ -954,50 +1224,67 @@ class Ebooks extends Plugin
 		ini_set('error_reporting', E_ALL | E_STRICT);
 		ini_set('display_errors', 0);
 		
-		$params 		= $request->getParams();
+		$projectname 	= $request->getQueryParams()['projectname'];
+		$itempath 		= $request->getQueryParams()['itempath'];
 		$settings 		= $this->getSettings();
-		$uri 			= $request->getUri()->withUserInfo('');
-		$base_url		= $uri->getBaseUrl();
+		$baseurl 		= $this->urlinfo['baseurl'];
 
-		$writeYaml 		= new WriteYaml();
-		$writeCache 	= new WriteCache();
+		# if it is from the settings
+		if($projectname)
+		{
+			$projectname 	= str_replace('.yaml', '', $projectname);
+			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
 
-		$ebookFolderName 	= 'data' . DIRECTORY_SEPARATOR . 'ebooks';
+			# get bookdata
+			$ebookdata 		= $this->getPluginYamlData($projectname . '.yaml');
+			if(!$ebookdata)
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
+				]));
 
-		# check if call comes from a tab
-		if(!empty($params) && isset($params['itempath']))
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			# get the stored ebook-navigation
+			$navigation 	= $this->getPluginData($naviname . '.txt');
+			if(!$navigation OR trim($navigation) == '')
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			$navigation = unserialize($navigation);
+		}
+		elseif($itempath)
 		{
 			# wait for a second to make super sure that the temporary item has been stored by vue-script
 			usleep(200000);
 
-			# get bookdata from the page
-			$meta 		= $writeYaml->getYaml($settings['contentFolder'], $params['itempath'] . '.yaml');
+			$storage 	= new StorageWrapper($settings['storage']);
+			
+			# get the metadata from page
+			$meta 		= $storage->getYaml('contentFolder', '', $itempath . '.yaml');
 			$ebookdata 	= isset($meta['ebooks']) ? $meta['ebooks'] : false;
 
-			$navigation = $writeCache->getCache($ebookFolderName, 'tmpitem.txt');
+			$navigation = $this->getPluginData('tmpitem.txt');
+			if(!$navigation OR trim($navigation) == '')
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We could not find the navigation for the eBook. Please make sure that you selected some pages for this book.'
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			$navigation = unserialize($navigation);			
 		}
 
-		# otherwise it is from the settings
-		elseif(!empty($params) && isset($params['projectname']))
-		{	
-			$projectname 	= str_replace('.yaml', '', $params['projectname']);
-			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
-
-			# get bookdata
-			$ebookdata 		= $writeYaml->getYaml($ebookFolderName, $projectname .'.yaml');
-
-			# get navigationdata
-			$navigation = $writeCache->getCache($ebookFolderName, $naviname . '.txt');
-		}
-
-		if(!$navigation OR !$ebookdata)
-		{
-			$response->write('There is no navigation or no ebookdata for this book project.');
-			return $response;
-		}
-
-		# generate the book content from ebook-navigation
-		$parsedown 		= new ParsedownExtension($base_url);
+		# setup parsedown with individual settings
+		$parsedown = new ParsedownExtension($baseurl);
 
 		$parsedown->withSpanFootnotes();
 
@@ -1012,11 +1299,15 @@ class Ebooks extends Plugin
 			# only selected shortcodes will be rendered
 			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
 		}
-		
-		$pathToContent	= $settings['rootPath'] . $settings['contentFolder'];
+
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
 		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
 
-		# START EPUB 
+
+		##############
+		# START EPUB #
+		##############
+
 
 		# setting timezone for time functions used for logging to work properly
 		date_default_timezone_set('Europe/Berlin');
@@ -1035,14 +1326,15 @@ class Ebooks extends Plugin
 		$log->logLine("getCurrentServerURL: " . URLHelper::getCurrentServerURL());
 		$log->logLine("getCurrentPageURL..: " . URLHelper::getCurrentPageURL());
 
-		if(!isset($ebookdata['title']) OR $ebookdata['title'] == '')
+		if(!isset($ebookdata['epubtitle']) OR $ebookdata['epubtitle'] == '')
 		{
-			$response->write('There is no title. A book title is mandatory, we cannot create an ePub without that.');
-			return $response;			
+			$response->getBody()->write('The ePub title is missing.');
+			
+			return $response->withStatus(422);
 		}
 
 		# Title and Identifier are mandatory!
-		$book->setTitle($ebookdata['title']);
+		$book->setTitle($ebookdata['epubtitle']);
 		
 		# Could also be the ISBN number, preferred for published books, or a UUID like https://www.php.net/manual/en/function.uniqid.php
 		if(isset($ebookdata['epubidentifierisbn']) && $ebookdata['epubidentifierisbn'] != '')
@@ -1086,6 +1378,7 @@ class Ebooks extends Plugin
 		}
 
 		# Strictly not needed as the book date defaults to time().
+## use input field for publishing date
 		$book->setDate(time());
 
 		# As this is generated, this _could_ contain the name or licence information of the user who purchased the book, if needed. If this is used that way, the identifier must also be made unique for the book.
@@ -1112,7 +1405,7 @@ class Ebooks extends Plugin
 		}
 
 		# Insert custom meta data to the book, in this case, Calibre series index information.
-		CalibreHelper::setCalibreMetadata($book, $ebookdata['title'], "3");
+		CalibreHelper::setCalibreMetadata($book, $ebookdata['epubtitle'], "3");
 
 		# FIXED-LAYOUT METADATA (ONLY AVAILABLE IN EPUB3)
 		# RenditionHelper::addPrefix($book);
@@ -1135,15 +1428,15 @@ class Ebooks extends Plugin
 
 		# ePub 3 uses a variant of HTML5 called XHTML5
 		$content_start =
-		    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-		    . "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n"
-		    . "\t<head>"
-		    . "\t\t<meta http-equiv=\"Default-Style\" content=\"text/html; charset=utf-8\" />\n"
-		    . $book->getViewportMetaLine() // generate the viewport meta line if the viewport is set.
-		    . "\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" />\n"
-		    . "\t\t<title>" . $ebookdata['title'] . "</title>\n"
-		    . "\t</head>\n"
-		    . "\t<body>\n";
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+			. "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n"
+			. "\t<head>"
+			. "\t\t<meta http-equiv=\"Default-Style\" content=\"text/html; charset=utf-8\" />\n"
+			. $book->getViewportMetaLine() // generate the viewport meta line if the viewport is set.
+			. "\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" />\n"
+			. "\t\t<title>" . $ebookdata['title'] . "</title>\n"
+			. "\t</head>\n"
+			. "\t<body>\n";
 
 		$bookEnd = "\t</body>\n</html>\n";
 
@@ -1156,10 +1449,9 @@ class Ebooks extends Plugin
 		# https://gist.githubusercontent.com/ZhiguoLong/ec9d86ebd0540b8a8631/raw/f90da926368d22935c2b9627ffef76ee9467db08/epub.css
 		# $cssData = '@page{margin:10px}a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,caption,center,cite,code,del,details,dfn,div,em,embed,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hgroup,html,i,iframe,img,ins,kbd,label,legend,mark,menu,nav,object,output,p,pre,q,ruby,s,samp,section,small,span,strike,strong,sub,summary,sup,table,tbody,td,tfoot,th,thead,time,tr,tt,u,var,video{margin:0;padding:0;border:0;font-size:100%;vertical-align:baseline}table{border-collapse:collapse;border-spacing:0}dd,dl,dt,li,ol,ul{margin:0;padding:0;border:0;font-size:100%;vertical-align:baseline}body{text-align:justify;line-height:120%}h1{text-indent:0;text-align:center;margin:100px 0 0;font-size:2.0em;font-weight:bold;page-break-before:always;line-height:150%}h2{text-indent:0;text-align:center;margin:50px 0 0;font-size:1.5em;font-weight:bold;page-break-before:always;line-height:135%}h3{text-indent:0;text-align:left;font-size:1.4em;font-weight:bold}h4{text-indent:0;text-align:left;font-size:1.2em;font-weight:bold}h5{text-indent:0;text-align:left;font-size:1.1em;font-weight:bold}h6{text-indent:0;text-align:left;font-size:1.0em;font-weight:bold}h1,h2,h3,h4,h5,h6{-webkit-hyphens:none !important;hyphens:none;page-break-after:avoid;page-break-inside:avoid}p{text-indent:1.25em;margin:0;widows:2;orphans:2}p.centered{text-indent:0;margin:1.0em 0 0;text-align:center}p.centeredbreak{text-indent:0;margin:1.0em 0;text-align:center}p.texttop{margin:1.5em 0 0;text-indent:0}p.clearit{clear:both}p.toctext{margin:0 0 0 1.5em;text-indent:0}p.toctext2{margin:0 0 0 2.5em;text-indent:0}ul{margin:1em 0 0 2em;text-align:left}ol{margin:1em 0 0 2em;text-align:left}span.i{font-style:italic}span.b{font-weight:bold}span.u{text-decoration:underline}span.st{text-decoration:line-through}span.ib{font-style:italic;font-weight:bold}span.iu{font-style:italic;text-decoration:underline}span.bu{font-weight:bold;text-decoration:underline}span.ibu{font-style:italic;font-weight:bold;text-decoration:underline}span.ipadcenterfix{text-align:center}img{max-width:100%}table{margin:1.0em auto}td,th,tr{margin:0;padding:2px;border:1px solid black;font-size:100%;vertical-align:baseline}.footnote{vertical-align:super;font-size:0.75em;text-decoration:none}span.dropcap{font-size:300%;font-weight:bold;height:1em;float:left;margin:0.3em 0.125em -0.4em 0.1em}div.pullquote{margin:2em 2em 0;text-align:left}div.pullquote p{font-weight:bold;font-style:italic}div.pullquote hr{width:100%;margin:0;height:3px;color:#2E8DE0;background-color:#2E8DE0;border:0}div.blockquote{margin:1em 1.5em 0;text-align:left;font-size:0.9em}';
 
-		# https://github.com/mattharrison/epub-css-starter-kit
-		$cssData = 'a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,caption,center,cite,code,dd,del,details,dfn,div,dl,dt,em,embed,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hgroup,html,i,iframe,img,ins,kbd,label,legend,mark,menu,nav,object,output,p,pre,q,ruby,s,samp,section,small,span,strike,strong,sub,summary,sup,table,tbody,td,tfoot,th,thead,time,tr,tt,u,var,video{margin-right:0;padding:0;border:0;font-size:100%;vertical-align:baseline}table{border-collapse:collapse;border-spacing:0}@page{margin-top:30px;margin-bottom:20px}div.cover{text-align:center;page-break-after:always;padding:0;margin:0}div.cover img{height:100%;max-width:100%;padding:10px;margin:0;background-color:#cccccc}.half{max-width:50%}.tenth{max-width:10%;width:10%}.cover-img{height:100%;max-width:100%;padding:0;margin:0}h1,h2,h3,h4,h5,h6{hyphens:none !important;-moz-hyphens:none !important;-webkit-hyphens:none !important;adobe-hyphenate:none !important;page-break-after:avoid;page-break-inside:avoid;text-indent:0;text-align:left;font-family:Helvetica, Arial, sans-serif}h1{font-size:1.6em;margin-bottom:3.2em}.title h1{margin-bottom:0;margin-top:3.2em}h2{font-size:1em;margin-top:0.5em;margin-bottom:0.5em}h3{font-size:0.625em}h4{font-size:0.391em}h5{font-size:0.244em}h6{font-size:0.153em}h1 + p,h2 + p,h3 + p,h4 + p,h5 + p,h6 + p{text-indent:0}p{font-family:"Palatino", "Times New Roman", Caecilia, serif;-webkit-hyphens:auto;-moz-hyphens:auto;hyphens:auto;hyphenate-after:3;hyphenate-before:3;hyphenate-lines:2;-webkit-hyphenate-after:3;-webkit-hyphenate-before:3;-webkit-hyphenate-lines:2;line-height:1.5em;margin:0;text-align:justify;text-indent:1em;orphans:2;widows:2}p.first-para,p.first-para-chapter,p.note-p-first{text-indent:0}p.first-para-chapter::first-line{font-variant:small-caps}p.no-indent{text-indent:0}.no-hyphens{hyphens:none !important;-moz-hyphens:none !important;-webkit-hyphens:none !important;adobe-hyphenate:none !important}.rtl{direction:rtl;float:right}.drop{overflow:hidden;line-height:89%;height:0.8em;font-size:281%;margin-right:0.075em;float:left}.dropcap{line-height:100%;font-size:341%;margin-right:0.075em;margin-top:-0.22em;float:left;height:0.8em}dl,ol,ul{margin:1em 0;text-align:left}li{font-family:"Palatino", "Times New Roman", Caecilia, serif;line-height:1.5em;orphans:2;widows:2;text-align:justify;text-indent:0;margin:0}li p{text-indent:0}dt{font-weight:bold;font-family:Helvetica, Arial, sans-serif}dd{line-height:1.5em;font-family:"Palatino", "Times New Roman", Caecilia, serif}dd p{text-indent:0}blockquote{margin-left:1em;margin-right:1em;line-height:1.5em;font-style:italic}blockquote p,blockquote p.first-para{text-indent:0}code,kbd,pre,samp,tt{font-family:"Courier New", Courier, monospace;word-wrap:break-word}pre{font-size:0.8em;line-height:1.2em;margin-left:1em;margin-bottom:1em;white-space:pre-wrap;display:block}img{border-radius:0.3em;-webkit-border-radius:0.3em;-webkit-box-shadow:rgba(0, 0, 0, 0.15) 0 1px 4px;box-shadow:rgba(0, 0, 0, 0.15) 0 1px 4px;box-sizing:border-box;border:white 0.5em solid;max-width:80%;max-height:80%}img.pwhack{width:100%}.group{page-break-inside:avoid}.caption{text-align:center;font-size:0.8em;font-weight:bold}p img{border-radius:0;border:none}figure{padding:1em;background-color:#cccccc;border:1px solid black;text-align:center}figure figcaption{text-align:center;font-size:0.8em;font-weight:bold}div.div-literal-block-admonition{margin-left:1em;background-color:#cccccc}div.hint,div.note,div.tip{margin:1em 0 1em 0 !important;background-color:#cccccc;padding:1em !important;border-top:0 solid #cccccc;border-bottom:0 dashed #cccccc;page-break-inside:avoid}.admonition-title,p.note-title{margin-top:0;font-variant:small-caps;font-size:0.9em;text-align:center;font-weight:bold;font-style:normal;-webkit-hyphens:none;-moz-hyphens:none;hyphens:none}.note-p,div.note p{text-indent:1em;margin-left:0;margin-right:0}div.note p.note-p-first{text-indent:0;margin-left:0;margin-right:0}table{page-break-inside:avoid;border:1px;margin:1em auto;border-collapse:collapse;border-spacing:0}th{font-variant:small-caps;padding:5px !important;vertical-align:baseline;border-bottom:1px solid black}td{font-family:"Palatino", "Times New Roman", Caecilia, serif;font-size:small;hyphens:none;-moz-hyphens:none;-webkit-hyphens:none;padding:5px !important;page-break-inside:avoid;text-align:left;text-indent:0;vertical-align:baseline}td:nth-last-child{border-bottom:1px solid black}.zebra{}.zebra tr th{background-color:white}.zebra tr:nth-child(6n+0),.zebra tr:nth-child(6n+1),.zebra tr:nth-child(6n-1){background-color:#cccccc}sup{vertical-align:super;font-size:0.5em;line-height:0.5em}sub{vertical-align:sub;font-size:0.5em;line-height:0.5em}table.footnote{margin:0.5em 0 0}.footnote{font-size:0.8em}.footnote-link{font-size:0.8em;vertical-align:super}.tocEntry-1 a{font-weight:bold;text-decoration:none;color:black}.tocEntry-2 a{margin-left:1em;text-indent:1em;text-decoration:none;color:black}.tocEntry-3 a{text-indent:2em;text-decoration:none;color:black}.tocEntry-4 a{text-indent:3em;text-decoration:none;color:black}.copyright-top{margin-top:6em}.page-break-before{page-break-before:always}.page-break-after{page-break-after:always}.center{text-indent:0;text-align:center;margin-left:auto;margin-right:auto;display:block}.right{text-align:right}.left{text-align:left}.f-right{float:right}.f-left{float:left}.ingredient{page-break-inside:avoid}.box-example{background-color:#8ae234;margin:2em;padding:1em;border:2px dashed #ef2929}.blue{background-color:blue}.dashed{border:2px dashed #ef2929}.padding-only{padding:1em}.margin-only{margin:2em}.smaller{font-size:0.8em}.em1{font-size:0.5em}.em2{font-size:0.75em}.em3{font-size:1em}.em4{font-size:1.5em}.em5{font-size:2em}.per1{font-size:50%}.per2{font-size:75%}.per3{font-size:100%}.per4{font-size:150%}.per5{font-size:200%}.mousepoem p{line-height:0;margin-left:1em}.per100{font-size:100%;line-height:0.9em}.per90{font-size:90%;line-height:0.9em}.per80{font-size:80%;line-height:0.9em}.per70{font-size:70%;line-height:0.9em}.per60{font-size:60%;line-height:0.9em}.per50{font-size:50%;line-height:1.05em}.per40{font-size:40%;line-height:0.9em}.size1{font-size:x-small}.size2{font-size:small}.size3{font-size:medium}.size4{font-size:large}.size5{font-size:x-large}.stanza{margin-top:1em;font-family:serif;padding-left:1em}.stanza p{padding-left:1em}.poetry{margin:1em}.ln{float:left;color:#999999;font-size:0.8em;font-style:italic}.pos1{margin-left:1em;text-indent:-1em}.pos2{margin-left:2em;text-indent:-1em}.pos3{margin-left:3em;text-indent:-1em}.pos4{margin-left:4em;text-indent:-1em}@font-face{font-family:Inconsolata Mono;font-style:normal;font-weight:normal;src:url("Inconsolata.otf")}.normal-mono{font-family:"Courier New", Courier, monospace}.mono,pre,tt{font-family:"Inconsolata Mono", "Courier New", Courier, monospace;font-style:normal}@font-face{font-family:mgopen modata;font-style:normal;font-weight:normal;font-size:0.5em;src:url("MgOpenModataRegular.ttf")}.modata{font-family:"mgopen modata"}@font-face{font-family:hidden;font-style:normal;font-weight:normal;font-size:1em;src:url("invisible1.ttf")}.hidden-font{font-family:"hidden"}@media (min-width: 200px){.px200{color:#8ae234}}@media (min-width: 400px){.px400{color:#8ae234}}@media (min-width: 800px){.px800{color:#8ae234}}@media (min-width: 1200px){.px1200{color:#8ae234}}* WIP device specific... */* @media (min-width: 768px) and (height: 1024px) and (amzn-kf8) */* Retina iPad */@media amzn-kf8{span.dropcapold{font-size:300%;font-weight:bold;height:1em;float:left;margin:-0.2em 0.1em 0}.dropcap{line-height:100%;font-size:341%;margin-right:0.075em;margin-top:-0.22em;float:left;height:0.8em}}@media amzn-mobi{span.dropcap{font-size:1.5em;font-weight:bold}tt{font-family:"Courier New", Courier, monospace}pre{margin-left:1em;margin-bottom:1em;font-size:x-small;font-family:"Courier New", Courier, monospace;white-space:pre-wrap;display:block}pre .no-indent{margin-left:0;text-indent:0}div.no-indent{margin-left:0;text-indent:0}h1{font-size:2em}h2{font-size:1em}h3{font-size:2em}h4{font-size:1em}blockquote{font-style:italics;margin-left:0;margin-right:0}div.note{border:1px solid black}.note-p,div.note{text-indent:1em;margin-left:0;margin-right:0;font-style:italic}.note-p-first{text-indent:0;margin-left:1em;margin-right:1em}.note-p{text-indent:1em;margin-left:1em;margin-right:1em}.pos1{text-indent:-1em}.pos2{text-indent:-1em}.pos3{text-indent:-1em}.pos4{text-indent:-1em}}.green{color:#8ae234}';
-
 		$log->logLine("Add css");
+
+		$cssData = '';
 		$cssPath = $settings['rootPath'] . 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'booklayouts' . DIRECTORY_SEPARATOR . $ebookdata['layout'] . DIRECTORY_SEPARATOR . 'epub.css';
 		if(file_exists($cssPath))
 		{
@@ -1173,6 +1465,12 @@ class Ebooks extends Plugin
 			{
 				$cssData = file_get_contents($cssPath);
 			}
+		}
+		else
+		{
+			# add standard epub css
+			$cssPath = $settings['rootPath'] . 'plugins' . DIRECTORY_SEPARATOR . 'ebooks' . DIRECTORY_SEPARATOR . 'epubcss' . DIRECTORY_SEPARATOR . 'epub-starter-kit.css';		
+			$cssData = file_get_contents($cssPath);
 		}
 
 		$book->addCSSFile("styles.css", "css1", $cssData);
@@ -1190,11 +1488,16 @@ class Ebooks extends Plugin
 		# setCoverImage can only be called once per book, but can be called at any point in the book creation.
 		$log->logLine("Set Cover Image");
 
-		# DONT DO THIS BECAUSE NAMINGS ARE FLEXIBLE DEPENDING ON LAYOUT
-		$cover = $content_start . "<h1>" . $ebookdata['title'] . "</h1>\n";
-		if(isset($ebookdata['subtitle']) && $ebookdata['subtitle'] != '') { 	$cover .= "<h2>" . $ebookdata['subtitle'] . "</h2>\n"; }
-		if(isset($ebookdata['author']) && $ebookdata['author'] != '') { 		$cover .= "<p>" . $ebookdata['author'] . "</p>\n"; }
-		if(isset($ebookdata['edition']) && $ebookdata['edition'] != '') { 		$cover .= "<p>" . $ebookdata['edition'] . "</p>\n"; }
+		# Create the cover
+		$cover = $content_start . "<h1>" . $ebookdata['epubtitle'] . "</h1>\n";
+		if(isset($ebookdata['epubsubtitle']) && $ebookdata['epubsubtitle'] != '')
+		{ 	
+			$cover .= "<h2>" . $ebookdata['epubsubtitle'] . "</h2>\n";
+		}
+		if(isset($ebookdata['epubauthor']) && $ebookdata['epubauthor'] != '')
+		{
+			$cover .= "<p>" . $ebookdata['epubauthor'] . "</p>\n"; 
+		}
 		$cover .= $bookEnd;
 
 		$tocName = (isset($ebookdata['epubtocname']) && $ebookdata['epubtocname'] != '' ) ? $ebookdata['epubtocname'] : 'Table of Contents';
@@ -1205,10 +1508,10 @@ class Ebooks extends Plugin
 		$book->addChapter($titleName, "Cover.xhtml", $cover);
 		$log->logLine("Cover added");
 
-		if(isset($ebookdata['imprint']) && $ebookdata['imprint'] != '')
+		if(isset($ebookdata['epubimprint']) && $ebookdata['epubimprint'] != '')
 		{
-			$imprinttitle  	= (isset($ebookdata['imprinttitle']) && $ebookdata['imprinttitle'] != '') ? $ebookdata['imprinttitle'] : 'Imprint';
-			$imprintarray 	= $parsedown->text($ebookdata['imprint'], $itemUrl = false);
+			$imprinttitle  	= (isset($ebookdata['epubimprinttitle']) && $ebookdata['epubimprinttitle'] != '') ? $ebookdata['epubimprinttitle'] : 'Imprint';
+			$imprintarray 	= $parsedown->text($ebookdata['epubimprint'], $itemUrl = false);
 			$imprinthtml 	= $parsedown->markup($imprintarray, $itemUrl = false);
 
 			$imprint = $content_start;
@@ -1307,44 +1610,44 @@ class Ebooks extends Plugin
 			}
 
 
-		    /**
-		     * Add a chapter to the book, as a chapter should not exceed 250kB, you can parse an array with multiple parts as $chapterData.
-		     * These will still only show up as a single chapter in the book TOC.
-		     *
-		     * @param string $chapterName        Name of the chapter, will be use din the TOC
-		     * @param string $fileName           Filename to use for the chapter, must be unique for the book.
-		     * @param string $chapterData        Chapter text in XHTML or array $chapterData valid XHTML data for the chapter. File should NOT exceed 250kB.
-		     * @param bool   $autoSplit          Should the chapter be split if it exceeds the default split size? Default=FALSE, only used if $chapterData is a string.
-		     * @param int    $externalReferences How to handle external references, EPub::EXTERNAL_REF_IGNORE, EPub::EXTERNAL_REF_ADD or EPub::EXTERNAL_REF_REMOVE_IMAGES? See documentation for <code>processChapterExternalReferences</code> for explanation. Default is EPub::EXTERNAL_REF_IGNORE.
-		     * @param string $baseDir            Default is "", meaning it is pointing to the document root. NOT used if $externalReferences is set to EPub::EXTERNAL_REF_IGNORE.
-		     *
-		     * @return mixed $success            FALSE if the addition failed, else the new NavPoint.
-		     */
+			/**
+			 * Add a chapter to the book, as a chapter should not exceed 250kB, you can parse an array with multiple parts as $chapterData.
+			 * These will still only show up as a single chapter in the book TOC.
+			 *
+			 * @param string $chapterName        Name of the chapter, will be use din the TOC
+			 * @param string $fileName           Filename to use for the chapter, must be unique for the book.
+			 * @param string $chapterData        Chapter text in XHTML or array $chapterData valid XHTML data for the chapter. File should NOT exceed 250kB.
+			 * @param bool   $autoSplit          Should the chapter be split if it exceeds the default split size? Default=FALSE, only used if $chapterData is a string.
+			 * @param int    $externalReferences How to handle external references, EPub::EXTERNAL_REF_IGNORE, EPub::EXTERNAL_REF_ADD or EPub::EXTERNAL_REF_REMOVE_IMAGES? See documentation for <code>processChapterExternalReferences</code> for explanation. Default is EPub::EXTERNAL_REF_IGNORE.
+			 * @param string $baseDir            Default is "", meaning it is pointing to the document root. NOT used if $externalReferences is set to EPub::EXTERNAL_REF_IGNORE.
+			 *
+			 * @return mixed $success            FALSE if the addition failed, else the new NavPoint.
+			 */
 
-		    /**
-		     * Process external references from a HTML to the book. The chapter itself is not stored.
-		     * the HTML is scanned for &lt;link..., &lt;style..., and &lt;img tags.
-		     * Embedded CSS styles and links will also be processed.
-		     * Script tags are not processed, as scripting should be avoided in e-books.
-		     *
-		     * EPub keeps track of added files, and duplicate files referenced across multiple
-		     *  chapters, are only added once.
-		     *
-		     * If the $doc is a string, it is assumed to be the content of an HTML file,
-		     *  else is it assumes to be a DOMDocument.
-		     *
-		     * Basedir is the root dir the HTML is supposed to "live" in, used to resolve
-		     *  relative references such as <code>&lt;img src="../images/image.png"/&gt;</code>
-		     *
-		     * $externalReferences determines how the function will handle external references.
-		     *
-		     * @param mixed  &$doc               (referenced)
-		     * @param int    $externalReferences How to handle external references, EPub::EXTERNAL_REF_IGNORE, EPub::EXTERNAL_REF_ADD or EPub::EXTERNAL_REF_REMOVE_IMAGES? Default is EPub::EXTERNAL_REF_ADD.
-		     * @param string $baseDir            Default is "", meaning it is pointing to the document root.
-		     * @param string $htmlDir            The path to the parent HTML file's directory from the root of the archive.
-		     *
-		     * @return bool  false if unsuccessful (book is finalized or $externalReferences == EXTERNAL_REF_IGNORE).
-		     */
+			/**
+			 * Process external references from a HTML to the book. The chapter itself is not stored.
+			 * the HTML is scanned for &lt;link..., &lt;style..., and &lt;img tags.
+			 * Embedded CSS styles and links will also be processed.
+			 * Script tags are not processed, as scripting should be avoided in e-books.
+			 *
+			 * EPub keeps track of added files, and duplicate files referenced across multiple
+			 *  chapters, are only added once.
+			 *
+			 * If the $doc is a string, it is assumed to be the content of an HTML file,
+			 *  else is it assumes to be a DOMDocument.
+			 *
+			 * Basedir is the root dir the HTML is supposed to "live" in, used to resolve
+			 *  relative references such as <code>&lt;img src="../images/image.png"/&gt;</code>
+			 *
+			 * $externalReferences determines how the function will handle external references.
+			 *
+			 * @param mixed  &$doc               (referenced)
+			 * @param int    $externalReferences How to handle external references, EPub::EXTERNAL_REF_IGNORE, EPub::EXTERNAL_REF_ADD or EPub::EXTERNAL_REF_REMOVE_IMAGES? Default is EPub::EXTERNAL_REF_ADD.
+			 * @param string $baseDir            Default is "", meaning it is pointing to the document root.
+			 * @param string $htmlDir            The path to the parent HTML file's directory from the root of the archive.
+			 *
+			 * @return bool  false if unsuccessful (book is finalized or $externalReferences == EXTERNAL_REF_IGNORE).
+			 */
 
 			$book->addChapter(
 				$chapterName 			= $prefix . $chapter['metadata']['meta']['title'], 
@@ -1363,7 +1666,7 @@ class Ebooks extends Plugin
 		{
 			$book->addChapter("Log", "Log.xhtml", $content_start . $log->getLog() . "\n</pre>" . $bookEnd);
 
-		    $book->addChapter("ePubLog", "ePubLog.xhtml", $content_start . $book->getLog() . "\n</pre>" . $bookEnd);
+			$book->addChapter("ePubLog", "ePubLog.xhtml", $content_start . $book->getLog() . "\n</pre>" . $bookEnd);
 		}
 
 		# Finalize the book, and build the archive.
@@ -1377,6 +1680,141 @@ class Ebooks extends Plugin
 		# After this point your script should call exit. If anything is written to the output,
 		# it'll be appended to the end of the book, causing the epub file to become corrupt.
 		exit();
+	}
+
+
+	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL)
+	{
+		# before we use this logic, we have to check if the current layout supports that feature.
+		# please check here
+		# or we should delete everything that is not related to the layout in the ebook-data first.
+
+		$originalimages 			= isset($ebookdata['originalimages']) ? $ebookdata['originalimages'] : false;
+		$downgradeheadlines 		= isset($ebookdata['downgradeheadlines']) ? $ebookdata['downgradeheadlines'] : 0;
+		$chapterlevel				= $chapterlevel ? $chapterlevel : 1;
+
+		foreach($navigation as $item)
+		{
+			if($item['status'] == "published")
+			{
+				# if page or folder is excluded from book content
+				if(!isset($item['include']) OR $item['include'] != true)
+				{
+					continue;
+				}
+
+				# set the filepath
+				$filePath 	= $item['path'];
+				$metaPath 	= $pathToContent . $item['pathWithoutType'] . '.yaml';
+				
+				# check if url is a folder and add index.md 
+				if($item['elementType'] == 'folder')
+				{
+					$filePath 	= $filePath . DIRECTORY_SEPARATOR . 'index.md';
+				}
+				
+				# get the meta
+				$meta 				= file_exists($metaPath) ? file_get_contents($metaPath) : false;
+				if($meta)
+				{
+					$meta 			= \Symfony\Component\Yaml\Yaml::parse($meta);
+				
+					# check for references
+					if(isset($meta['meta']['referencetype']) && $meta['meta']['referencetype'] == 'copy')
+					{
+						$filePath = $this->getFilepathForReference($meta, $filePath);
+					}
+				}
+
+				$filePath = $pathToContent . $filePath;
+
+				# read the content of the file
+				$chapter 			= file_exists($filePath) ? file_get_contents($filePath) : false;
+
+				# turn into an array
+				$chapterArray 		= $parsedown->text($chapter, $itemUrl = false);
+
+				# check the hierarchy of the current page within the navigation
+				# $chapterlevel = count($item['keyPathArray']);
+
+				# we have to overwrite headlines and/or image urls if user selected those options
+				# if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
+				if( $originalimages OR $chapterlevel >= ($downgradeheadlines+1)  )
+				{
+					# go through each content element
+					foreach($chapterArray as $key => $element)
+					{
+						# if user wants to use original images instead of small once
+						if($originalimages && isset($element['name']) && $element['name'] == 'figure')
+						{
+							# rewrite the image urls
+							$image = $element['elements'][0]['handler']['argument'];
+							$element['elements'][0]['handler']['argument'] = str_replace("media/live/", "media/original/", $image);
+							$chapterArray[$key] = $element;
+						}
+
+						/*
+						# by default and if user did not contradict to automatically adjust the headline levels
+						if(!$originalheadlinelevels AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						{
+							# lower the levels of headlines
+							$headlinelevel = $element['name'][1] + ($chapterlevel -1);
+							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
+							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
+						}
+						*/
+						if($downgradeheadlines == 0)
+						{
+							continue;
+						}
+
+						# adjust the headline levels
+						if( ($chapterlevel >= ($downgradeheadlines+1) ) AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						{
+							# lower the levels of headlines
+							$headlinelevel = $element['name'][1] + ($chapterlevel - $downgradeheadlines);
+							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
+							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
+						}
+					}
+				}
+
+				# turn into html
+				$chapterHTML		= $parsedown->markup($chapterArray, $itemUrl = false);
+
+				$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML, 'metadata' => $meta];
+
+				if($item['elementType'] == 'folder')
+				{
+					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1 );
+				}
+			}
+		}
+
+		return $book;
+	}
+
+	private function getFilepathForReference($meta, $filepath)
+	{
+		$urlinfo 			= $this->urlinfo;
+		$settings 			= $this->getSettings();
+		$langattr 			= $settings['langattr'];
+
+		$navigation 		= new Navigation();
+
+		$draftNavigation 	= $navigation->getDraftNavigation($urlinfo, $langattr);
+
+		$findurl 			= trim($meta['meta']['reference'], '/');
+		$findurl 			= '/' . $findurl;
+
+		$referenceItem 		= $navigation->getItemWithUrl($draftNavigation, $findurl);
+
+		if($referenceItem)
+		{
+			$filepath = $referenceItem->path;
+		}
+
+		return $filepath;		
 	}
 
 	# we have to flatten field definitions and erase fieldsets
@@ -1395,49 +1833,4 @@ class Ebooks extends Plugin
 		}
 		return $flat;
 	}
-
-	public function generateUuidV4($request, $response, $args)
-	{
-
-    	$uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-	    	# 32 bits for "time_low"
-      		mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-      		
-      		#16 bits for "time_mid"
-      		mt_rand(0, 0xffff),
-
-      		# 16 bits for "time_hi_and_version",
-      		# four most significant bits holds version number 4
-      		mt_rand(0, 0x0fff) | 0x4000,
-
-      		# 16 bits, 8 bits for "clk_seq_hi_res",
-      		# 8 bits for "clk_seq_low",
-      		# two most significant bits holds zero and one for variant DCE1.1
-      		mt_rand(0, 0x3fff) | 0x8000,
-
-      		# 48 bits for "node"
-      		mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    	);
-
-		return $response->withJson(array('uuid' => $uuid, 'errors' => false), 200);    	
-  	}
-
-	public function checkEbookFolder($folder)
-	{
-
-		if(!file_exists($folder) && !is_dir( $folder ))
-		{
-			if(!mkdir($folder, 0755, true))
-			{
-				return false;
-			}
-		}
-		elseif(!is_writeable($folder) OR !is_readable($folder))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
 }

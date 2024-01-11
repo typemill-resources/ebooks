@@ -1,68 +1,105 @@
-let ebooks = new Vue({
-    delimiters: ['${', '}'],
-	el: '#ebooks',
-	data: function () {
+const app = Vue.createApp({
+	template: `<Transition name="initial" appear>
+					<div>
+						<h1 class="text-3xl font-bold mb-4">eBook Studio</h1>
+						<form class="inline-block w-full">
+							<ul class="flex flex-wrap mt-4 mb-4">
+								<li v-for="tab in tabs">
+									<button 
+										class="px-2 py-2 border-b-2 border-stone-200 dark:border-stone-900 hover:border-stone-700 hover:dark:border-stone-200 hover:bg-stone-200 hover:dark:bg-stone-900 transition duration-100" 
+										:class="(tab == currentTab) ? 'border-stone-700 bg-stone-200 dark:bg-stone-900 dark:border-stone-200' : ''" 
+										@click.prevent="activateTab(tab)"
+									>{{ $filters.translate(tab) }}</button>
+								</li>
+							</ul>
+							<div>
+								<component
+									:is 				= "currentTabComponent"
+									:errors 			= "formErrors"
+									:formdata 			= "formData"
+									:layouts 			= "layoutData"
+									:navigation 		= "navigation"
+									:ebookprojects 		= "ebookprojects"
+									:currentproject 	= "currentproject"
+									:message  			= "message"
+									:messageClass 		= "messageClass"
+									:previewUrl 		= "previewUrl"
+									:epubUrl 			= "epubUrl"								    
+									@change-project 	= "setCurrentProject"
+									@create-project 	= "createEbookProject"
+									@delete-project 	= "deleteEbookProject"
+									@save-project		= "storeEbookData"
+									@reset-navigation 	= "resetNavigation"
+									@generate-uuid 		= "setUuid"
+								></component>
+							</div>
+						</form>
+					</div>
+				</Transition>`,
+	data() {
 		return {
-			root: document.getElementById("main").dataset.url, /* get url of current page */
-			currentTabComponent: "ebook-layout",
-	       	currentTab: "layout",
-	       	nextStep: false,
-    	   	tabs: ["layout", "settings", "content", "epub", "create"],
-			dataLoaded: false,
+			tabs: ["projects", "content", "pdf", "epub"],
+			currentTab: "projects",
+			currentTabComponent: "ebook-projects",
+
 			navigation: {}, 
-			standardForms: {}, /* holds the standard forms from layout that user has choosen from layoutData */
-			customForms: {}, /* holds the custom forms from layout that user has choosen from layoutData */
 			layoutData: {}, /* holds all the different eBook layouts */
 			formData: {}, /* holds the input data for the forms */
 			formErrors: {},
-			formErrorsReset: {},
-			tabErrors: {},
-			ebookprojects: false,
+			ebookprojects: ['ebookdata.yaml'],
 			currentproject: false,
+			shortcodes: false,
 			message: '',
-			messagecolor: '',
-			initialize: true,
-			disabled: false,
+			messageClass: '',
+
+			previewUrl: false,
+			epubUrl: false,
 		}
 	},
-	mounted: function(){
+	mounted() {
+
+		eventBus.$on('forminput', formdata => {
+			this.formData[formdata.name] = formdata.value;
+		});
 
 		/* set a default currentproject */
 		this.currentproject = 'ebookdata.yaml';
 
 		var self = this;
 
-        /* get the ebook layouts */
-        myaxios.get('/api/v1/ebooklayouts',{
-        	params: {
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-        	}
+		/* get the ebook layouts */
+		tmaxios.get('/api/v1/ebooklayouts',{
+			params: {
+				'url':	data.urlinfo.route,
+			}
 		})
-        .then(function (response)
-        {
-	        self.layoutData = response.data.layoutdata;
+		.then(function (response)
+		{
+			self.layoutData = response.data.layoutdata;
 
-	        /* as default use the first layout in folder as the default layout and store it in formData */
+			/* use the first layout in folder as the default layout and store it in formData */
 			var defaultlayout = Object.keys(self.layoutData)[0];
-	        self.formData = { 'layout': defaultlayout };
-        })
-        .catch(function (error)
-        {
-        });
-
-        /* get the ebook projects */
-        myaxios.get('/api/v1/ebookprojects',{
-        	params: {
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-        	}
+			self.formData = { 'layout': defaultlayout };
 		})
-        .then(function (response)
-        {
-        	var ebookprojects = response.data.ebookprojects;
+		.catch(function (error)
+		{
+			if(error.response)
+			{
+				self.message = handleErrorMessage(error);
+				self.messageClass = 'bg-rose-500';
+				self.formErrors = error.response.data.errors;
+			}
+		});
+
+		/* get the ebook projects */
+		tmaxios.get('/api/v1/ebookprojects',{
+			params: {
+				'url':	data.urlinfo.route,
+			}
+		})
+		.then(function (response)
+		{
+			var ebookprojects = response.data.ebookprojects;
 
 			if(Array.isArray(ebookprojects) && ebookprojects.length > 0)
 			{
@@ -71,98 +108,83 @@ let ebooks = new Vue({
 				self.currentproject = self.ebookprojects[0];
 				self.loadEbookProject();
 			}
-			else
+
+			self.previewUrl = data.urlinfo.baseurl + '/tm/ebooks/preview?projectname=' + self.currentproject;
+			self.epubUrl = data.urlinfo.baseurl + '/tm/ebooks/epub?projectname=' + self.currentproject;
+		})
+		.catch(function (error)
+		{
+			if(error.response)
 			{
-				/* add the default name for empty project */
-				self.ebookprojects = ['ebookdata.yaml'];
-
+				self.message = handleErrorMessage(error);
+				self.messageClass = 'bg-rose-500';
+				self.formErrors = error.response.data.errors;
 			}
-			
-			self.dataLoaded = true;
-			self.disabled = false;
+		});
 
-	        /* load the default navigation */
-	        this.loadEbookNavi();
-        })
-        .catch(function (error)
-        {
-        });
-
-		FormBus.$on('forminput', formdata => {
-			this.$set(this.formData, formdata.name, formdata.value);
+		tmaxios.get('/api/v1/shortcodedata',{
+			'url':	data.urlinfo.route
+		})
+		.then(function (response)
+		{
+			self.shortcodes = response.data.shortcodedata;
+		})
+		.catch(function (error)
+		{
+			if(error.response)
+			{
+				self.message = handleErrorMessage(error);
+				self.messageClass = 'bg-rose-500';
+				self.formErrors = error.response.data.errors;
+			}
 		});
 	},
 	methods: {
-		setCurrentProject: function(projectname)
+		activateTab(tab)
+		{
+			this.currentTab = tab;
+			this.currentTabComponent = 'ebook-' + tab;
+			this.reset();
+		},
+		setCurrentProject(projectname)
 		{
 			this.currentproject = projectname;
+			this.reset();
+			this.loadEbookProject();
 		},
-		createEbookProject: function(projectname)
+		createEbookProject(projectname)
 		{
 			this.ebookprojects.push(projectname);
 			this.currentproject = projectname;
 			
-			/*	do you want to clear the forms or keep the data?		
-			this.formData = {}; 
-			*/
-		},
-		loadEbookProject: function()
-		{
 			self = this; 
 
-	        /* get the last book data */
-	        myaxios.get('/api/v1/ebookdata',{
-	        	params: {
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
-					'projectname':  this.currentproject
+			/* get the last book data */
+			tmaxios.post('/api/v1/ebookproject',{
+				'url':	data.urlinfo.route,
+				'projectname': projectname
+			})
+			.then(function (response)
+			{
+				self.reset();
+				self.formData = {};
+				self.navigation = {};
+
+				/* use the first layout in folder as the default layout and store it in formData */
+				var defaultlayout = Object.keys(self.layoutData)[0];
+				self.formData = { 'layout': defaultlayout };
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
 				}
-			})
-	        .then(function (response)
-	        {
-	        	var ebookdata 		= response.data;
-
-	        	self.formData 		= ebookdata['formdata'];
-
-	        	self.loadEbookNavi(self.currentproject);
-	        })
-	        .catch(function (error)
-	        {
-		        self.message = error.response.data.errors.message;
-	        	self.messagecolor = 'bg-tm-red';
-	        });
+			});
 		},
-		loadEbookNavi: function()
-		{
-			self = this;
-
-			/* always get the latest navigation (not the stored book navigation, because website navigation might have changed) */
-	        myaxios.get('/api/v1/ebooknavi',{
-	        	params: {
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
-					'projectname': 	this.currentproject 
-	        	}
-			})
-	        .then(function (response){
-
-	        	self.navigation = response.data.navigation;
-
-	        })
-	        .catch(function (error)
-	        {
-		        self.message = error.response.data.errors.message;
-	        	self.messagecolor = 'bg-tm-red';
-	        	self.disabled = false;
-	        	if(typeof error.response.data.errors.disable !== 'undefined')
-	        	{
-		        	self.disabled = true;
-	        	}        	
-	        });
-		},
-		deleteEbookProject: function(ebookproject)
+		deleteEbookProject(ebookproject)
 		{
 			if(this.ebookprojects.indexOf(ebookproject) === -1)
 			{
@@ -172,16 +194,16 @@ let ebooks = new Vue({
 
 			var self = this;
 
-	        myaxios.delete('/api/v1/ebookdata',{
-	        	data: {
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
+			tmaxios.delete('/api/v1/ebookproject',{
+				data: {
+					'url':	data.urlinfo.route,
 					'projectname': 	ebookproject
-	        	}
+				}
 			})
- 	        .then(function (response)
-    	    {
+			.then(function (response)
+			{
+				self.reset();
+
 				for( var i = 0; i < self.ebookprojects.length; i++)
 				{ 
 					if ( self.ebookprojects[i] === ebookproject)
@@ -195,187 +217,192 @@ let ebooks = new Vue({
 						break;
 					}
 				}
-	        })
-	        .catch(function (error)
-	        {
-		        self.message = error.response.data.errors.message;
-	        	self.messagecolor = 'bg-tm-red';
-	        });
-
-		},
-		triggersubmit: function(tab)
-		{
-			/* triggered by navigation */
-			if(this.currentTab == 'layout')
-			{
-				this.storeCustomCSS();
-			}
-			this.currentTab = tab;
-			this.currentTabComponent = 'ebook-' + tab;
-			this.moveUp();
-		},
-		submit: function(tab)
-		{
-			/* triggered by button */
-			if(this.currentTab == 'layout')
-			{
-				this.storeCustomCSS()
-			}
-			this.currentTab = tab;
-			this.currentTabComponent = 'ebook-' + tab;
-			this.moveUp();
-		},
-		moveUp()
-		{
-			setTimeout(function(){ 
-	       		window.scrollTo({
-				  top: 0,
-				  left: 0,
-				  behavior: 'smooth'
-				});
-
-			}, 100);
-      	},		
-		storeEbookData: function()
-		{
-			this.message = false;
-			this.messagecolor = '';
-
-			var self = this;
-
-	        myaxios.post('/api/v1/ebookdata',{
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-				'data': 		this.formData,
-				'navigation': 	this.navigation,
-				'projectname': 	this.currentproject
 			})
-	        .then(function (response) {
-	        	self.tabErrors = {};
-	        })
-	        .catch(function (error)
-	        {
-	        	if(error.response.status == 400)
-	        	{
-	        		self.message = 'You are probably logged out, please login again.';
-        			self.messagecolor = 'bg-tm-red';
-	        	}
-	           	if(error.response.data.errors)
-	            {
-	        		self.message = 'We did not safe the book-data. Please correct the errors.';
-        			self.messagecolor = 'bg-tm-red';
-	        		self.formErrors = error.response.data.errors;
-	        		self.checkTabStatus();
-	            }
-	        });
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
+
 		},
-		storeCustomCSS: function()
+		loadEbookProject()
 		{
-			var customcss = this.layoutData[this.formData.layout].customcss;
+			self = this; 
 
-			var self = this;
-
-			myaxios.post('/api/v1/ebooklayoutcss',{
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
-					'css': 			customcss,
-					'layout': 		this.formData.layout
+			/* get the last book data */
+			tmaxios.get('/api/v1/ebookdata',{
+				params: {
+					'url':	data.urlinfo.route,
+					'projectname':  this.currentproject
+				}
 			})
-			.then(function (response) {
+			.then(function (response)
+			{
+				var ebookdata 		= response.data;
+
+				if(ebookdata['formdata'])
+				{
+					self.formData = ebookdata['formdata'];
+				}
+				else
+				{
+					var defaultlayout 	= Object.keys(self.layoutData)[0];
+					self.formData 		= { 'layout': defaultlayout };	        		
+				}
+
+				self.loadEbookNavi(self.currentproject);
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
+		},
+		loadEbookNavi()
+		{
+			self = this;
+
+			tmaxios.get('/api/v1/ebooknavi',{
+				params: {
+					'url':	data.urlinfo.route,
+					'projectname': 	this.currentproject 
+				}
+			})
+			.then(function (response){
+
+				self.navigation = response.data.navigation;
 
 			})
 			.catch(function (error)
 			{
-			});				
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
 		},
-		getTabClass: function(tab)
-		{
-			active = (this.currentTab === tab) ? ' active' : '';
-			error = (this.tabErrors[tab]) ? ' error' : '';
-			return 'tab-button ' + tab + active + error;
-		},
-		checkTabStatus: function()
-		{
-			this.tabErrors = {};
-
-			var fronttab = ['title', 'subtitle', 'author', 'edition', 'imprint', 'dedication', 'primarycolor', 'secondarycolor', 'coverimage'];
-			var contenttab = ['content'];
-			var backtab = ['blurb'];
-			var generaltab = ['layout'];
-
-			for(var error in this.formErrors)
-			{
-				if(fronttab.indexOf(error) > -1){ this.tabErrors.front = true; }
-				if(backtab.indexOf(error) > -1){ this.tabErrors.back = true; }
-				if(contenttab.indexOf(error) > -1){ this.tabErrors.content = true; }
-				if(generaltab.indexOf(error) > -1){ this.tabErrors.general = true; }
-			}
-		},
-		getPreviewUrl: function()
-		{
-			return this.root + '/tm/ebooks/preview?projectname=' + this.currentproject;
-		},
-		getEpubUrl: function()
-		{
-			return this.root + '/tm/ebooks/epub?projectname=' + this.currentproject;
-		},		
-		tmpStoreItem: function()
-		{
-			return true;
-		},
-		setUuid: function()
-		{
-			self = this;
-
-	        myaxios.get('/api/v1/epubuuid',{
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
-			})
-	        .then(function (response) {
-				self.$set(self.formData, 'epubidentifieruuid', response.data.uuid);
-	        })
-	        .catch(function (error)
-	        {
-	        	if(error.response.status == 400)
-	        	{
-	        		self.message = 'You are probably logged out, please login again.';
-        			self.messagecolor = 'bg-tm-red';
-	        	}
-	           	if(error.response.data.errors)
-	            {
-	        		self.message = 'We did not safe the book-data. Please correct the errors.';
-        			self.messagecolor = 'bg-tm-red';
-	        		self.formErrors = error.response.data.errors;
-	        		self.checkTabStatus();
-	            }
-	        });
-		},		
 		resetNavigation: function()
 		{
 			var self = this;
 
 			/* always get the latest navigation (not the stored book navigation, because website navigation might have changed) */
-	        myaxios.get('/api/v1/navigation',{
-	        	params: {
-					'url':			document.getElementById("path").value,        		
-					'csrf_name': 	document.getElementById("csrf_name").value,
-					'csrf_value':	document.getElementById("csrf_value").value,
-	        	}
+			tmaxios.get('/api/v1/ebooknewdraftnavi',{
+				params: {
+					'url':	data.urlinfo.route,
+				}
 			})
-	        .then(function (response) {
+			.then(function (response) {
 
-	        	self.navigation = response.data.data;
+				self.navigation = response.data.navigation;
 
-	        })
-	        .catch(function (error)
-	        {
-	           	if(error.response)
-	            {
-	            }
-	        });
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
 		},		
-	}
-});
+		storeEbookData(css)
+		{
+			this.reset();
+
+			var self = this;
+
+			tmaxios.post('/api/v1/ebookdata',{
+				'url':			data.urlinfo.route,
+				'data': 		this.formData,
+				'navigation': 	this.navigation,
+				'projectname': 	this.currentproject,
+			})
+			.then(function (response) {
+				self.messageClass = "bg-teal-500";
+				self.message = "Data stored successfully";
+				self.formErrors = {};
+				if(css)
+				{
+					self.storeCustomCSS();
+				}
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
+		},
+		storeCustomCSS()
+		{
+			var customcss = this.layoutData[this.formData.layout].customcss;
+
+			var self = this;
+
+			tmaxios.post('/api/v1/ebooklayoutcss',{
+				'url':			data.urlinfo.route,
+				'css': 			customcss,
+				'layout': 		this.formData.layout
+			})
+			.then(function (response) {
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = 'Could not store the custom css';
+					self.messageClass = 'bg-rose-500';
+				}
+			});
+		},
+		reset()
+		{
+			this.errors 			= {};
+			this.message 			= '';
+			this.messageClass		= '';
+		},
+		setUuid()
+		{
+			if(this.formData.epubidentifieruuid && this.formData.epubidentifieruuid != '')
+			{
+				this.formErrors.epubidentifieruuid = 'You already have an uuid. Please delete it before you create a new one.';
+
+				return;
+			}
+
+			delete this.formErrors.epubidentifieruuid;
+
+			self = this;
+
+			tmaxios.get('/api/v1/epubuuid',{
+				'url':	data.urlinfo.route,
+			})
+			.then(function (response) {
+				self.formData.epubidentifieruuid = response.data.uuid;
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					self.message = handleErrorMessage(error);
+					self.messageClass = 'bg-rose-500';
+					self.formErrors = error.response.data.errors;
+				}
+			});
+		}
+	},
+})

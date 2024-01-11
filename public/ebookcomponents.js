@@ -1,117 +1,61 @@
-Vue.component("ebook-layout", {
+app.component("ebook-projects", {
 	props: ['errors', 'formdata', 'layouts', 'ebookprojects', 'currentproject'],
 	data: function(){
 		return {
-			src: this.$parent.root + '/plugins/ebooks/booklayouts/',
-			shortcodes: false,
 			projectname: '',
 			projectnameerror: false,
 			disabled: 'disabled',
 		}
 	},
- 	template: '<div class="ebookcover">' +
- 				'<form id="design" @submit.prevent="submitstep">' +
- 					'<fieldset v-if="ebookprojects" class="subfield">' +
-	 					'<legend>Select a Project</legend>' +
-						'<div class="large">' +
-							'<div v-for="ebookproject in ebookprojects" class="ba b--moon-gray mb2 relative pa2 pb1 hover-bg-light-gray">' +
-								'<label class="control-group w-90">{{ readableProject(ebookproject) }}' +
-									'<input @change="changeProject(ebookproject)" type="radio" name="project" :checked="ebookproject == currentproject" />' +
-									'<span class="radiomark"></span>' +
-								'</label>' +
-								'<button @click.prevent="deleteProject(ebookproject)" class="bg-white hover-bg-tm-red moon-gray hover-white ba bw1 b b--moon-gray  dib tc lh-title absolute right-0 top-0 w2 h2 mt2 mr2">x</button>' +
-							'</div>' +
-						'</div>' +
-						'<div class="large">' +
-							'<label for="ebookprojectname">Insert a name to create a new ebookproject</label>' +
-							'<input id="ebookprojectname" name="ebookprojectname" v-model="projectname" @input="checkProjectName()" type="text" maxlength="20" />' +
-							'<button class="uuid-button button bn br2 bg-tm-green white absolute" @click.prevent="createProject()" :disabled="disabled">Create project</button>' +
-							'<div class="fielddescription"><span class="error" v-if="projectnameerror">{{ projectnameerror }}</span></div>' +
-						'</div>' +
- 					'</fieldset>' +
-	 				'<fieldset class="subfield">' +
-	 					'<legend>Select a Layout</legend>' +
-						'<div class="large half"><img class="coverpreview" :src="getCover()"></div>' +
-						'<div class="large half" :class="{ error : errors.design}">' +
-							'<label>Select a book layout</label>' +
-							'<div v-for="details,layout in layouts">' +
-								'<label class="control-group">{{ layout }}' +
-									'<input type="radio" name="design" v-model="formdata.layout" :value="layout" />' +
-								  	'<span class="radiomark"></span>' +
-								'</label>' +
-							'</div>' +
-							'<div class="layoutinfo">' + 
-								'<div class="label">About this layout</div>' +
-								'<ul>' +
-									'<li v-for="info,name in layouts[formdata.layout]" v-if="showinfo(name)"><span class="infokey">{{ name }}:</span><a v-if="name == \'Link\'" :href="info">{{ info }}</a><span v-else>{{ info }}</span></li>' +
-								'</ul>' +
-							'</div>' +
-						  	'<span class="error" v-if="errors.layout">{{ errors.layout[0] }}</span>' +
-						'</div>' +
-						'<div class="large">' +
-							'<label><b>{{ layouts[formdata.layout].name }}</b>: Customize the layout with CSS</label>' +
-							'<textarea class="codearea" rows="8" v-model="layouts[formdata.layout].customcss"></textarea>' +
-						'</div>' +
-	 				'</fieldset>' +
-	 				'<fieldset v-if="shortcodes" class="fs-formbuilder">' +
-		 				'<legend>Configure shortcodes</legend>' +
-						'<div class="large">' +
-							'<label for="">Disable shortcodes</label>' +
-							'<label class="control-group">Disable and exclude all shortcodes for the eBook.' +
-								'<input type="checkbox" name="shortcodes" v-model="formdata.disableshortcodes" />' +
-								'<span class="checkmark"></span>' +
-							'</label>' +
-						'</div>' +
-						'<div class="large">' +
-							'<label for="">Activate shortcodes individually</label>' +
-							'<label v-for="(shortcodedata,shortcodename) in shortcodes" :key="shortcodename" class="control-group">{{shortcodename}}' +
-								'<input type="checkbox" v-model="formdata.activeshortcodes" :id="shortcodename" :value="shortcodename" />' +
-								'<span class="checkmark"></span>' +
-							'</label>' +
-						'</div>' +
-	 				'</fieldset>' +
-					'<div class="large">' + 
-						'<button ref="submitdesign" class="button bn br2 bg-tm-green white" type="submit">Next step</button>' +
-					'</div>' +
-				'</form>' +
-				'<div class="large tc">' +
-					'<h2>Tutorial: How to create an ebook?</h2>' +
-					'<p>A short video-tutorial (just 10 minutes) on how to create an eBook with Typemill.<br/>'+
-					'Click to view on <a href="https://www.youtube.com/watch?v=g5ntN4Z5pyE" target="_blank">YouTube</a></p>' +
-					'<a href="https://www.youtube.com/watch?v=g5ntN4Z5pyE" target="_blank"><img :src="getVideoImgUrl()" /></a>' +
-				'</div>'+
-			  '</div>',
-	mounted: function(){
-		
-		if(!this.$parent.initialize)
-		{
-			this.$parent.storeEbookData();
-		}
-		this.$parent.initialize = false;
-
-		this.$nextTick(() => {
-			this.autosize();
-		});		
-
-		var self = this;
-
-	    myaxios.get('/api/v1/shortcodedata',{
-			'url':			document.getElementById("path").value,
-			'csrf_name': 	document.getElementById("csrf_name").value,
-			'csrf_value':	document.getElementById("csrf_value").value,
-		})
- 		.then(function (response)
-   		{
- 			self.shortcodes = response.data.shortcodedata;
-		})
-		.catch(function (error)
-		{
-			self.message = error.response.data.errors.message;
-			self.messagecolor = 'bg-tm-red';
-		});
-	},
+	template: `<div class="ebookcover">
+				<form class="w-full">
+					<fieldset v-if="ebookprojects" class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8">
+						<legend class="text-lg font-medium">Select a Project</legend>
+						<div class="py-3 w-full">
+							<div v-for="ebookproject in ebookprojects" class="w-full relative my-1 p-2 border border-stone-300">
+								<label class="inline-flex items-start">
+									<input 
+										@change 	= "$emit('changeProject', ebookproject)" 
+										type 		= "radio" 
+										name 		= "project" 
+										:checked 	= "ebookproject == currentproject" 
+										class 		= "w-6 h-6 border-stone-300 bg-stone-200" />
+									<span class="ml-2 text-sm">{{ readableProject(ebookproject) }}</span>
+								</label>
+								<button 
+									@click.prevent="$emit('deleteProject', ebookproject)" 
+									class="absolute right-0 top-0 px-2 py-1 mt-2 mr-2 bg-stone-200 hover:bg-rose-500 text-stone-900 hover:text-stone-100 inline-block text-center"
+								>x</button>
+							</div>
+						</div>
+						<div class="w-full">
+							<label for="ebookprojectname" class="block mb-1 font-medium">Insert a name for your new ebook-project</label>
+							<div class="flex">
+								<input 
+									id 			= "ebookprojectname" 
+									name 		= "ebookprojectname" 
+									v-model 	= "projectname" 
+									@input 		= "checkProjectName()" 
+									type 		= "text" 
+									maxlength 	= "20"
+									class 		= "h-12 w-3/4 border px-2 py-3 border-stone-300 bg-stone-200 text-stone-900" 
+								/>
+								<button 
+									class 			= "w-1/4 px-2 py-3 ml-2 text-stone-50 bg-stone-700 hover:bg-stone-900 hover:text-white transition duration-100 cursor-pointer disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-800" 
+									@click.prevent 	= "createProject()" 
+									:disabled 		= "disabled"
+								>Create project</button>
+							</div>
+							<div class="w-full">
+								<span v-if="projectnameerror" class="text-rose-500">{{ projectnameerror }}</span>
+								<span v-else>Between 3 and 20 characters allowed.</span>
+							</div>
+						</div>
+					</fieldset>
+				</form>
+			  </div>`,
 	methods: {
-		readableProject: function(ebookproject)
+		readableProject(ebookproject)
 		{
 			if(ebookproject == 'ebookdata.yaml')
 			{
@@ -120,14 +64,9 @@ Vue.component("ebook-layout", {
 			var readablename = ebookproject.replace(".yaml", "");
 			return readablename.replace("ebookdata-", ""); 
 		},
-		changeProject: function(ebookproject)
-		{
-			this.$parent.setCurrentProject(ebookproject);
-			this.$parent.loadEbookProject();
-		},
 		createProject: function()
 		{
-			this.$parent.createEbookProject('ebookdata-' + this.projectname + '.yaml');
+			this.$emit('createProject', 'ebookdata-' + this.projectname + '.yaml');
 			this.projectname = '';
 		},
 		checkProjectName: function()
@@ -156,280 +95,235 @@ Vue.component("ebook-layout", {
 				this.projectnameerror = 'Only characters a-z and - allowed.'
 			}
 		},
-		getCover: function()
-		{
-			return this.src + this.formdata.layout + '/cover.png';
-		},
-		getVideoImgUrl: function()
-		{
-			return this.$parent.root + '/plugins/ebooks/public/youtube-g5ntn4z5pye.jpeg';
-		},
-		showinfo: function(name)
-		{
-			if(name != 'customforms' && name != 'customcss')
-			{
-				return true;
-			}
-		},
-		submitstep: function()
-		{
-			this.$parent.submit('settings');
-		},
 		deleteProject: function(ebookproject)
 		{
-			this.$parent.deleteEbookProject(ebookproject);
+			this.$emit('deleteEbookProject', ebookproject);
 		},
-		autosize: function()
-		{
-			autosize(document.querySelector('textarea'));
-		},		
 	}
 });
 
-Vue.component("ebook-settings", {
-	props: ['errors', 'formdata', 'layouts'],
-	data: function(){
-		return {
-			booklayout: { 'customforms': false },
-		}
-	},
- 	template: '<div>' +
- 				'<form id="settings" @submit.prevent="submitstep">' +
-					'<div v-if="booklayout.customforms" v-for="(fielddefinition, fieldname) in booklayout.customforms.fields" :class="getFieldClass(fielddefinition)">' +
-						'<fieldset class="fs-formbuilder" v-if="fielddefinition.type == \'fieldset\'"><legend>{{fielddefinition.legend}}</legend>' + 
-							'<component v-for="(subfield, fieldname) in fielddefinition.fields "' +
-			                    ':key="fieldname"' +
-			            	    ':class="getFieldClass(subfield)"' +
-			                    ':is="selectComponent(subfield)"' +
-			                    ':errors="errors"' +
-			                    ':name="fieldname"' +
-			                    'v-model="formdata[fieldname]"' +
-			                    'v-bind="subfield">' +
-							'</component>' + 
-						'</fieldset>' +
-							'<component v-else' +
-			            	    ' :key="fieldname"' +
-			                	' :is="selectComponent(fielddefinition)"' +
-			                	' :errors="errors"' +
-			                	' :name="fieldname"' +
-			                	' v-model="formdata[fieldname]"' +
-			                	' v-bind="fielddefinition">' +
-							'</component>' + 
-					'</div>' +					
-					'<div class="large"><button ref="submitsettings" class="button bn br2 bg-tm-green white" type="submit">Next step</button></div>' +
-				'</form>' +
-			'</div>',
-	mounted: function(){
-		this.booklayout = this.layouts[this.formdata.layout];
 
-		this.$parent.storeEbookData();
-
-		this.$nextTick(() => {
-			this.autosize();
-		});
-	},
-	methods: {
-		validate: function(field)
-		{
-			/* use the html5 field validation for error messages. NOT IN USE */
-			this.errors[field.name] = false;
-			if(field.validationMessage != '')
-			{
-				this.errors[field.name] = [field.validationMessage];
-			}
-		},
-		getFieldClass: function(field)
-		{
-			if(field.type == 'fieldset')
-			{ 
-				return; 
-			}
-			else if(field.class === undefined )
-			{
-				return 'large';
-			}
-			else
-			{
-				return field.class;
-			}
-		},	
-		selectComponent: function(field)
-		{
-			return 'component-'+field.type;
-		},		
-		submitstep: function()
-		{
-			this.$parent.submit('content');
-		},
-		autosize: function()
-		{
-			autosize(document.querySelector('textarea'));
-		},
-	},
-});
-
-Vue.component("ebook-content", {
-	props: ['navigation', 'errors', 'formdata', 'layouts'],
+app.component("ebook-content", {
+	props: ['navigation', 'errors', 'shortcodes', 'formdata', 'layouts', 'messageClass', 'message'],
 	data: function(){
 		return {
 			booklayout: { 'customforms': false },
 			headlines: false,
 		}
 	},	
-   	template: '<div>' +
-   				'<form>' +
-		   			'<div class="large">' +
-			   			'<label>Select content from navigation</label>'+
-			   			'<div class="tableofcontents">'+
-			   				'<button @click.prevent="reset()" class="button bg-tm-green white bn br2 mb3 pointer">Load Latest Content Tree</button>'+
-							'<div v-if="basefolder()"><label class="control-group">Exclude the base folder from eBook' +
-								'<input type="checkbox" name="excludebasefolder" @change="toggleBaseFolder()" v-model="formdata.excludebasefolder" />' +
-								'<span class="checkmark"></span>' +
-							'</label><hr></div>' +
-			   				'<list :navigation="navigation"></list>'+
-			   			'</div>'+
-			   			'<p>* All pages are included by default. You can exclude pages from the ebook by deselecting them. If you deselect a folder, all sub-items will be excluded, too. If you want to change the structure or the order, then please change it in the navigation of the webside.</p>'+
-			   		'</div>' +
-					'<fieldset class="subfield">' +
-						'<legend>Downgrade Headlines</legend>' +
-						'<div class="large" :class="{ error : errors.downgradeheadlines }">' +
-							'<label for="">Downgrade Headlines</label>' +
-							'<label class="control-group">Downgrade Headlines starting with the first sub-page-level.' +
-								'<input type="radio" id="first" value="1" v-model="formdata.downgradeheadlines" checked/>' +
-								'<span class="radiomark"></span>' +
-							'</label>' +
-							'<label class="control-group">Downgrade Headlines starting with the second sub-page-level.' +
-								'<input type="radio" id="second" value="2" v-model="formdata.downgradeheadlines" />' +
-								'<span class="radiomark"></span>' +
-							'</label>' +
-							'<label class="control-group">Downgrade Headlines starting with the third sub-page-level.' +
-								'<input type="radio" id="third" value="3" v-model="formdata.downgradeheadlines" />' +
-								'<span class="radiomark"></span>' +
-							'</label>' +
-							'<label class="control-group">Do not downgrade headlines at all.' +
-								'<input type="radio" id="none" value="0" v-model="formdata.downgradeheadlines" />' +
-								'<span class="radiomark"></span>' +
-							'</label>' +
-							'<div class="description">To keep the chapter structure in the eBook consistent, Typemill will downgrade the headlines of sub-pages according to the position in the navigation hierarchy. To understand the logic, you can experiment with this setting and use the headline preview below.</div>' +
-						'</div>' + 
-					'</fieldset>' +
-					'<fieldset class="subfield">' +
-						'<legend>Preview Headline Hierarchy</legend>' +
-						'<div class="large">' +
-							'<div class="description">You can preview the headline hierarchy here. If something looks wrong, then check the headline levels in the content pages and review the feature "downgrade headlines" above.</div>' +
-							'<div><button @click.prevent="headlinepreview" class="button bn br2 bg-tm-green white mt3" type="submit">Generate Headline Preview</button></div>' +
-							'<div v-if="headlines">' +
-								'<ul class="pa0 list">' +
-									'<li v-for="headline in headlines"><span class="tm-green" :class="addLevelClass(headline.level)">{{ headline.name }}</span> {{ headline.text }}</li>' +
-								'</ul>' +
-							'</div>' +
-						'</div>' + 
-					'</fieldset>' +
-					'<div class="large"><button @click="submitstep" class="button bn br2 bg-tm-green white" type="submit">Next step</button></div>' +
-				'</form>' +
-   			'</div>',
+	template: `<div>
+				<form class="w-full my-8">
+				<div class="flex flex-wrap justify-between">
+					<fieldset v-if="shortcodes" class="fs-formbuilder">
+						<legend>Configure shortcodes</legend>
+						<div class="large">
+							<label for="">Disable shortcodes</label>
+							<label class="control-group">Disable and exclude all shortcodes for the eBook.
+								<input type="checkbox" name="shortcodes" v-model="formdata.disableshortcodes" />
+								<span class="checkmark"></span>
+							</label>
+						</div>
+						<div class="large">
+							<label for="">Activate shortcodes individually</label>
+							<label v-for="(shortcodedata,shortcodename) in shortcodes" :key="shortcodename" class="control-group">{{shortcodename}}
+								<input type="checkbox" v-model="formdata.activeshortcodes" :id="shortcodename" :value="shortcodename" />
+								<span class="checkmark"></span>
+							</label>
+						</div>
+					</fieldset>
+					<fieldset class="w-half border-2 border-stone-200 p-4">
+						<legend class="text-lg font-medium">Select pages from your website</legend>
+						<div>
+							<button 
+								@click.prevent = "$emit('resetNavigation')" 
+								class = "p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
+							>reset/refresh navigation</button>
+							<div class="pl-6 mt-5" v-if="basefolder()">
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	= "checkbox" 
+										name 	= "excludebasefolder" 
+										@change = "$emit('toggleBasefolder')" 
+										v-model = "formdata.excludebasefolder" 
+									/>
+									<span class="ml-2 text-sm">Exclude the base folder from eBook</span>
+								</label>
+								<hr>
+							</div>
+							<div class="py-3">
+								<list :navigation="navigation"></list>
+							</div>
+						</div>
+					</fieldset>
+					<fieldset class="w-half border-2 border-stone-200 p-4">
+						<legend class="text-lg font-medium">Headlines</legend>
+						<div class="w-full" :class="{ error : errors.downgradeheadlines }">
+							<p>You can downgrade the headline-levels of sub-pages to modify the hierarchy in your book.</p>
+							<div class="py-3">
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	= "radio" 
+										id 		= "none" 
+										value 	= "0" 
+										v-model = "formdata.downgradeheadlines" 
+										@change = "headlinepreview()"
+									/>
+									<span class="ml-2 text-sm">Do not downgrade headlines.</span>
+								</label>
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	= "radio" 
+										id 		= "first" 
+										value 	= "1" 
+										v-model = "formdata.downgradeheadlines" 
+										@change = "headlinepreview()"
+									/>
+									<span class="ml-2 text-sm">Downgrade starting from first subpage-level.</span>
+								</label>
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	= "radio" 
+										id 		= "second" 
+										value 	= "2" 
+										v-model = "formdata.downgradeheadlines" 
+										@change = "headlinepreview()"
+									/>
+									<span class="ml-2 text-sm">Downgrade starting from second subpage-level.</span>
+								</label>
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	= "radio" 
+										id 		= "third" 
+										value 	= "3" 
+										v-model	="formdata.downgradeheadlines" 
+										@change = "headlinepreview()"
+									/>
+									<span class="ml-2 text-sm">Downgrade starting from third subpage-level.</span>
+								</label>
+							</div>
+						</div> 
+						<hr class="my-3">
+						<div class="w-full">
+							<h3 class="text-lg font-medium pt-3">Table of Contents</h3>
+							<div class="my-3 p-3 bg-stone-200">
+								<div v-if="headlines">
+									<ul class="pa0 list">
+										<li v-for="headline in headlines">
+											<span class="text-teal-600" :class="addLevelClass(headline.level)">{{ headline.name }}</span> 
+											{{ headline.text }}
+										</li>
+									</ul>
+								</div>
+								<div v-else>Select pages on the left to generate a Table of Contents.</div>
+							</div>
+						</div> 
+					</fieldset>
+					</div>
+					<div class="my-5">
+						<div :class="messageClass" class="block w-full h-8 px-3 py-1 my-1 text-white transition duration-100">{{ $filters.translate(message) }}</div>
+						<input 
+							type 			= "submit" 
+							@click.prevent 	= "$emit('saveProject')" 
+							:value 			= "$filters.translate('save')" 
+							class 			= "w-full p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
+						>
+					</div>
+				</form>
+			</div>`,
 	mounted: function(){
+		
 		this.booklayout = this.layouts[this.formdata.layout];
 
 		if(this.formdata.excludebasefolder)
 		{
-			this.$parent.excludeBaseFolder(this.formdata.excludebasefolder);			
+		//	this.$parent.excludeBaseFolder(this.formdata.excludebasefolder);			
 		}
 
-		this.$parent.storeEbookData();
+		eventBus.$on('createHeadlinePreview', this.headlinepreview );
+
+		this.headlinepreview();
 	},
 	methods: {
-		reset: function()
+		addLevelClass(level)
 		{
-			this.$parent.resetNavigation();
+			return 'pl-' + (level*2);
 		},
-		submitstep: function()
-		{
-			this.$parent.submit('epub');
-		},
-		addLevelClass: function(level)
-		{
-			return 'level-' + level;
-		},
-		basefolder: function()
+		basefolder()
 		{
 			if(this.navigation.length == 1 && this.navigation[0].folderContent)
 			{
 				return true;
 			}
 		},
-		toggleBaseFolder: function()
+		headlinepreview()
 		{
-			this.$parent.excludeBaseFolder();
-		},
-		headlinepreview: function()
-		{
+			console.info('createHeadlinePreview');
+
 			var self = this;
 
-	        myaxios.post('/api/v1/headlinepreview',{
-				'url':			document.getElementById("path").value,        		
-				'csrf_name': 	document.getElementById("csrf_name").value,
-				'csrf_value':	document.getElementById("csrf_value").value,
+			tmaxios.post('/api/v1/headlinepreview',{
+				'url':			data.urlinfo.route,
 				'item': 		this.navigation,
 				'ebookdata':  	this.formdata,
 			})
- 	       .then(function (response)
-    	    {
-    	    	self.headlines = response.data.headlines;
-	        })
-	        .catch(function (error)
-	        {
-		        self.message = error.response.data.errors.message;
-	        	self.messagecolor = 'bg-tm-red';
-	        });
-
+		   .then(function (response)
+			{
+				self.headlines = response.data.headlines;
+			})
+			.catch(function (error)
+			{
+				self.message = error.response.data.errors.message;
+				self.messagecolor = 'bg-tm-red';
+			});
 		}
 	}
 });
 
-Vue.component("list", {
+
+app.component("list", {
 	props: ['navigation'],
 	data: function(){
 		return {
 			folder: 'folder'
 		}
 	},
-   	template: '<ul class="contentselection">' +
-   	 			'<li v-for="item in publishedItems" :class="item.class">' + 
-					'<label class="control-group">{{item.name}}' +
-					  '<input type="checkbox"' + 
-						' :id="item.keyPath"' +
-					    ' :name="item.name"' + 
-					    ' :disabled="checkDisabled(item)"' + 					    
-					    ' v-model="item.exclude"' +
-					    ' @change="selectedItem($event, item)">' +				
-				  	  '<span class="checkmark"></span>' +
-   	 				'</label>' +
-   	 				'<div v-if="item.elementType == folder"><list :navigation="item.folderContent"></list>' +
-   	 			'</li>' +
-   	 		  '</ul>',
+	template: `<ul class="pl-6">
+				<li v-for="item in publishedItems">
+					<label class="block mb-1 font-medium">
+						<input 
+							type 		= "checkbox" 
+							:id 		= "item.keyPath"
+							:name 		= "item.name"
+							:disabled 	= "checkDisabled(item)"				    
+							v-model 	= "item.include"
+							@change 	= "loadpreview"
+						/>
+						<span class="ml-2 text-sm">{{item.name}}</span>
+					</label>
+					<div v-if="item.elementType == folder">
+						<list :navigation="item.folderContent"></list>
+					</div>
+				</li>
+
+			  </ul>`,
 	computed: {
-	   	publishedItems: function () 
-	   	{
-		    return this.navigation.filter(function (item)
-		    {
-		      	return item.status == "published";
-		    })
-	  	}
+		publishedItems: function () 
+		{
+			if(this.navigation.filter !== undefined)
+			{
+				return this.navigation.filter(function (item)
+				{
+					return item.status == "published";
+				})
+			}
+		}
 	},
 	methods: {
-		selectedItem: function(event,item)
+		loadpreview()
 		{
-			if(item.class == 'unselected')
-			{
-				item.class = '';
-			}
-			else
-			{
-				item.class = 'unselected';
-			}
+			eventBus.$emit('createHeadlinePreview');
 		},
-		checkDisabled: function(item)
+		checkDisabled(item)
 		{
 			if(item.disabled)
 			{
@@ -440,112 +334,276 @@ Vue.component("list", {
 	},
 });
 
-Vue.component("ebook-epub", {
-	props: ['errors', 'formdata', 'layouts'],
+
+app.component("ebook-pdf", {
+	props: ['errors', 'formdata', 'layouts', 'ebookprojects', 'currentproject', 'messageClass', 'message', 'previewUrl'],
 	data: function(){
 		return {
-			booklayout: { 'customforms': false },
+			src: data.urlinfo.baseurl + '/plugins/ebooks/booklayouts/',
+			highlighted: '',
+//			previewUrl: data.urlinfo.baseurl + '/tm/ebooks/preview?projectname=' + this.currentproject,
 		}
 	},
- 	template: '<div>' +
- 				'<form id="epub" @submit.prevent="submitstep">' +
-	 				'<fieldset class="subfield">' +
-						'<legend>ePUB Identifier</legend>' +
-						'<div class="large">Please add one identifier: either an ISBN, UUID or URI. If you add more than one identifiers, then the first will be used and the others will be ignored. Identifiers must be unique. Never change an identifier after you publishd/distributed a book, otherwise e-readers cannot identify the book anymore.</div>' +
-						'<div class="large" :class="{ error : errors.epubidentifierisbn }">' +
-							'<label for="epubidentifierisbn">Either ISBN</label>' +
-							'<input id="epubidentifierisbn" name="epubidentifierisbn" type="text" v-model="formdata.epubidentifierisbn" maxlength="200" />' +
-							'<div class="fielddescription"><small>You can get an ISBN here:  </small></div>' +
-							'<span class="error" v-if="errors.epubidentifierisbn">{{ errors.epubidentifierisbn[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.epubidentifieruuid }">' +
-							'<label for="epubidentifieruuid">Or UUID</label>' +
-							'<input id="epubidentifieruuid" name="epubidentifieruuid" type="text" v-model="formdata.epubidentifieruuid" maxlength="200" />' +
-							'<button class="uuid-button button bn br2 bg-tm-green white absolute" @click.prevent="generateUuid()" :disabled="checkUuidDisabled()">Generate UUID</button>' +
-							'<div class="fielddescription"><small>You can generate an UUID version 4 with the button. Do not change it after you published a book.</small></div>' +
-							'<span class="error" v-if="errors.epubidentifieruuid">{{ errors.epubidentifieruuid[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.epubidentifieruri }">' +
-							'<label for="epubidentifieruri">Or URI</label>' +
-							'<input id="epubidentifieruri" name="epubidentifieruri" type="text" v-model="formdata.epubidentifieruri" maxlength="200" />' +
-							'<div class="fielddescription"><small>The URI should be a unique address (e.g an url) where the book is published.</small></div>' +
-							'<span class="error" v-if="errors.epubidentifieruri">{{ errors.epubidentifieruri[0] }}</span>' +
-						'</div>' +
-					'</fieldset>' +
-					'<fieldset class="subfield">' +
-						'<legend>ePUB Meta Details</legend>' +
-						'<component-image :value="formdata.epubcover" name="epubcover" label="Cover image for epub" description="Maximum size 5 MB. Must be jpeg format. Ideal size is 2,560 x 1,600 pixels." errors="errors.epubcover"></component-image>' +
-						'<div class="large" :class="{ error : errors.epubdescription }">' +
-							'<label for="title">Short eBook Description für the ePub</label>' +
-							'<textarea @change="autosize()" rows="8" id="epubdescription" name="epubdescription" v-model="formdata.epubdescription" class="textareaclass" maxlength="1500"></textarea>' +
-							'<span class="error" v-if="errors.epubdescription">{{ errors.epubdescription[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.epubsubjects }">' +
-							'<label for="epubsubjects">Subjects/Tags</label>' +
-							'<input id="epubsubjects" name="epubsubjects" type="text" v-model="formdata.epubsubjects" maxlength="200" />' +
-							'<div class="description">Separate several subjects with comma.</div>' +
-							'<span class="error" v-if="errors.epubsubjects">{{ errors.epubsubjects[0] }}</span>' +
-						'</div>' +
-						'<div class="medium" :class="{ error : errors.epubauthorfirstname }">' +
-							'<label for="epubauthorfirstname">Author First Name</label>' +
-							'<input id="epubauthorfirstname" name="epubauthorfirstname" type="text" v-model="formdata.epubauthorfirstname" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubauthorfirstname">{{ errors.epubauthorfirstname[0] }}</span>' +
-						'</div>' +
-						'<div class="medium" :class="{ error : errors.epubauthorlastname }">' +
-							'<label for="epubauthorlastname">Author Last Name</label>' +
-							'<input id="epubauthorlastname" name="epubauthorlastname" type="text" v-model="formdata.epubauthorlastname" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubauthorlastname">{{ errors.epubauthorlastname[0] }}</span>' +
-						'</div>' +
-						'<div class="medium" :class="{ error : errors.epubpublishername }">' +
-							'<label for="epubpublishername">Publisher Name</label>' +
-							'<input id="epubpublishername" name="epubpublishername" type="text" v-model="formdata.epubpublishername" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubpublishername">{{ errors.epubpublishername[0] }}</span>' +
-						'</div>' +
-						'<div class="medium" :class="{ error : errors.epubpublisherurl }">' +
-							'<label for="epubpublisherurl">Publisher URL</label>' +
-							'<input id="epubpublisherurl" name="epubpublisherurl" type="text" v-model="formdata.epubpublisherurl" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubpublisherurl">{{ errors.epubpublisherurl[0] }}</span>' +
-						'</div>' +
-					'</fieldset>' +
-					'<fieldset class="subfield">' +
-						'<legend>ePUP Navigation Details</legend>' +						
-						'<div class="large" :class="{ error : errors.epubtocname }">' +
-							'<label for="epubtocname">Name for "Table of Contents"</label>' +
-							'<input id="epubtocname" name="epubtocname" type="text" v-model="formdata.epubtocname" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubtocname">{{ errors.epubtocname[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.epubtitlepage }">' +
-							'<label for="epubtitlepage">Name for the titlepage</label>' +
-							'<input id="epubtitlepage" name="epubtitlepage" type="text" v-model="formdata.epubtitlepage" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubtitlepage">{{ errors.epubtitlepage[0] }}</span>' +
-						'</div>' +
-						'<div class="large" :class="{ error : errors.epubchapternumber }">' +
-							'<label class="control-group">Prefix chapters with numbers automatically' +
-								'<input type="checkbox" name="epubchapternumber" v-model="formdata.epubchapternumber" />' +
-								'<span class="checkmark"></span>' +
-							'</label>' +
-						'</div>' + 
-						'<div class="large" :class="{ error : errors.epubchaptername }">' +
-							'<label for="epubchaptername">Name for chapter in prefix</label>' +
-							'<input id="epubchaptername" name="epubchaptername" type="text" v-model="formdata.epubchaptername" maxlength="80" />' +
-							'<span class="error" v-if="errors.epubchaptername">{{ errors.epubchaptername[0] }}</span>' +
-						'</div>' +
-					'</fieldset>' +
-						'<div class="large" :class="{ error : errors.epubdebug }">' +
-							'<label class="control-group">Debug ePub (will append a report as last chapter)' +
-								'<input type="checkbox" name="epubdebug" v-model="formdata.epubdebug" />' +
-								'<span class="checkmark"></span>' +
-							'</label>' +
-						'</div>' + 
-					'<div class="large"><button ref="submitepub" class="button bn br2 bg-tm-green white" type="submit">Next step</button></div>' +
-				'</form>' +
-			  '</div>',
+	template: `<div>
+				<form class="w-full">
+					<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8">
+						<legend class="text-lg font-medium">Select a Layout</legend>
+						<div class="w-half">
+							<img class="coverpreview" :src="getCover()">
+						</div>
+						<div class="w-half" :class="{ error : errors.design}">
+							<label class="block mb-1 font-medium">Select a book layout</label>
+							<div v-for="details,layout in layouts">
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	 	= "radio" 
+										name 	 	= "design" 
+										v-model  	= "formdata.layout" 
+										:value 		= "layout" 
+										class  		= "w-6 h-6 border-stone-300 bg-stone-200" 
+										@change 	= "updateCode"
+									/>
+									<span class="ml-2 text-sm">{{ layout }}</span>
+								</label>
+							</div>
+							<div class="block pt-3 mb-1 font-medium">About this layout</div>
+							<div class="text-sm"> 
+								<ul>
+									<li v-for="info,name in layouts[formdata.layout]">
+										<div v-if="showinfo(name)" class="table">
+											<span class="table-cell w-24 font-bold">{{ name }}:</span>
+											<a v-if="name == 'Link'" :href="info">{{ info }}</a>
+											<span v-else>{{ info }}</span>
+										</div>
+									</li>
+								</ul>
+							</div>
+							<span class="text-rose-500" v-if="errors.layout">{{ errors.layout[0] }}</span>
+						</div>
+					</fieldset>
+					<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8">
+						<legend class="text-lg font-medium">Custom CSS for {{ layouts[formdata.layout].name }}</legend>						
+						<div class="w-full">
+							<label>Customize the layout with CSS</label>
+							<div class="codearea"> 
+								<textarea 
+									data-el 	= "editor" 
+									class 		= "editor" 
+									ref 		= "editor" 
+									v-model 	= "layouts[formdata.layout].customcss"
+									@input 		= "updateCode"
+								></textarea>
+								<pre aria-hidden="true" class="highlight hljs"><code data-el="highlight" v-html="highlighted"></code></pre>
+							</div>
+						</div>
+					</fieldset>
+					<div v-if="layouts[formdata.layout].customforms" v-for="(fielddefinition, fieldname) in layouts[formdata.layout].customforms.fields">
+						<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8" v-if="fielddefinition.type == 'fieldset'">
+							<legend class="text-lg font-medium">{{ fielddefinition.legend }}</legend>
+							<component v-for="(subfield, subfieldname) in fielddefinition.fields"
+								:key  		= "subfieldname"
+								:is  		= "selectComponent(subfield.type)"
+								:errors  	= "errors"
+								:name 		= "subfieldname"
+								:value 		= "formdata[subfieldname]" 
+								v-bind 		= "subfield">
+							</component>
+						</fieldset>
+						<component v-else
+							:key  			= "fieldname"
+							:is  			= "selectComponent(fielddefinition.type)"
+							:errors  		= "errors"
+							:name  			= "fieldname"
+							:value  		= "formdata[fieldname]"
+							v-bind  		= "fielddefinition">
+						</component>
+					</div>
+					<div class="my-5">
+						<div :class="messageClass" class="block w-full h-8 px-3 py-1 my-1 text-white transition duration-100">{{ $filters.translate(message) }}</div>
+						<input 
+							type 			= "submit" 
+							@click.prevent 	= "$emit('saveProject', 'css')" 
+							:value 			= "$filters.translate('save')" 
+							class 			= "w-full p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
+						>
+					</div>
+				</form>
+
+				<div class="border-2 border-stone-200 p-4 my-8 bg-stone-100">
+					<h2 class="text-2xl font-bold mb-4 mt-2">Produce a PDF</h2>
+					<p class="my-2">Here you can generate a html-preview for your eBook in PDF format or directly create a pdf-file.</p>
+					<div class="flex my-8 justify-between">
+						<div class="w-half">
+							<a 
+								:href="previewUrl" 
+								target="_blank" 
+								class="block w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center hover:bg-teal-600 transition duration-100"
+								@click="$emit('storeTmpItem')"
+							>Open PDF-Preview</a>
+							<p class="my-2">This button will open a html-preview of the ebook in a separate page. You can download and save the ebook as pdf with your local printer driver.</p>
+							<p class="my-2">It works with chromium-browser like Google Chrome or Brave.</p>
+							<p class="my-2">Check the following extended settings in your PDF printer configurations:</p>
+							<ul class="list-disc ml-4">
+								<li>Set margins to “none”</li>
+								<li>Uncheck “Headers and footers” or set them to none</li>
+								<li>Check “Background graphics”</li>
+							</ul>
+						</div>
+						<div class="w-half">
+							<button 
+								disabled="disabled"
+								class="w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center"
+							>Generate PDF with API (comming soon)</button>
+							<p class="my-2">This button will use the typemill service-api and directly return an eBook in PDF format (comming soon). A Typemill license will be required to use the service.</p>
+						</div>
+					</div>
+				</div>
+			  </div>`,
 	mounted: function(){
+		this.resizeCodearea();
+		this.highlight(this.layouts[this.formdata.layout].customcss);
+
+		this.$nextTick(() => {
+			this.autosize();
+		});
+	},
+	methods: {
+		getCover()
+		{
+			return this.src + this.formdata.layout + '/cover.png';
+		},
+		showinfo(name)
+		{
+			if(name != 'customforms' && name != 'customcss' && name != 'epubforms')
+			{
+				return true;
+			}
+		},
+		selectComponent(type)
+		{
+			return 'component-'+type;
+		},
+		autosize()
+		{
+//			autosize(document.querySelector('textarea'));
+		},
+		updateCode()
+		{
+			this.highlighted = '';
+			this.resizeCodearea();
+			this.highlight(this.layouts[this.formdata.layout].customcss);
+		},
+		resizeCodearea: function()
+		{
+			let codeeditor = this.$refs["editor"];
+
+			window.requestAnimationFrame(() => {
+				codeeditor.style.height = '200px';
+				if (codeeditor.scrollHeight > 200)
+				{
+					codeeditor.style.height = `${codeeditor.scrollHeight + 2}px`;
+				}
+			});
+		},
+		highlight: function(code)
+		{
+			if(code === undefined)
+			{
+				return;
+			}
+
+			window.requestAnimationFrame(() => {
+				highlighted = hljs.highlightAuto(code, ['xml','css','yaml','markdown']).value;
+				this.highlighted = highlighted;
+			});
+		},		
+	}
+});
+
+
+app.component("ebook-epub", {
+	props: ['errors', 'formdata', 'layouts', 'messageClass', 'message', 'currentproject', 'epubUrl'],
+	data: function(){
+		return {
+			booklayout: { 'customforms': false }
+		}
+	},
+	template: `<div>
+				<form class="w-full my-8">
+					<div v-if="booklayout.epubforms" v-for="(fielddefinition, fieldname) in booklayout.epubforms.fields">
+						<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8" v-if="fielddefinition.type == 'fieldset'">
+							<legend class="text-lg font-medium">{{ fielddefinition.legend }}</legend>
+							<div v-if="fieldname == 'epubidentifier'" class="w-full mt-5 mb-5">Please add one identifier: either an ISBN, UUID or URI. If you add more than one identifiers, then the first will be used and the others will be ignored. Identifiers must be unique. Never change an identifier after you published/distributed a book, otherwise e-readers cannot identify the book anymore.</div>
+							<component v-for="(subfield, subfieldname) in fielddefinition.fields"
+								:key="subfieldname"
+								:is="selectComponent(subfield.type)"
+								:errors="errors"
+								:name="subfieldname"
+								:value="formdata[subfieldname]" 
+								v-bind="subfield">
+								<slot v-if="subfieldname == 'epubidentifieruuid'">
+									<button 
+										class   		= "absolute px-2 py-3 ml-2 text-stone-50 bg-stone-700 hover:bg-stone-900 hover:text-white transition duration-100 cursor-pointer" 
+										style 			= "right:0px; width:200px;"
+										@click.prevent 	= "$emit('generateUuid')" 
+									>Generate UUID</button>
+								</slot>
+							</component>
+						</fieldset>
+						<component v-else
+							:key="fieldname"
+							:is="selectComponent(fielddefinition.type)"
+							:errors="errors"
+							:name="fieldname"
+							:value="formdata[fieldname]"
+							v-bind="fielddefinition">
+						</component>
+					</div>
+					<div class="my-5">
+						<div :class="messageClass" class="block w-full h-8 px-3 py-1 my-1 text-white transition duration-100">{{ $filters.translate(message) }}</div>
+						<input 
+							type 			= "submit" 
+							@click.prevent 	= "$emit('saveProject')" 
+							:value 			= "$filters.translate('Save Settings')" 
+							class 			= "w-full p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
+						>
+					</div>
+				</form>
+
+				<div class="border-2 border-stone-200 p-4 my-8 bg-stone-100">
+					<h2 class="text-2xl font-bold mb-4 mt-2">Produce an ePub</h2>
+					<p class="my-2">Here you can generate an eBook in ePub format. The ePub will support most of the common ePub-3 specifications, but some features might be missing.</p>
+					<div class="flex my-8 justify-between">
+						<div class="w-half">
+							<a 
+								:href="epubUrl" 
+								target="_blank" 
+								class="block w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center hover:bg-teal-600 transition duration-100"
+								@click="$emit('storeTmpItem')"
+							>Generate ePub locally</a>
+							<p class="my-2">This button will generate the ePub-file locally and open the browser dialogue to download the file.</p>
+						</div>
+						<div class="w-half">
+							<button disabled="disabled"
+								class="w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center"
+							>Generate ePub with API (comming soon)</button>
+							<p class="my-2">This button will use the typemill service-api (comming soon). It will support mathematical syntax in your ePub. A Typemill license will be required to use the service.</p>
+						</div>
+					</div>
+				</div>
+
+			  </div>`,
+	mounted: function(){
+
 		this.booklayout = this.layouts[this.formdata.layout];
-		this.$parent.storeEbookData();
+	
 	},		
 	methods: {
-		validate: function(field)
+		selectComponent(type)
+		{
+			return 'component-'+type;
+		},
+		validate(field)
 		{
 			/* use the html5 field validation for error messages */
 			this.errors[field.name] = false;
@@ -553,84 +611,10 @@ Vue.component("ebook-epub", {
 			{
 				this.errors[field.name] = [field.validationMessage];
 			}
-		},		
-		submitstep: function()
-		{
-			this.$parent.submit('create');
 		},
-		autosize: function()
+		autosize()
 		{
 			autosize(document.querySelector('textarea'));
-		},
-		checkUuidDisabled: function()
-		{
-			if(this.formdata.epubidentifieruuid === undefined)
-			{
-				return false;
-			}
-			else if(this.formdata.epubidentifieruuid != '')
-			{
-				return 'disabled';
-			}
-			return false;
-		},
-		generateUuid: function()
-		{
-			this.$parent.setUuid();
 		}
 	}
-});
-
-Vue.component("ebook-create", {
-	props: ['errors', 'formdata', 'navigation', 'root'],
-	data: function(){
-		return {
-			previewUrl: false,
-			epubUrl: false,
-		}
-	},	
-    template: '<div class="large">' + 
-    			'<h2>Create the eBook</h2>' +
-    			'<div class="flex">' +
-    				'<div class="pagedjs w-50 mr3">' +
-    					'<h3 class="f4 b">PDF Preview</h3>' +
-		    			'<p>The button below will open a html-preview of the ebook in a separate page. You can download and save the ebook as pdf with your local printer driver.</p>' + 
-		    			'<a :href="previewUrl" target="_blank" class="link button bn bg-tm-green dim dib mt3">Open PDF-Preview</a>' +
-		    			'<h3 class="f4 b mt3">Limitations</h3>' +
-		    			'<p>Please use a recent version of the following browsers:</p>' + 
-		    			'<ul>' +
-		    				'<li>Chromium</li>' +
-		    				'<li>Google Chrome</li>' +
-		    				'<li>Brave</li>' +
-		    				'<li>Opera</li>' +
-		    			'</ul>' +
-		    			'<p>In your PDF printer configurations please check the following extended settings:</p>' +
-		    			'<ul>' +
-		    				'<li>Set margins to “none”</li>' +
-		    				'<li>Uncheck “Headers and footers” or set them to none</li>' +
-		    				'<li>Check “Background graphics”</li>' +
-		    			'</ul>' +
-		    			'<h3 class="f4 b mt3">Credits</h3>' +
-		    			'<p>This feature uses the open source library <a href="https://www.pagedjs.org/" target="_blank">paged.js</a> by Cabbage Tree Labs (MIT-Licence).</p>' +
-		    		'</div>' +
-    				'<div class="epub w-50 ml3">' +
-    					'<h3 class="f4 b">ePub Export</h3>' +
-		    			'<p>The button below will generate an ePub 3 file. The download dialogue of your browser will open automatically.</p>' + 
-		    			'<a :href="epubUrl" target="_blank" class="link button bn bg-tm-green dim dib mt3">Export ePub 3</a>' +
-		    			'<h3 class="f4 b mt3">Limitations</h3>' +
-		    			'<p>The ePub will support most of the common ePub-3 specifications, but some features might be missing.</p>' + 
-		    			'<h3 class="f4 b mt3">Credits</h3>' +
-		    			'<p>This feature uses the open source library <a href="https://github.com/Grandt/PHPePub" target="_blank">PHPePub</a> by Asbjørn Grandt (Licence LGPL 2.1)</p>' +
-		    		'</div>' +
-    		  '</div>',
-	mounted: function(){
-
-		this.previewUrl = this.$parent.getPreviewUrl();
-
-		this.epubUrl = this.$parent.getEpubUrl();
-
-		this.$parent.storeEbookData();
-
-		this.$parent.tmpStoreItem();
-	},
 });
