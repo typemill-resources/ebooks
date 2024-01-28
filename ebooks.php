@@ -1080,8 +1080,8 @@ class Ebooks extends Plugin
 	# generates the ebook-preview
 	public function ebookPreview(Request $request, Response $response, $args)
 	{
-		$projectname 	= $request->getQueryParams()['projectname'];
-		$itempath 		= $request->getQueryParams()['itempath'];
+		$projectname 	= $request->getQueryParams()['projectname'] ?? false;
+		$itempath 		= $request->getQueryParams()['itempath'] ?? false;
 		$settings 		= $this->getSettings();
 		$baseurl 		= $this->urlinfo['baseurl'];
 		$dispatcher 	= $this->getDispatcher();
@@ -1175,13 +1175,18 @@ class Ebooks extends Plugin
 		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
 
 		# let us add the thumb index:
-		$thumbindex = false;
+		$thumbindex 	= [];
 
 		foreach($bookcontent as $chapter)
 		{
 			if( isset($chapter['metadata']['thumbindex']['language']) && ($chapter['metadata']['thumbindex']['language'] != 'clear'))
 			{
-				$thumbindex[$chapter['metadata']['thumbindex']['lang']] = ['lang' => $chapter['metadata']['thumbindex']['lang'], 'thumb' =>  $chapter['metadata']['thumbindex']['thumb'] ];
+				$lang 	= $chapter['metadata']['thumbindex']['language'];
+				$thumb 	= $chapter['metadata']['thumbindex']['thumb'] ?? false;
+				$thumbindex[$lang] = [
+					'lang' 	=> $lang, 
+					'thumb' => $thumb 
+				];
 			}
 		}
 

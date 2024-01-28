@@ -535,7 +535,7 @@ sup:after{
   text-decoration: none;
 }
 
-/* span style footnotes 
+/* span style footnotes */
 span.footnote:first-child{
     border-top: solid black thin;  
 }
@@ -546,13 +546,13 @@ span.footnote {
     line-height:  1.1em;
 }
 .footnote::footnote-call {
-  color:  var(--link-color);
+  color:  var(--primary-bg-color);
 }
 .footnote::footnote-marker {
-  color:  var(--link-color);
+  color:  var(--primary-bg-color);
 }
 
-/* 
+/*
 ** TABLE OF CONTENTS
 */
 
