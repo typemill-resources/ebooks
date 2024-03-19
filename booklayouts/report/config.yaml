@@ -1,9 +1,9 @@
 name: Report
 version: 2.0.0
 description: A modern layout for reports and similar publications in A4-format. Change font-sizes, font-families, brand-colors, and much more.
-author: Sebastian Schürmanns, trendschau.net
-licence: CC BY 3.0
-link: https://trendschau.net
+author: Sebastian Schürmanns
+license: MIT
+website: https://trendschau.net
 sizes: A4
 
 customforms:

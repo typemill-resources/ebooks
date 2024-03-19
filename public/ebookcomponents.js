@@ -131,7 +131,7 @@ app.component("ebook-content", {
 							</label>
 						</div>
 					</fieldset>
-					<fieldset class="w-half border-2 border-stone-200 p-4">
+					<fieldset class="lg:w-half border-2 border-stone-200 p-4">
 						<legend class="text-lg font-medium">Select pages from your website</legend>
 						<div>
 							<button 
@@ -155,7 +155,7 @@ app.component("ebook-content", {
 							</div>
 						</div>
 					</fieldset>
-					<fieldset class="w-half border-2 border-stone-200 p-4">
+					<fieldset class="lg:w-half border-2 border-stone-200 p-4">
 						<legend class="text-lg font-medium">Headlines</legend>
 						<div class="w-full" :class="{ error : errors.downgradeheadlines }">
 							<p>You can downgrade the headline-levels of sub-pages to modify the hierarchy in your book.</p>
@@ -348,10 +348,10 @@ app.component("ebook-pdf", {
 				<form class="w-full">
 					<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8">
 						<legend class="text-lg font-medium">Select a Layout</legend>
-						<div class="w-half">
+						<div class="lg:w-half">
 							<img class="coverpreview" :src="getCover()">
 						</div>
-						<div class="w-half" :class="{ error : errors.design}">
+						<div class="lg:w-half" :class="{ error : errors.design}">
 							<label class="block mb-1 font-medium">Select a book layout</label>
 							<div v-for="details,layout in layouts">
 								<label class="block mb-1 font-medium">
@@ -433,7 +433,7 @@ app.component("ebook-pdf", {
 					<h2 class="text-2xl font-bold mb-4 mt-2">Produce a PDF</h2>
 					<p class="my-2">Here you can generate a html-preview for your eBook in PDF format or directly create a pdf-file.</p>
 					<div class="flex my-8 justify-between">
-						<div class="w-half">
+						<div class="lg:w-half">
 							<a 
 								:href="previewUrl" 
 								target="_blank" 
@@ -449,7 +449,7 @@ app.component("ebook-pdf", {
 								<li>Check “Background graphics”</li>
 							</ul>
 						</div>
-						<div class="w-half">
+						<div class="lg:w-half">
 							<button 
 								disabled="disabled"
 								class="w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center"
@@ -574,7 +574,7 @@ app.component("ebook-epub", {
 					<h2 class="text-2xl font-bold mb-4 mt-2">Produce an ePub</h2>
 					<p class="my-2">Here you can generate an eBook in ePub format. The ePub will support most of the common ePub-3 specifications, but some features might be missing.</p>
 					<div class="flex my-8 justify-between">
-						<div class="w-half">
+						<div class="lg:w-half">
 							<a 
 								:href="epubUrl" 
 								target="_blank" 
@@ -583,7 +583,7 @@ app.component("ebook-epub", {
 							>Generate ePub locally</a>
 							<p class="my-2">This button will generate the ePub-file locally and open the browser dialogue to download the file.</p>
 						</div>
-						<div class="w-half">
+						<div class="lg:w-half">
 							<button disabled="disabled"
 								class="w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center"
 							>Generate ePub with API (comming soon)</button>

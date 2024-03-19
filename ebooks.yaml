@@ -1,5 +1,5 @@
 name: eBooks
-version: 2.1.1
+version: 2.1.2
 description: Transform your typemill installation into a publishing studio.
 author: Sebastian Schürmanns
 homepage: https://trendschau.net
@@ -52,12 +52,12 @@ metatabs:
             type: text
             label: Language Code
             readonly: true
-            css: w-half
+            css: lg:w-half
           thumb:
             type: text
             label: Thumb Index
             readonly: true
-            css: w-half
+            css: lg:w-half
 
 epub:
   fields:
@@ -125,17 +125,17 @@ epub:
         epubtocname: 
           type: text
           label: 'Name for "Table of Contents"'
-          css: w-half
+          css: lg:w-half
           maxlength: 200
         epubtitlepage: 
           type: text
           label: Name for the titlepage
-          css: w-half
+          css: lg:w-half
           maxlength: 200
         epubchaptername: 
           type: text
           label: Name for chapter in prefix
-          css: w-half
+          css: lg:w-half
           maxlength: 200
         epubchapternumber:
           type: checkbox
@@ -160,25 +160,25 @@ epub:
         epubpublishername:
           type: text
           label: Publisher Name
-          css: w-half
+          css: lg:w-half
           maxlength: 200
           description: Examples of a Publisher include a person, an organization, or a service (used for dc:publisher and dc:relation).
         epubpublisherurl:
           type: text
           label: Publisher URL
-          css: w-half
+          css: lg:w-half
           maxlength: 200
           description: The url of the publishers website (used for dc:publisher and dc:relation).
         epubauthorfirstname:
           type: text
           label: Author First Name
-          css: w-half
+          css: lg:w-half
           maxlength: 200
           description: A person, an organization, or a service primarily responsible for the book (used for dc:creator and docAuthor)
         epubauthorlastname:
           type: text
           label: Author Last Name
-          css: w-half
+          css: lg:w-half
           maxlength: 200
           description: A person, an organization, or a service primarily responsible for the book (used for dc:creator and docAuthor)
         epubrights:
