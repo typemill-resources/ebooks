@@ -44,7 +44,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebooks.show', 
 				'class' 		=> 'Typemill\Controllers\ControllerWebSystem:blankSystemPage', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'get', 
@@ -68,7 +68,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebookprojects.get', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookProjects', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'post', 
@@ -76,7 +76,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebookproject.create', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:createEbookProject', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'delete', 
@@ -84,7 +84,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebookdata.delete', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:deleteEbookProject', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'get', 
@@ -92,7 +92,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebookdata.get', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookData', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'post', 
@@ -100,7 +100,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebookdata.store', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:storeEbookData', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'get', 
@@ -108,7 +108,7 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebooknavi.get', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookNavi', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'get', 
@@ -116,14 +116,15 @@ class Ebooks extends Plugin
 				'name' 			=> 'ebooknewdraftnavi.get', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookNewDraftNavi', 
 				'resource' 		=> 'system', 
-				'privilege' 	=> 'view'
+				'privilege' 	=> 'read'
 			],
 			[
 				'httpMethod' 	=> 'get', 
 				'route' 		=> '/api/v1/ebooktabdata', 
 				'name' 			=> 'ebooktabdata.get', 
 				'class' 		=> 'Plugins\Ebooks\Ebooks:getEbookTabData', 
-				'resource' 		=> 'content', 'privilege' => 'create'
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
 			],
 			[
 				'httpMethod' 	=> 'post', 
@@ -224,7 +225,7 @@ class Ebooks extends Plugin
 				'routename' 	=> 'ebooks.show', 
 				'icon' 			=> 'icon-book', 
 				'aclresource' 	=> 'system', 
-				'aclprivilege' 	=> 'view'
+				'aclprivilege' 	=> 'read'
 			];
 
 
@@ -702,13 +703,21 @@ class Ebooks extends Plugin
 
 		# get the stored ebook-data
 		$navigation 	= $this->getPluginData($naviname . '.txt');
-
-		if(!$navigation)
+		if($navigation)
 		{
-			$navigation = $this->getPluginData('navi-draft.txt', 'navigation');
+			$navigation = unserialize($navigation);
+		}
+		else
+		{
+			$naviModel 		= new Navigation();
+			$urlinfo 		= $this->urlinfo;
+			$settings 		= $this->getSettings();
+			$langattr 		= $settings['langattr'];
+
+			$navigation 	= $naviModel->getFullDraftNavigation($urlinfo, $langattr);
 		}
 
-		if(!$navigation OR trim($navigation) == '')
+		if(!$navigation OR !is_array($navigation) OR empty($navigation))
 		{
 			$response->getBody()->write(json_encode([
 				'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
@@ -718,7 +727,7 @@ class Ebooks extends Plugin
 		}
 
 		$response->getBody()->write(json_encode([
-			'navigation' => unserialize($navigation)
+			'navigation' => $navigation
 		]));
 
 		return $response->withHeader('Content-Type', 'application/json');
@@ -732,7 +741,7 @@ class Ebooks extends Plugin
 		$settings 		= $this->getSettings();
 		$langattr 		= $settings['langattr'];
 
-		$draftNavigation = $navigation->getDraftNavigation($urlinfo, $langattr);
+		$draftNavigation = $navigation->getFullDraftNavigation($urlinfo, $langattr);
 
 		if(!$draftNavigation)
 		{
@@ -1806,18 +1815,18 @@ class Ebooks extends Plugin
 		$langattr 			= $settings['langattr'];
 
 		$navigation 		= new Navigation();
+		$draftNavigation 	= $navigation->getFullDraftNavigation($urlinfo, $langattr);
 
-		$draftNavigation 	= $navigation->getDraftNavigation($urlinfo, $langattr);
-
-		$findurl 			= trim($meta['meta']['reference'], '/');
-		$findurl 			= '/' . $findurl;
-
-		$referenceItem 		= $navigation->getItemWithUrl($draftNavigation, $findurl);
-
-		if($referenceItem)
-		{
-			$filepath = $referenceItem->path;
-		}
+		$refpageinfo 		= $navigation->getPageInfoForUrl(trim($meta['meta']['reference'], '/'), $urlinfo, $langattr);
+	    if($refpageinfo)
+	    {
+			$refKeyPathArray 	= explode(".", $refpageinfo['keyPath']);
+			$refitem 			= $navigation->getItemWithKeyPath($draftNavigation, $refKeyPathArray);
+			if($refîtem)
+			{
+				$filepath 		= $refitem->path;
+			}
+	    }
 
 		return $filepath;		
 	}
