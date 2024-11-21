@@ -1153,7 +1153,7 @@ class Ebooks extends Plugin
 		$parsedown = new ParsedownExtension($baseurl, $settingsForHeadlineAnchors = false, $dispatcher);
 		
 		# disable attributes for images because of bug in pagedjs
-#		$parsedown->withoutImageAttributes();
+		$parsedown->withoutImageAttributes();
 		
 		# the default mode is with footnotes, but user can activate endnotes too
 		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
