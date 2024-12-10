@@ -30,6 +30,7 @@ app.component('tab-ebooks', {
 								:messageClass 		= "messageClass"
 								:previewUrl 		= "previewUrl"
 								:epubUrl 			= "epubUrl"
+								:shortcodes  		= "shortcodes"
 								@change-project 	= "setCurrentProject"
 								@create-project 	= "createEbookProject"
 								@delete-project 	= "deleteEbookProject"
@@ -91,10 +92,9 @@ app.component('tab-ebooks', {
 			self.formData 		= ebookdata['formdata'];
 			self.layoutData 	= ebookdata['layoutdata'];
 
-			if(typeof self.formData.activeshortcodes == 'undefined')
-			{
-				self.formData.activeshortcodes = [];
-			}
+			self.formData.activeshortcodes = Array.isArray(self.formData.activeshortcodes)
+			    ? self.formData.activeshortcodes
+			    : [];
 
 			/* if there are no stored formdata yet */
 			if(!self.formData)
@@ -133,6 +133,23 @@ app.component('tab-ebooks', {
 				{
 					self.home = true;
 				}
+			}
+		});
+
+		tmaxios.get('/api/v1/shortcodedata',{
+			'url':	data.urlinfo.route
+		})
+		.then(function (response)
+		{
+			self.shortcodes = response.data.shortcodedata;
+		})
+		.catch(function (error)
+		{
+			if(error.response)
+			{
+				self.message = handleErrorMessage(error);
+				self.messageClass = 'bg-rose-500';
+				self.formErrors = error.response.data.errors;
 			}
 		});
 

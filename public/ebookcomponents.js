@@ -114,21 +114,38 @@ app.component("ebook-content", {
 	template: `<div>
 				<form class="w-full my-8">
 				<div class="flex flex-wrap justify-between">
-					<fieldset v-if="shortcodes" class="fs-formbuilder">
-						<legend>Configure shortcodes</legend>
-						<div class="large">
-							<label for="">Disable shortcodes</label>
-							<label class="control-group">Disable and exclude all shortcodes for the eBook.
-								<input type="checkbox" name="shortcodes" v-model="formdata.disableshortcodes" />
-								<span class="checkmark"></span>
+					<fieldset v-if="shortcodes" class="w-full border-2 border-stone-200 p-4 mb-4">
+						<legend class="text-lg font-medium">Configure shortcodes</legend>
+						<div class="w-full mt-2">
+							<div class="block mb-1 font-medium">Disable shortcodes</div>
+							<label class="inline-flex items-start">
+								<input 
+									type 	= "checkbox" 
+									name 	= "shortcodes" 
+									v-model = "formdata.disableshortcodes" 
+									class 	= "w-6 h-6 border-stone-300 bg-stone-200" 
+								/>
+								<span class="ml-2 text-sm">Disable and exclude all shortcodes for the eBook.</span>
 							</label>
 						</div>
-						<div class="large">
-							<label for="">Activate shortcodes individually</label>
-							<label v-for="(shortcodedata,shortcodename) in shortcodes" :key="shortcodename" class="control-group">{{shortcodename}}
-								<input type="checkbox" v-model="formdata.activeshortcodes" :id="shortcodename" :value="shortcodename" />
-								<span class="checkmark"></span>
-							</label>
+						<div class="w-full mt-2">
+							<div class="block mb-1 font-medium">Activate shortcodes individually</div>
+							<div 
+								v-for 	= "(shortcodedata,shortcodename) in shortcodes" 
+								:key 	= "shortcodename" 
+								class 	= "w-full"
+								>
+								<label class="inline-flex items-start">
+									<input 
+										type 	= "checkbox" 
+										v-model = "formdata.activeshortcodes" 
+										:id 	= "shortcodename" 
+										:value 	= "shortcodename"
+										class 	= "w-6 h-6 border-stone-300 bg-stone-200" 
+									/>
+									<span class="ml-2 text-sm">{{shortcodename}}</span>
+								</label>
+							</div>
 						</div>
 					</fieldset>
 					<fieldset class="lg:w-half border-2 border-stone-200 p-4">
@@ -257,8 +274,6 @@ app.component("ebook-content", {
 		},
 		headlinepreview()
 		{
-			console.info('createHeadlinePreview');
-
 			var self = this;
 
 			tmaxios.post('/api/v1/headlinepreview',{

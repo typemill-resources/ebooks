@@ -122,12 +122,16 @@ customforms:
             none: none
     fieldsetimprint:
       type: fieldset
-      legend: Imprint
+      legend: Imprint & Preface
       fields:
         imprint:
           type: textarea
           label: Text for imprint (use markdown)
           description: Keep empty to skip the imprint.
+        preface:
+          type: textarea
+          label: Text for the preface (use markdown)
+          description: Keep empty to skip.
     fieldsettoc:
       type: fieldset
       legend: Table of Contents
@@ -164,8 +168,12 @@ customforms:
           checkboxlabel: Show current title (h1) in footer
     fieldsetblurb:
       type: fieldset
-      legend: Blurb
+      legend: Afterword and Blurb
       fields:
+        afterword:
+          type: textarea
+          label: Text for afterword (use markdown)
+          description: Keep empty to skip the afterword.        
         blurb:
           type: textarea
           label: Text for the blurb (use markdown)

@@ -236,6 +236,14 @@
 
 		<div class="bookcontent">
 
+			{% if ebookdata.preface %}
+				<div class="preface">
+				
+					{{ markdown(ebookdata.preface) }}
+				
+				</div>
+			{% endif %}
+
 			{% for chapter in book %}
 
 				{% if chapter.level == 1 %}
@@ -251,7 +259,15 @@
 				{% endif %}
 
 			{% endfor %}
-		
+
+			{% if ebookdata.afterword %}
+				<div class="afterword">
+				
+					{{ markdown(ebookdata.afterword) }}
+				
+				</div>
+			{% endif %}
+
 		</div>
 
 		{% if ebookdata.blurb %}

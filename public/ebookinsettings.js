@@ -24,7 +24,8 @@ const app = Vue.createApp({
 									:message  			= "message"
 									:messageClass 		= "messageClass"
 									:previewUrl 		= "previewUrl"
-									:epubUrl 			= "epubUrl"								    
+									:epubUrl 			= "epubUrl"	
+									:shortcodes  		= "shortcodes"							    
 									@change-project 	= "setCurrentProject"
 									@create-project 	= "createEbookProject"
 									@delete-project 	= "deleteEbookProject"
@@ -253,6 +254,10 @@ const app = Vue.createApp({
 					var defaultlayout 	= Object.keys(self.layoutData)[0];
 					self.formData 		= { 'layout': defaultlayout };	        		
 				}
+
+				self.formData.activeshortcodes = Array.isArray(self.formData.activeshortcodes)
+				    ? self.formData.activeshortcodes
+				    : [];
 
 				self.loadEbookNavi(self.currentproject);
 			})

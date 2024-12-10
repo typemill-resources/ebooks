@@ -1753,6 +1753,7 @@ class Ebooks extends Plugin
 
 				# we have to overwrite headlines and/or image urls if user selected those options
 				# if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
+
 				if( $originalimages OR $chapterlevel >= ($downgradeheadlines+1)  )
 				{
 					# go through each content element
@@ -1777,6 +1778,7 @@ class Ebooks extends Plugin
 							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
 						}
 						*/
+
 						if($downgradeheadlines == 0)
 						{
 							continue;
@@ -1794,6 +1796,7 @@ class Ebooks extends Plugin
 				}
 
 				# turn into html
+				
 				$chapterHTML		= $parsedown->markup($chapterArray, $itemUrl = false);
 
 				$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML, 'metadata' => $meta];
