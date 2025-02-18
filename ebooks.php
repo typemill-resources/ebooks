@@ -1153,7 +1153,7 @@ class Ebooks extends Plugin
 		$parsedown = new ParsedownExtension($baseurl, $settingsForHeadlineAnchors = false, $dispatcher);
 		
 		# disable attributes for images because of bug in pagedjs
-		$parsedown->withoutImageAttributes();
+		# $parsedown->withoutImageAttributes();
 		
 		# the default mode is with footnotes, but user can activate endnotes too
 		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
@@ -1753,6 +1753,8 @@ class Ebooks extends Plugin
 				# we have to overwrite headlines and/or image urls if user selected those options
 				# if( $originalimages OR ( !$originalheadlinelevels && $chapterlevel > 1 ) )
 
+				$basepath = str_replace('/content', '/', $pathToContent);
+
 				if( $originalimages OR $chapterlevel >= ($downgradeheadlines+1)  )
 				{
 					# go through each content element
@@ -1762,8 +1764,9 @@ class Ebooks extends Plugin
 						if($originalimages && isset($element['name']) && $element['name'] == 'figure')
 						{
 							# rewrite the image urls
-							$image = $element['elements'][0]['handler']['argument'];
-							$element['elements'][0]['handler']['argument'] = str_replace("media/live/", "media/original/", $image);
+							$imageMD = $element['elements'][0]['handler']['argument'];
+							$origImage = $this->getOriginalImage($basepath, $imageMD);
+							$element['elements'][0]['handler']['argument'] = $origImage;
 							$chapterArray[$key] = $element;
 						}
 
@@ -1808,6 +1811,38 @@ class Ebooks extends Plugin
 		}
 
 		return $book;
+	}
+
+	private function getOriginalImage($basepath, $imageMD)
+	{
+	    $tryExtensions = ['webp', 'png', 'jpg', 'jpeg', 'gif'];
+
+	    # Extract image URL from markdown
+	    if (preg_match('/!\[.*?\]\((media\/live\/(.*?))\)/', $imageMD, $matches))
+	    {
+	        $origRelativePath = $matches[1]; // media/live/ps-1.webp
+	        $filename = $matches[2]; // ps-1.webp
+
+	        # Generate the original folder path
+	        $originalFolder = 'media/original/';
+	        $originalBasePath = $basepath . '/' . $originalFolder . pathinfo($filename, PATHINFO_FILENAME);
+
+	        # Check if the image exists in 'media/original/' with any extension
+	        foreach ($tryExtensions as $ext)
+	        {
+	            $newFile = $originalBasePath . '.' . $ext;
+	            if (file_exists($newFile))
+	            {
+	                # Replace 'media/live/' with 'media/original/' and use the correct extension
+	                $newRelativePath = preg_replace('/media\/live\//', $originalFolder, $origRelativePath);
+	                $newRelativePath = preg_replace('/\.\w+$/', '.' . $ext, $newRelativePath);
+	                return str_replace($origRelativePath, $newRelativePath, $imageMD);
+	            }
+	        }
+	    }
+
+	    # Return the original markdown if no match found
+	    return $imageMD;
 	}
 
 	private function getFilepathForReference($meta, $filepath)
