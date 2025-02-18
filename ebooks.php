@@ -206,6 +206,7 @@ class Ebooks extends Plugin
 		}
 	}
 
+
 	# Add ebook-item to system navigation
 	public function onSystemnaviLoaded($navidata)
 	{
@@ -1094,6 +1095,7 @@ class Ebooks extends Plugin
 		$settings 		= $this->getSettings();
 		$baseurl 		= $this->urlinfo['baseurl'];
 		$dispatcher 	= $this->getDispatcher();
+		$storage 		= new StorageWrapper($settings['storage']);
 
 		# if it is from the settings
 		if($projectname)
@@ -1129,8 +1131,6 @@ class Ebooks extends Plugin
 		{
 			# wait for a second to make super sure that the temporary item has been stored by vue-script
 			usleep(200000);
-
-			$storage 	= new StorageWrapper($settings['storage']);
 			
 			# get the metadata from page
 			$meta 		= $storage->getYaml('contentFolder', '', $itempath . '.yaml');
@@ -1209,14 +1209,13 @@ class Ebooks extends Plugin
 	
 		$booklayouts = $this->scanEbooklayouts();
 
-		/*
 		# load customcss
-		$customcss = $writeYaml->checkFile('cache', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		$customcss = $storage->checkFile('cacheFolder', '', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+
 		if($customcss)
 		{
-			$this->container->assets->addCSS($base_url . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+			$this->container->get('assets')->addCSS($baseurl . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
 		}
-		*/
 
 		return $twig->render($response, '@booklayouts/index.twig', [
 			'settings' 		=> $settings, 
