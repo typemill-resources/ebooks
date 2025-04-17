@@ -453,10 +453,21 @@ class Ebooks extends Plugin
 		}
 
 		$response->getBody()->write(json_encode([
-			'ebookprojects' => $ebookprojects
+			'ebookprojects' => $ebookprojects,
+			'dominstalled' => $this->checkDom()
 		]));
 
 		return $response->withHeader('Content-Type', 'application/json');
+	}
+
+	private function checkDom()
+	{
+		if(!extension_loaded('dom'))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	private function checkEbookFolder($folder)
@@ -791,7 +802,8 @@ class Ebooks extends Plugin
 
 		$response->getBody()->write(json_encode([
 			'formdata' 		=> $formdata,
-			'layoutdata' 	=> $booklayouts
+			'layoutdata' 	=> $booklayouts,
+			'dominstalled'  => $this->checkDom()
 		]));
 
 		return $response->withHeader('Content-Type', 'application/json');
@@ -1231,7 +1243,10 @@ class Ebooks extends Plugin
 	# generates and returns the epub file
 	public function createEpub(Request $request, Response $response, $args)
 	{
-		ob_end_flush();
+		if(ob_get_level() > 0)
+		{
+			ob_end_flush();
+		}
 
 		error_reporting(E_ALL | E_STRICT);
 		ini_set('error_reporting', E_ALL | E_STRICT);
@@ -1364,7 +1379,7 @@ class Ebooks extends Plugin
 		}
 		else
 		{
-			$response->write('There is no epub identifier. An identifier is mandatory, we cannot create an ePub without that.');
+			$response->getBody()->write('There is no epub identifier. An identifier is mandatory, we cannot create an ePub without that.');
 			return $response;
 		}
 

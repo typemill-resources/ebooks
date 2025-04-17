@@ -1,5 +1,5 @@
 name: eBooks
-version: 2.3.0
+version: 2.3.1
 description: Transform your typemill installation into a publishing studio.
 author: Sebastian Schürmanns
 homepage: https://trendschau.net
@@ -65,6 +65,10 @@ epub:
       type: fieldset
       legend: ePub Identifier
       fields:
+        epubidentifierhint:
+          type: paragraph
+          css: w-full
+          description: 'You have to insert one of the following identifiers: ISBN, UUID, or URL.'
         epubidentifierisbn:
           type: text
           label: ISBN
