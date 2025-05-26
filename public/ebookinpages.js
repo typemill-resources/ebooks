@@ -105,7 +105,6 @@ app.component('tab-ebooks', {
 
 				/* use the default item for content tree */
 				self.navigation = [self.item];
-
 			}
 			else if(self.formData.content && Object.keys(self.formData.content).length > 0)
 			{
@@ -279,6 +278,7 @@ app.component('tab-ebooks', {
 		toggleBaseFolder()
 		{
 			/* endable/disable basefolder in navigation according to basefolder setting (true/false) */
+			this.navigation[0].include = true;
 			this.navigation[0].disabled = this.formData.excludebasefolder;
 
 			/* regenerate headline preview */

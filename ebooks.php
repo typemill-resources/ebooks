@@ -1713,10 +1713,25 @@ class Ebooks extends Plugin
 
 	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL)
 	{
+		# create a counter that is used to generate a unique id
+		# search for all headline
+		# get the relative url of the page ($urlRelWoF)
+		# create a toc that contains all headlines with the info
+		# toc[] = [
+		#   'level' => $headlineLevel
+		#   'text' => $headlineText
+		#	'id'   => $counter . '-' . $slug,  <<< create an anchor
+		#   'url'  => $urlRelWoF . '-' . $slug <<< search for references and replace them with the anchor later
+		# ]
+		# usually, only the h1 of a page will be referenced
+		# then we can just loop through the book html and search for something like ahref="$urlRelWoF" 
+		# and replace $urlRelWoF with the anchor from the toc[] array.
+
 		# before we use this logic, we have to check if the current layout supports that feature.
 		# please check here
 		# or we should delete everything that is not related to the layout in the ebook-data first.
 
+		$counter 					= isset($book['toc']) ? count($book['toc']) : 1;
 		$originalimages 			= isset($ebookdata['originalimages']) ? $ebookdata['originalimages'] : false;
 		$downgradeheadlines 		= isset($ebookdata['downgradeheadlines']) ? $ebookdata['downgradeheadlines'] : 0;
 		$chapterlevel				= $chapterlevel ? $chapterlevel : 1;
@@ -1826,7 +1841,7 @@ class Ebooks extends Plugin
 		}
 
 		return $book;
-	}
+	} 
 
 	private function getOriginalImage($basepath, $imageMD)
 	{

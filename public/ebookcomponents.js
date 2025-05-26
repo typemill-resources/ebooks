@@ -109,44 +109,52 @@ app.component("ebook-content", {
 		return {
 			booklayout: { 'customforms': false },
 			headlines: false,
+			shortcodeOpen: false,
 		}
 	},	
 	template: `<div>
 				<form class="w-full my-8">
 				<div class="flex flex-wrap justify-between">
-					<fieldset v-if="shortcodes" class="w-full border-2 border-stone-200 p-4 mb-4">
-						<legend class="text-lg font-medium">Configure shortcodes</legend>
-						<div class="w-full mt-2">
-							<div class="block mb-1 font-medium">Disable shortcodes</div>
-							<label class="inline-flex items-start">
-								<input 
-									type 	= "checkbox" 
-									name 	= "shortcodes" 
-									v-model = "formdata.disableshortcodes" 
-									class 	= "w-6 h-6 border-stone-300 bg-stone-200" 
-								/>
-								<span class="ml-2 text-sm">Disable and exclude all shortcodes for the eBook.</span>
-							</label>
+					<fieldset v-if="shortcodes" class="block w-full border-2 border-stone-200 p-4 my-8">
+						<div @click="shortcodeOpen = !shortcodeOpen" class="flex justify-between w-full py-2 text-lg font-medium cursor-pointer">
+							<h3>Configure Shortcodes</h3> 
+							<span class="mt-2 h-0 w-0 border-x-8 border-x-transparent" :class="shortcodeOpen ? 'border-b-8 border-b-black' : 'border-t-8 border-t-black'"></span>
 						</div>
-						<div class="w-full mt-2">
-							<div class="block mb-1 font-medium">Activate shortcodes individually</div>
-							<div 
-								v-for 	= "(shortcodedata,shortcodename) in shortcodes" 
-								:key 	= "shortcodename" 
-								class 	= "w-full"
-								>
-								<label class="inline-flex items-start">
-									<input 
-										type 	= "checkbox" 
-										v-model = "formdata.activeshortcodes" 
-										:id 	= "shortcodename" 
-										:value 	= "shortcodename"
-										class 	= "w-6 h-6 border-stone-300 bg-stone-200" 
-									/>
-									<span class="ml-2 text-sm">{{shortcodename}}</span>
-								</label>
+						<transition name="accordion">
+					        <div v-if="shortcodeOpen" class="w-full accordion-content flex flex-wrap justify-between">
+								<div class="mt-2">
+									<div class="block mb-1 font-medium">Disable shortcodes</div>
+									<label class="inline-flex items-start">
+										<input 
+											type 	= "checkbox" 
+											name 	= "shortcodes" 
+											v-model = "formdata.disableshortcodes" 
+											class 	= "w-6 h-6 border-stone-300 bg-stone-200" 
+										/>
+										<span class="ml-2 text-sm">Disable and exclude all shortcodes for the eBook.</span>
+									</label>
+								</div>
+								<div class="w-full mt-2">
+									<div class="block mb-1 font-medium">Activate shortcodes individually</div>
+									<div 
+										v-for 	= "(shortcodedata,shortcodename) in shortcodes" 
+										:key 	= "shortcodename" 
+										class 	= "w-full"
+										>
+										<label class="inline-flex items-start">
+											<input 
+												type 	= "checkbox" 
+												v-model = "formdata.activeshortcodes" 
+												:id 	= "shortcodename" 
+												:value 	= "shortcodename"
+												class 	= "w-6 h-6 border-stone-300 bg-stone-200" 
+											/>
+											<span class="ml-2 text-sm">{{shortcodename}}</span>
+										</label>
+									</div>
+								</div>	
 							</div>
-						</div>
+						</transition>
 					</fieldset>
 					<fieldset class="lg:w-half border-2 border-stone-200 p-4">
 						<legend class="text-lg font-medium">Select pages from your website</legend>
