@@ -1192,10 +1192,26 @@ class Ebooks extends Plugin
 			$navigation = $navigation[0]['folderContent'];
 		}
 
-		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
-		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
+		# activate sectionNumbers (headline numbers)
+		$sectionNumbers = false;
+		if(isset($ebookdata['toccounter']) && $ebookdata['toccounter'] == 1)
+		{
+			$sectionNumbers = [0,0,0,0,0,0];
+		}
 
-		# let us add the thumb index:
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
+		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL, $sectionNumbers);
+
+		$toc = false;
+		if(isset($bookcontent['toc']) && !empty($bookcontent['toc']))
+		{
+			$toc = $bookcontent['toc'];
+			unset($bookcontent['toc']);
+		}
+
+		$bookcontent = $this->transformRelativeLinks($bookcontent, $toc, $baseurl);
+
+		# add the thumb index:
 		$thumbindex 	= [];
 
 		foreach($bookcontent as $chapter)
@@ -1235,10 +1251,10 @@ class Ebooks extends Plugin
 			'ebookdata' 	=> $ebookdata, 
 			'booklayout'	=> $booklayouts[$ebookdata['layout']],
 			'book' 			=> $bookcontent,
+			'toc' 			=> $toc,
 			'thumbindex'	=> $thumbindex
 		]);
 	}
-
 
 	# generates and returns the epub file
 	public function createEpub(Request $request, Response $response, $args)
@@ -1711,27 +1727,9 @@ class Ebooks extends Plugin
 	}
 
 
-	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL)
+	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL, $sectionNumbers = false)
 	{
-		# create a counter that is used to generate a unique id
-		# search for all headline
-		# get the relative url of the page ($urlRelWoF)
-		# create a toc that contains all headlines with the info
-		# toc[] = [
-		#   'level' => $headlineLevel
-		#   'text' => $headlineText
-		#	'id'   => $counter . '-' . $slug,  <<< create an anchor
-		#   'url'  => $urlRelWoF . '-' . $slug <<< search for references and replace them with the anchor later
-		# ]
-		# usually, only the h1 of a page will be referenced
-		# then we can just loop through the book html and search for something like ahref="$urlRelWoF" 
-		# and replace $urlRelWoF with the anchor from the toc[] array.
-
-		# before we use this logic, we have to check if the current layout supports that feature.
-		# please check here
-		# or we should delete everything that is not related to the layout in the ebook-data first.
-
-		$counter 					= isset($book['toc']) ? count($book['toc']) : 1;
+		$counter 					= isset($book['toc']) ? count($book['toc']) : 0;
 		$originalimages 			= isset($ebookdata['originalimages']) ? $ebookdata['originalimages'] : false;
 		$downgradeheadlines 		= isset($ebookdata['downgradeheadlines']) ? $ebookdata['downgradeheadlines'] : 0;
 		$chapterlevel				= $chapterlevel ? $chapterlevel : 1;
@@ -1785,63 +1783,145 @@ class Ebooks extends Plugin
 
 				$basepath = str_replace('/content', '/', $pathToContent);
 
-				if( $originalimages OR $chapterlevel >= ($downgradeheadlines+1)  )
+				# go through each content element
+				foreach($chapterArray as $key => $element)
 				{
-					# go through each content element
-					foreach($chapterArray as $key => $element)
+					$elementName = $element['name'] ?? false;
+
+					# if user wants to use original images instead of small once
+					if($originalimages && $elementName == 'figure')
 					{
-						# if user wants to use original images instead of small once
-						if($originalimages && isset($element['name']) && $element['name'] == 'figure')
-						{
-							# rewrite the image urls
-							$imageMD = $element['elements'][0]['handler']['argument'];
-							$origImage = $this->getOriginalImage($basepath, $imageMD);
-							$element['elements'][0]['handler']['argument'] = $origImage;
-							$chapterArray[$key] = $element;
-						}
-
-						/*
-						# by default and if user did not contradict to automatically adjust the headline levels
-						if(!$originalheadlinelevels AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
-						{
-							# lower the levels of headlines
-							$headlinelevel = $element['name'][1] + ($chapterlevel -1);
-							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
-							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
-						}
-						*/
-
-						if($downgradeheadlines == 0)
-						{
-							continue;
-						}
+						# rewrite the image urls
+						$imageMD = $element['elements'][0]['handler']['argument'];
+						$origImage = $this->getOriginalImage($basepath, $imageMD);
+						$element['elements'][0]['handler']['argument'] = $origImage;
+						$chapterArray[$key] = $element;
+					}
+					
+					# if it is a headline
+					if(
+						$elementName 
+						AND $elementName[0] == 'h' 
+						AND is_numeric($elementName[1])
+					)
+					{
+						$headlinelevel = (int)$element['name'][1];
 
 						# adjust the headline levels
-						if( ($chapterlevel >= ($downgradeheadlines+1) ) AND isset($element['name'][1]) AND $element['name'][0] == 'h' AND is_numeric($element['name'][1]))
+						if( 
+							$downgradeheadlines > 0 
+							AND ($chapterlevel >= ($downgradeheadlines+1) ) 
+						)
 						{
 							# lower the levels of headlines
 							$headlinelevel = $element['name'][1] + ($chapterlevel - $downgradeheadlines);
 							$headlinelevel = ($headlinelevel > 6) ? 6 : $headlinelevel;
 							$chapterArray[$key]['name'] = 'h' . $headlinelevel;
 						}
+
+						# new headline so increase counter
+						$counter++;
+
+						$headlinetext 	= $element['handler']['argument'];
+						$headlineanchor = $element['attributes']['id'];
+						$headlineid 	= 'c' .$counter . '-' . $headlineanchor;
+
+						# Update section counters
+						$numbering 	= '';
+						if(isset($sectionNumbers) && is_array($sectionNumbers))
+						{
+							$sectionIndex 	= $headlinelevel-1;
+							$sectionNumbers[$sectionIndex]++;
+
+							# Reset deeper levels
+							for ($i = $sectionIndex + 1; $i <= 5; $i++)
+							{
+							    $sectionNumbers[$i] = 0;
+							}
+
+							# Create number string like "1.2.3"
+							$numbering = implode('.', array_slice($sectionNumbers, 0, $sectionIndex+1));
+							if($sectionIndex == 0)
+							{
+								$numbering .= '.';
+							}
+
+							$numbering = '<span class="sectionNumber">' . $numbering . '</span> ';
+						}
+
+						$headlinetext 	= $numbering . $element['handler']['argument'];
+						$chapterArray[$key]['handler']['argument'] = $headlinetext;
+
+						$chapterArray[$key]['attributes']['id'] = $headlineid;
+
+						# create new toc entry
+						$book['toc'][] = [
+							'level' 	=> $headlinelevel,
+							'text' 		=> $headlinetext,
+							'id'   		=> $headlineid,
+							'anchor' 	=> $headlineanchor,
+							'url'  		=> $item['urlRelWoF'] # search for references and replace them with the anchor later
+						];
 					}
 				}
 
-				# turn into html
-				
+				# turn into html				
 				$chapterHTML		= $parsedown->markup($chapterArray, $itemUrl = false);
 
 				$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML, 'metadata' => $meta];
 
 				if($item['elementType'] == 'folder')
 				{
-					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1 );
+					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1, $sectionNumbers );
 				}
 			}
 		}
 
 		return $book;
 	} 
+
+	private function transformRelativeLinks($bookcontent, $toc, $baseurl)
+	{
+		$tocindex = [];
+		$baseurl = rtrim($baseurl, '/');		
+		foreach($toc as $tocitem)
+		{
+			$anchor = '';
+			if($tocitem['level'] > 1)
+			{
+				$anchor = '#' . $tocitem['anchor'];
+			}
+			$urlKey = trim($tocitem['url'], '/');
+		    $tocindex[$baseurl . '/' . $urlKey . $anchor] = $tocitem;
+    	}
+
+		foreach ($bookcontent as $key => $chapter)
+		{
+		    $html = $chapter['content'];
+
+		    $html = preg_replace_callback(
+		        '/href=["\']([^"\']+)["\']/i',
+		        function($match) use ($tocindex)
+		        {
+		            $href = $match[1];
+
+		            // If it's in the index, replace with anchor
+		            if (isset($tocindex[$href]))
+		            {		            	
+		                return 'href="#' . $tocindex[$href]['id'] . '"';
+		            }
+
+		            // Otherwise, return original
+		            return $match[0];
+		        }, 
+		        $html
+		    );
+
+		    $bookcontent[$key]['content'] = $html;
+		}
+
+		return $bookcontent;
+	}
 
 	private function getOriginalImage($basepath, $imageMD)
 	{

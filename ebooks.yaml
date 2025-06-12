@@ -1,6 +1,6 @@
 name: eBooks
-version: 2.3.2
-description: Transform your typemill installation into a publishing studio.
+version: 2.4.0
+description: Transform Typemill into a publishing studio and create ebooks in PDF and ePUB format.
 author: Sebastian Schürmanns
 homepage: https://trendschau.net
 license: MIT/MIXED

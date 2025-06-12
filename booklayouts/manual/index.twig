@@ -125,18 +125,28 @@
 			{% endif %}
 		</div>
 
-		<div class="imprint">
-			<div class="imprint-bottom">
+		{% if ebookdata.imprint %}
+			<div class="imprint">
+				<div class="imprint-bottom">
 
-				{{ markdown(ebookdata.imprint) }}
+					{{ markdown(ebookdata.imprint) }}
 
+				</div>
 			</div>
-		</div>
+		{% endif %}
 		
-		{% if ebookdata.toc %}
-			<div class="tableofcontents">
+		{% if ebookdata.toc and toc %}
+			<div id="toc" class="tableofcontents">
 				<h1>{{ ebookdata.toctitle }}</h1>
-				<div id="toc"></div>
+				<ul id="list-toc-generated">
+					{% for tocitem in toc %}
+						{% if tocitem.level <= ebookdata.toclevel %}
+							<li class="toc-element toc-element-level-{{ tocitem.level }}">
+								<a href="#{{ tocitem.id }}">{{ tocitem.text }}</a>
+							</li>
+						{% endif %}
+					{% endfor %}
+				</ul>
 			</div>
 		{% endif %}
 
@@ -202,7 +212,7 @@
 
 		<script src="{{ base_url }}/plugins/ebooks/public/paged.polyfill.js"></script>
 		<script>
-
+			/*
 			class handlers extends Paged.Handler {
 				constructor(chunker, polisher, caller) {
 				    super(chunker, polisher, caller);
@@ -222,7 +232,7 @@
 				}
 			}
 			Paged.registerHandlers(handlers);
-
+			*/
 		</script>
 
 		<script src="{{ base_url }}/plugins/ebooks/public/imagefix.js"></script>
