@@ -4,7 +4,7 @@ app.component('tab-ebooks', {
 					<h1 class="text-3xl font-bold mb-4">eBook Studio</h1>
 					<div v-if="home">
 						<p class="font-bold py-3">Welcome the eBook studio of Typemill.</p>
-						<p class="py-3">You can generate eBooks from each chapter and each page of your website. If you want to create (multiple) eBook-projects with all pages, then use the eBook-feature in the settings-area.</p>
+						<p class="py-3">The homepage does not support eBook generation, but you can generate eBooks from all other folders and pages. If you want to create (multiple) eBook-projects with all pages, then use the eBook-feature in the settings-area.</p>
 						<p class="py-3">Happy publishing!</p>
 					</div>
 					<form v-else class="inline-block w-full">

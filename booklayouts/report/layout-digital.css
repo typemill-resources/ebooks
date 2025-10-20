@@ -160,13 +160,13 @@
 @page:blank {
     @bottom-left { content: none; }    
     @bottom-right { content: none; } 
-    @bottom-right-corner: { content: none; background:transparent; } 
+    @bottom-right-corner { content: none; background:transparent; } 
 }
 
 @page imprint {
     @bottom-left { content: none; }    
     @bottom-right { content: none; } 
-    @bottom-right-corner: { content: none; background:transparent; } 
+    @bottom-right-corner { content: none; background:transparent; } 
 }
 
 @page blurb {

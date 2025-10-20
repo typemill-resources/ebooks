@@ -35,39 +35,33 @@
 
 		<style>
 
-			/* logo position */
+			/* Option 1: full background-like cover image */
+			{% if ebookdata.coverimagefit %}
 
-			{% if ebookdata.logoleft %}
-
-				img.logo{
-				  left: 60px;
-				  right: auto;
+				.coverimage {
+				  flex: 1; /* let it expand inside cover */
+				  display: flex;
+				}
+				.coverimage img {
+				  width: 100%;
+				  height: 100%;
+				  object-fit: cover; /* fill area without distortion */
 				}
 
 			{% endif %}
 
+			/* Option 2: custom width, centered */
+			{% if ebookdata.coverimagewidth %}
 
-			/* cover image options */
-
-			{% if ebookdata.coverimagefit %}
-
-				.coverimage img{
-				  height: 100%;
-				  object-fit:cover;
+				.coverimage {
+				  flex: 1; /* take vertical space */
+				  display: flex;
+				  justify-content: center;
+				  align-items: center;
 				}
-
-			{% elseif ebookdata.coverimagewidth %}
-
-				.coverimage{
-					position:relative;
-					height:77%;
-				}
-				.coverimage img{
-					position:absolute;
-					width: {{ebookdata.coverimagewidth}};
-					left: 50%;
-					top: 50%;
-					transform: translate(-50%,-50%);
+				.coverimage img {
+				  width: {{ ebookdata.coverimagewidth }};
+				  height: auto; /* keep aspect ratio */
 				}
 
 			{% endif %}
@@ -75,14 +69,26 @@
 			{% if ebookdata.hideemptypages %}
 			
 				/* remove empty pages */
-				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				.imprint,
+				.tableofcontents, 
+				.bookcontent, 
+				.chapter, 
+				.subchapter, 
+				.bookcontent h1, 
+				.blurb {
 				    break-before: page; /* page, right, left, recto, verso */
 				}
 
 			{% else %}
 
 				/* add page breaks */
-				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				.imprint,
+				.tableofcontents, 
+				.bookcontent, 
+				.chapter, 
+				.subchapter, 
+				.bookcontent h1, 
+				.blurb {
 				    break-before: right; /* page, left, recto, verso */
 				}
 			
@@ -193,7 +199,7 @@
 	<body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
 
 		<div class="cover">
-			<div class="cover-top">
+			<div class="cover-top{% if ebookdata.logoleft %} logo-left{% else %} logo-right{% endif %}">
 				{% if ebookdata.logo != '' %}
 					<img class="logo" src="{{ base_url }}/{{ ebookdata.logo }}">				
 				{% endif %}
@@ -281,15 +287,15 @@
 		{% if ebookdata.blurb %}
 
 			<div class="blurb">
-				<div class="cover-top">
+				<div class="cover-top{% if ebookdata.logoleft %} logo-left{% else %} logo-right{% endif %}">
 					{% if ebookdata.logo != '' %}
 						<img class="logo" src="{{ base_url }}/{{ ebookdata.logo }}">				
 					{% endif %}
 				</div>
-				<div class="cover-title"></div>
-				<div class="cover-bottom">
-					<div class="bottomcorner">{{ markdown(ebookdata.blurb) }}</div>
+				<div class="blurb-title">
+					{{ markdown(ebookdata.blurb) }}
 				</div>
+				<div class="blurb-bottom"></div>
 			</div>
 		
 		{% endif %}

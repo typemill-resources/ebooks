@@ -1,7 +1,7 @@
 /* CSS for Paged.js interface */
 /* download from : https://gitlab.pagedmedia.org/tools/pagedjs-documentation/blob/master/ressources/interface-0.1.css */
-
-/* Change the look */
+ 
+/* Change the look */ 
 :root {
     --color-background: whitesmoke;
     --color-pageBox: #666;
@@ -102,6 +102,11 @@
     /*--------------------------------------------------------------------------------------*/
 }
 
+/* Set h1 as title for running footer */
+h1 {
+  string-set: title content(text);
+}
+
 /* Define the standard page layout */
 @page {
     
@@ -113,17 +118,18 @@
 
     @bottom-left  {
         content: string(title);
-        font-size: 0.8em;
+/*        font-size: calc(var(--font-size) * 0.8); */
         width: 90%;
+        font-size: 10px;
     }
     @bottom-right {
         content: counter(page);
-        font-size: 0.8em;
+/*        font-size: calc(var(--font-size) * 0.8); */
+        font-size: 10px;
     }
     @footnote {
         float: bottom;
     }
-
 }
 
 @page coverlayout {
@@ -131,6 +137,8 @@
     margin-right: 0mm;
     margin-bottom: 0mm;
     margin-left: 0mm;
+    @bottom-left { content: none; }    
+    @bottom-right { content: none; }     
 }
 
 /* Delete running title from blank pages */
@@ -150,13 +158,16 @@
     margin-right: 0mm;
     margin-bottom: 0mm;
     margin-left: 0mm;
+    @bottom-left { content: none; }    
+    @bottom-right { content: none; }     
 }
 
 
-/* add page breaks */
+/* add page breaks
 .tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
-    break-before: right; /* page, left, recto, verso */
+    break-before: right; /* page, left, recto, verso 
 }
+*/
 
 /* add counter to figcaptions */
 body {
@@ -167,8 +178,4 @@ figcaption {
 }
 figcaption::before {
     content: counter(figureNumber);
-}
-
-h1 {
-  string-set: title content(text);
 }

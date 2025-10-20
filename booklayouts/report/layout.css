@@ -224,9 +224,9 @@ dd {
 /*
 ** MEDIA IMAGES AND VIDEOS
 */
-
+/*
 figure{
-  display: table;     /* to keep captions in size with image */
+  display: table;     /* to keep captions in size with image
   margin:1em auto;
   break-inside:avoid;
 }
@@ -235,26 +235,60 @@ figure.left{
   max-width: 50%;
   float: left;
   margin: 0 1em 1em 0;
-  break-inside: unset; /* avoid causes rendering errors */
+  break-inside: unset; /* avoid causes rendering errors 
 }
 figure.right {
   width: auto;
   max-width: 50%;
   float: right;
   margin: 0 0 1em 1em;
-  break-inside: unset; /* avoid causes rendering errors */
+  break-inside: unset; /* avoid causes rendering errors 
 }
 figcaption{
-  display: table-caption; /* to keep captions in size with image */
+  display: table-caption; /* to keep captions in size with image
   caption-side: bottom;
   font-size: 0.8em;
   margin-top: .5em;
   line-height: 1.4em;
 }
-img{
-  display:block;
+img {
+  display: block;
   max-width: 100%;
   height: auto;
+  object-fit: contain; /* Keep aspect ratio 
+}
+*/
+figure {
+  display: block;       /* block for proper sizing */
+  margin: 1em auto;
+  break-inside: avoid;
+  max-width: 100%;      /* constrain to page width */
+}
+
+figure.left,
+figure.right {
+  width: 50%;
+  margin: 0 1em 1em 0;
+  break-inside: unset;
+  float: left;  /* right figure gets float: right */
+}
+figure.right {
+  float: right;
+  margin: 0 0 1em 1em;
+}
+
+figcaption {
+  font-size: 0.8em;
+  margin-top: 0.5em;
+  line-height: 1.4em;
+  text-align: center; /* optional */
+}
+
+img {
+  display: block;
+  width: auto;      /* intrinsic width */
+  max-width: 100%;  /* fit container */
+  height: auto;     /* maintain aspect ratio */
 }
 audio,
 video{
@@ -585,22 +619,26 @@ span.footnote {
     padding-left: 5px;
     letter-spacing: 2px;
     font-weight: normal;
+    position:relative;
+    z-index:0;
 }
 #list-toc-generated .toc-element{
     display: flex; 
-    overflow-x: hidden;
+    overflow: hidden;
+    position: relative;
 }
 #list-toc-generated .toc-element a::after{
     position: absolute;
     right: 0;
     background-color: white;
     padding-left: 6px;
+    z-index: 1;
 }
 #list-toc-generated .toc-element a{
     right: 0;
 }
 
-/* individual styling */
+/* individual styling */ 
 #toc .toc-element{
   padding-left: 0;
 }
@@ -626,7 +664,6 @@ span.footnote {
   margin-right:5px;
 }
 
-
 /* Hide the table of contents within chapters */
 
 ul.TOC{
@@ -635,115 +672,85 @@ ul.TOC{
 
 
 /*
-** COVER  
+** COVER (flexbox version, no absolute positioning)
 */
 
-.cover{
+.cover {
   font-family: 'Noto Sans', arial, sans-serif;
   page: coverlayout;
-  position: absolute;
   width: 100%;
-  height: 100%;
-  background-color: var(--primary-cover-bg-color);  
-  background-size: cover;
-}
-.cover-top{
-  position: absolute;
-  height: 150px;
-  top: 0;
-  left: 0;
-  right: 0;
-  background-color: white;
-  color:  black;
-  text-align: right;
-}
-.cover-title{
-  position: absolute;
-  width: 100%;
-  top: 150px;
-  bottom: 200px;
-  left: 0;
-  right: 0;
-  padding: 0px;
+  height: 297mm;
   background-color: var(--primary-cover-bg-color);
-  color:  var(--primary-cover-ft-color);
+  color: var(--primary-cover-ft-color);
+  box-sizing: border-box;
 }
-.coverimage{
-  width: 100%;
-  height: 100%;
+.cover-top {
+  display: block;
+  height: 30mm; 
+  line-height: 25mm;
+  padding: 5mm 20mm; 
+  background-color: white;
+  color: black;
+  box-sizing: border-box;  
 }
-.coverimage img{
-  display:  block;
-  max-width: 100%;
-}
-.cover-bottom{
-  position:absolute;
-  display: flex;
-  width: 100%;
-  height: 200px;
-  bottom: 0;
-  left:  0;
-  padding: 0;
-  background-color: var(--secondary-cover-bg-color);
-  color: var(--secondary-cover-ft-color);
-}
-.cover-bottom p{
+.cover-top.logo-left {
   text-align: left;
 }
-.bottomcorner{
-  padding-top: 40px;
-  padding-left: 60px;
-  padding-right: 60px; 
-  padding-bottom: 40px;
-  width: 100%;
-  border-top: 1px solid white;
-}
-.bottomcorner.cornerright{
-  border-left: 1px solid white;
-}
-.cover-title h1.cover-headline,
-.cover-title h2.cover-subtitle{
-  font-family: 'Noto sans',sans-serif;  
+
+.cover-top.logo-right {
+  text-align: right;
 }
 
-h1.cover-headline{
-  font-size: 30pt;
-  line-height: 35pt;
-  margin-top: 60px!important;
-  margin-left: 60px;
-  margin-right: 60px;
-  margin-bottom: 10px;
-}
-h2.cover-subtitle {
-  font-size: 18pt;
-  line-height: 20pt;
-  font-weight:  300;
-  margin-top: 10px;
-  margin-left: 60px;
-  margin-right: 60px;
-  margin-bottom: 40px;
-}
-img.logo{
-  position: absolute;
-  top: 40px;
-  right: 60px;
+.cover-top img.logo {
+  display: inline-block;
   max-width: 210px;
   max-height: 70px;
 }
-.cover-author{
-  position: absolute;
-  bottom: 40px;
-  left: 20px;
+.cover-title {
+  height: 222mm;
+  padding: 20mm; 
+  background-color: var(--primary-cover-bg-color);
+  color: var(--primary-cover-ft-color);
+  box-sizing: border-box;
 }
-.cover-edition{
-  position: absolute;
-  bottom: 40px;
-  right: 20px;
+.cover-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;  
+  height: 45mm; 
+  padding: 10mm 20mm; 
+  background-color: var(--secondary-cover-bg-color);
+  color: var(--secondary-cover-ft-color);
+  border-top: 1px solid white;
+  box-sizing: border-box;
+}
+
+h1.cover-headline {
+  font-size: 30pt;
+  line-height: 35pt;
+  margin: 0 0 10px 0;
+}
+
+h2.cover-subtitle {
+  font-size: 18pt;
+  line-height: 20pt;
+  font-weight: 300;
+  margin: 10px 0 40px 0;
+}
+
+.cover-bottom p {
+  margin: 0;
+  text-align: left;
+}
+
+.cover-bottom .bottomcorner {
+  width: 45%;
 }
 
 .flytitle{
   page: flytitlelayout;
-  position: absolute;
+  position: relative;
+  display: block;
   width: 100%;
   height: 100%;
 }
@@ -781,22 +788,25 @@ img.logo{
 /*
 ** IMPRINT
 */
-
 .imprint {
-  page: imprint; 
+  page: imprint;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* push imprint text to bottom */
+  min-height: 100%; /* fill page height */
+  padding: 40pt; /* optional: inner margins */
+  box-sizing: border-box;
 }
 .imprint-bottom {
-  position: absolute;
-  bottom: 0;
-  overflow: hidden; 
+  margin-top: auto; /* push to bottom */
 }
 .imprint p {
   font-size: .8em;
   margin: 15pt 0;
-  text-align: left; 
+  text-align: left;
 }
 .imprint p + p {
-  text-indent: 0pt; 
+  text-indent: 0pt;
 }
 .preface{
   page: preface;
@@ -814,18 +824,36 @@ img.logo{
   margin-top: 6rem;
 }
 
-.blurb{
+/*
+** BLURB
+*/
+.blurb {
+  font-family: 'Noto Sans', arial, sans-serif;
   page: blurb;
-  background-color: var(--secondary-bg-cover-color);
-  background-size: cover;
-  position: absolute;
-  text-align: left;
   width: 100%;
-  height: 100%;
-  padding: 40px;
-  color: #f7f7f7;
-  font-size: .8em;
+  height: 297mm;
+  background-color: var(--primary-cover-bg-color);
+  color: var(--primary-cover-ft-color);
+  box-sizing: border-box;
 }
+.blurb-title{
+  height: 222mm;
+  padding: 20mm; 
+  background-color: var(--primary-cover-bg-color);
+  color: var(--primary-cover-ft-color);
+  box-sizing: border-box;
+}
+.blurb-bottom{
+  height: 45mm; 
+  padding: 10mm 20mm; 
+  background-color: var(--primary-cover-bg-color);
+  color: var(--primary-cover-ft-color);
+  border-top: 1px solid white;
+  box-sizing: border-box;
+}
+
+
+
 
 article,
 aside,

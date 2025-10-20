@@ -232,9 +232,9 @@ app.component("ebook-content", {
 							<h3 class="text-lg font-medium pt-3">Table of Contents</h3>
 							<div class="my-3 p-3 bg-stone-200">
 								<div v-if="headlines">
-									<ul class="pa0 list">
-										<li v-for="headline in headlines">
-											<span class="text-teal-600" :class="addLevelClass(headline.level)">{{ headline.name }}</span> 
+									<ul class="pa0 list text-sm">
+										<li v-for="headline in headlines" :class="addLevelClass(headline.level)">
+											<span class="text-teal-600">{{ headline.name }}</span> 
 											{{ headline.text }}
 										</li>
 									</ul>
@@ -359,12 +359,23 @@ app.component("list", {
 
 
 app.component("ebook-pdf", {
+	components: {
+		medialib: medialib
+	},	
 	props: ['errors', 'formdata', 'layouts', 'ebookprojects', 'currentproject', 'messageClass', 'message', 'previewUrl'],
 	data: function(){
 		return {
 			src: data.urlinfo.baseurl + '/plugins/ebooks/booklayouts/',
 			highlighted: '',
-//			previewUrl: data.urlinfo.baseurl + '/tm/ebooks/preview?projectname=' + this.currentproject,
+			accordionState: {},
+			productionTab: 'pdf',
+			termsAccepted: false,
+			hasLicense: false,
+			ebooks: [],
+			generating: false,
+			tokenstats: false,
+			ebookmessage: false,
+			showmedialib: false,
 		}
 	},
 	template: `<div>
@@ -393,8 +404,8 @@ app.component("ebook-pdf", {
 							<div class="text-sm"> 
 								<ul>
 									<li v-for="info,name in layouts[formdata.layout]">
-										<div v-if="showinfo(name)" class="table">
-											<span class="table-cell w-24 font-bold">{{ name }}:</span>
+										<div v-if="showinfo(name)" class="table w-full">
+											<span class="table-cell w-1/4 font-bold">{{ name }}:</span>
 											<a v-if="name == 'Link'" :href="info">{{ info }}</a>
 											<span v-else>{{ info }}</span>
 										</div>
@@ -421,16 +432,23 @@ app.component("ebook-pdf", {
 						</div>
 					</fieldset>
 					<div v-if="layouts[formdata.layout].customforms" v-for="(fielddefinition, fieldname) in layouts[formdata.layout].customforms.fields">
-						<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8" v-if="fielddefinition.type == 'fieldset'">
-							<legend class="text-lg font-medium">{{ fielddefinition.legend }}</legend>
-							<component v-for="(subfield, subfieldname) in fielddefinition.fields"
-								:key  		= "subfieldname"
-								:is  		= "selectComponent(subfield.type)"
-								:errors  	= "errors"
-								:name 		= "subfieldname"
-								:value 		= "formdata[subfieldname]" 
-								v-bind 		= "subfield">
-							</component>
+						<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8" v-if="fielddefinition.type == 'fieldset'" :class="{ 'open': isOpen(fieldname) }">
+							<div @click="toggleAccordion(fieldname)" class="flex justify-between w-full py-2 text-lg font-medium cursor-pointer">
+								<h3>{{ fielddefinition.legend }}</h3> 
+								<span class="mt-2 h-0 w-0 border-x-8 border-x-transparent" :class="isOpen(fieldname) ? 'border-b-8 border-b-black' : 'border-t-8 border-t-black'"></span>
+							</div>
+							<transition name="accordion">
+								<div v-if="isOpen(fieldname)" class="w-full accordion-content flex flex-wrap justify-between">						
+									<component v-for="(subfield, subfieldname) in fielddefinition.fields"
+										:key  		= "subfieldname"
+										:is  		= "selectComponent(subfield.type)"
+										:errors  	= "errors"
+										:name 		= "subfieldname"
+										:value 		= "formdata[subfieldname]" 
+										v-bind 		= "subfield">
+									</component>
+								</div>
+							</transition>
 						</fieldset>
 						<component v-else
 							:key  			= "fieldname"
@@ -452,33 +470,174 @@ app.component("ebook-pdf", {
 					</div>
 				</form>
 
-				<div class="border-2 border-stone-200 p-4 my-8 bg-stone-100">
-					<h2 class="text-2xl font-bold mb-4 mt-2">Produce a PDF</h2>
-					<p class="my-2">Here you can generate a html-preview for your eBook in PDF format or directly create a pdf-file.</p>
-					<div class="flex my-8 justify-between">
-						<div class="lg:w-half">
+				<div class="mt-8 w-full inline-block">
+					<ul class="flex flex-wrap mb-0">
+						<li>
+							<button 
+								class="px-2 py-2 border-b-2 border-stone-200 dark:border-stone-900 hover:border-stone-700 hover:dark:border-stone-200 hover:bg-stone-200 hover:dark:bg-stone-900 transition duration-100"
+								:class="(productionTab == 'pdf') ? 'border-stone-700 bg-stone-200 dark:bg-stone-900 dark:border-stone-200' : ''"
+								@click.prevent="productionTab = 'pdf'"
+								>Generate PDF
+							</button>
+						</li>
+						<li>
+							<button 
+								class="px-2 py-2 border-b-2 border-stone-200 dark:border-stone-900 hover:border-stone-700 hover:dark:border-stone-200 hover:bg-stone-200 hover:dark:bg-stone-900 transition duration-100"
+								:class="(productionTab == 'preview') ? 'border-stone-700 bg-stone-200 dark:bg-stone-900 dark:border-stone-200' : ''"
+								@click.prevent="productionTab = 'preview'"
+								>Preview PDF
+							</button>
+						</li>
+					</ul>
+					<div class="border-2 bg-stone-200 border-stone-300 dark:bg-stone-900 p-4 mb-8">
+						<div v-if="productionTab == 'pdf'">
+							<p class="my-2">
+								Generate a PDF of your book remotely using the Kixote API.  
+								The finished file will be saved directly into your medialibrary and shown in the list below.
+							</p>
+							<div v-if="!hasLicense" class="my-2"> 
+								<p class="my-2">
+									This service requires a Typemill <strong>MAKER</strong> or <strong>BUSINESS</strong> license. You can <a class="text-teal-500 underline" href="https://typemill.net/license/buy" target="blank">buy a license here</a>.
+								</p>
+								<p class="my-2">
+									Alternatively, you can generate a pdf locally with the tab "Preview PDF".
+								</p>
+								<a 
+									href="https://typemill.net/license/buy" 
+									target="_blank" 
+									class="mt-8 block w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center hover:bg-teal-600 transition duration-100"
+								>Buy a License</a>	
+							</div>
+							<div v-else>
+								<p class="my-2">
+									By clicking the button, your content will be temporarily processed by the Kixote server to generate the PDF. 
+									No personal data will be stored on the server. 
+									Only an anonymous identifier is kept to track usage and enforce rate limits.
+									For more details, see our <a href="https://typemill.net/info/privacy#h3-kixote-services" target="_blank" class="underline text-teal-500">Privacy Policy</a>.
+								</p>
+								<button
+								  v-if="generating"
+								  disabled="disabled"
+								  class="mt-8 flex items-center justify-center gap-2 w-full p-4 text-white bg-teal-500 border border-stone-300 text-center hover:bg-teal-600 transition duration-100 disabled:bg-stone-200 disabled:text-stone-900 disabled:dark:bg-stone-600 disabled:dark:text-stone-200 disabled:cursor-not-allowed"
+								>
+								  Generating PDF, do not leave this page
+								  <svg class="ml-2 animate-spin h-5 w-5 text-stone-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+								    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								  </svg>
+								</button>
+								<button 
+									v-else
+									@click.prevent="kixotePdf()"
+									class="mt-8 block w-full p-4 text-white bg-teal-500 border-1 border-stone-300 text-center hover:bg-teal-600 transition duration-100  disabled:bg-stone-200 disabled:text-stone-900 disabled:dark:bg-stone-600 disabled:dark:text-stone-200 disabled:cursor-not-allowed"
+								>Generate PDF (10 Token)</button>
+							</div>
+							<div v-if="ebookmessage" class="text-center w-full bg-rose-500 text-white p-3 my-2">{{ ebookmessage }}</div>
+							<div v-if="tokenstats" class="mt-6 bg-stone-100 border p-4">
+							  <div class="flex text-center text-sm font-medium text-stone-700">
+							    <div class="w-1/3">
+							      <p>Monthly Tokens: 
+								      <span class="font-semibold text-teal-600">{{ tokenstats.monthly_limit }}</span>
+							      </p>
+							    </div>
+							    <div class="w-1/3">
+									<p>Used: 
+							      		<span class="font-semibold text-teal-600">{{ tokenstats.used_this_month }}</span>
+							     	</p>
+							    </div>
+							    <div class="w-1/3">
+									<p>Remaining: 
+							      		<span class="font-semibold text-teal-600">{{ tokenstats.remaining_this_month }}</span>
+							      	</p>
+							    </div>
+							  </div>
+							</div>
+							<div class="mt-5 space-y-3">
+								<div v-if="ebooks.length > 0" class="my-2">
+									<button 
+										@click.prevent="showmedialib = true"
+										class="w-full border border-stone-300 px-2 py-2 bg-stone-50 hover:bg-stone-100 dark:text-stone-200 dark:bg-stone-700 hover:dark:text-stone-900 transition duration-100"
+										> open medialib 
+										<svg class="icon icon-image"><use xlink:href="#icon-image"></use></svg>
+									</button>
+									<transition name="initial" appear>
+										<div v-if="showmedialib" class="fixed top-0 left-0 right-0 bottom-0 bg-stone-100 dark:bg-stone-700 z-50">
+											<button class="w-full bg-stone-200 dark:bg-stone-900 hover:dark:bg-rose-500 hover:bg-rose-500 hover:text-white p-2 transition duration-100" @click.prevent="showmedialib = false">{{ $filters.translate('close library') }}</button>
+											<medialib parentcomponent="files"></medialib>
+										</div>
+									</transition>
+								</div>
+								<transition-group name="initial" tag="div" appear>
+									<div 
+									    v-for="ebook in ebooks" 
+									    :key="ebook.name" 
+									    class="flex items-center justify-between border bg-stone-100 p-4 mb-2"
+									>
+									    <!-- Left side: book icon + info -->
+									    <div class="flex items-center">
+
+									      <!-- Book icon -->
+											<svg class="mr-2 h-6 w-6" viewBox="0 0 32 32">
+											  <path d="M28 4v26h-21c-1.657 0-3-1.343-3-3s1.343-3 3-3h19v-24h-20c-2.2 0-4 1.8-4 4v24c0 2.2 1.8 4 4 4h24v-28h-2z"></path>
+											  <path d="M7.002 26v0c-0.001 0-0.001 0-0.002 0-0.552 0-1 0.448-1 1s0.448 1 1 1c0.001 0 0.001-0 0.002-0v0h18.997v-2h-18.997z"></path>
+											</svg>
+
+									      <!-- Ebook details -->
+									      <div>
+									        <div class="font-semibold text-stone-800">{{ ebook.ebookName }}</div>
+									        <div class="text-sm text-stone-500">{{ ebook.ebookTime }}</div>
+									      </div>
+
+									    </div>
+
+									    <!-- Right side: size + download -->
+									    <div class="flex items-center space-x-4">
+
+									      <div class="text-sm text-stone-600">
+									        {{ (ebook.bytes / (1024 * 1024)).toFixed(2) }} MB
+									      </div>
+
+									      <a :href="getUrl(ebook.url)" download class="text-teal-600 hover:text-teal-800">
+									        <!-- Download icon -->
+									        <svg xmlns="http://www.w3.org/2000/svg" 
+									             fill="none" 
+									             viewBox="0 0 24 24" 
+									             stroke-width="1.5" 
+									             stroke="currentColor" 
+									             class="w-6 h-6">
+									          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-3-3m3 3l3-3M6 20h12" />
+									        </svg>
+									      </a>
+										</div>
+									</div>
+								</transition>
+							</div>
+						</div>
+						<div v-if="productionTab == 'preview'">
+							<p class="my-2">
+								The button below will open an HTML preview of your ebook in a new tab.  
+								Please note that the preview may differ from the pdf generated with our API.
+							</p>
+							<p class="my-2">
+								You can export the preview as a PDF using your browser’s built-in print function.  
+								However, this method does not support features such as sidebar bookmarks and may produce layout issues (e.g., missing lines).  
+								The preview works best in Chromium-based browsers (Google Chrome, Brave, Edge), and generally works well in Firefox too.
+							</p>
+							<p class="my-2">
+								For best results, adjust the following print settings in your browser’s PDF printer:
+							</p>
+							<ul class="list-disc ml-4">
+								<li>Set margins to <em>None</em></li>
+								<li>Disable <em>Headers and Footers</em></li>
+								<li>Enable <em>Background Graphics</em></li>
+							</ul>
 							<a 
 								:href="previewUrl" 
 								target="_blank" 
-								class="block w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center hover:bg-teal-600 transition duration-100"
+								class="mt-8 block w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center hover:bg-teal-600 transition duration-100"
 								@click="$emit('storeTmpItem')"
 							>Open PDF-Preview</a>
-							<p class="my-2">This button will open a html-preview of the ebook in a separate page. You can download and save the ebook as pdf with your local printer driver.</p>
-							<p class="my-2">It works with chromium-browser like Google Chrome or Brave.</p>
-							<p class="my-2">Check the following extended settings in your PDF printer configurations:</p>
-							<ul class="list-disc ml-4">
-								<li>Set margins to “none”</li>
-								<li>Uncheck “Headers and footers” or set them to none</li>
-								<li>Check “Background graphics”</li>
-							</ul>
-						</div>
-						<div class="lg:w-half">
-							<button 
-								disabled="disabled"
-								class="w-full p-4 text-white bg-teal-500 border-2 border-stone-200 text-center"
-							>Generate PDF with API (comming soon)</button>
-							<p class="my-2">This button will use the typemill service-api and directly return an eBook in PDF format (comming soon). A Typemill license will be required to use the service.</p>
-						</div>
+						</div>	
 					</div>
 				</div>
 			  </div>`,
@@ -489,11 +648,22 @@ app.component("ebook-pdf", {
 		this.$nextTick(() => {
 			this.autosize();
 		});
+
+		if(data.settings.license)
+		{
+			this.hasLicense = data.settings.license;
+		}
+
+		this.loadFiles();
 	},
 	methods: {
 		getCover()
 		{
 			return this.src + this.formdata.layout + '/cover.png';
+		},
+		getUrl(relative)
+		{
+			return data.urlinfo.baseurl + '/' + relative;
 		},
 		showinfo(name)
 		{
@@ -539,7 +709,146 @@ app.component("ebook-pdf", {
 				highlighted = hljs.highlightAuto(code, ['xml','css','yaml','markdown']).value;
 				this.highlighted = highlighted;
 			});
-		},		
+		},
+		kixotePdf: function()
+		{
+			this.$emit('storeTmpItem');
+			this.generating = true;
+
+			var self = this;
+
+			let projectname = false;
+			let itempath = false;
+
+		    let url = new URL(this.previewUrl);
+		    if (url.searchParams.has("projectname"))
+		    {
+		        projectname = url.searchParams.get("projectname");
+		    }
+		    if (url.searchParams.has("itempath"))
+		    {
+		        itempath = url.searchParams.get("itempath");
+		    }
+
+			tmaxios.post('/api/v1/kixotepdf',{
+				'url': data.urlinfo.route,
+				'projectname': projectname,
+				'itempath': itempath,
+				'name': this.getName()
+			})
+		   .then(function (response)
+			{
+				self.tokenstats = JSON.parse(response.data.tokenstats);
+				self.generating = false;
+				self.loadFiles();
+			})
+			.catch(function (error)
+			{
+				self.generating = false;
+				self.ebookmessage = error.response.data.errors.message;
+			});
+		},
+		loadFiles()
+		{
+			var fileself = this;
+
+			tmaxios.get('/api/v1/files',{
+				params: {
+					'url': data.urlinfo.route,
+				}
+			})
+			.then(function (response)
+			{
+				const files = response.data.files;
+				if(files && Array.isArray(files))
+				{
+					fileself.filterEbooks(files);
+				}
+			})
+			.catch(function (error)
+			{
+				if(error.response)
+				{
+					let message = handleErrorMessage(error);
+					if(message)
+					{
+						self.message = message;
+						self.messagecolor = 'bg-tm-red';
+					}
+				}
+			});
+		},
+		getName()
+		{
+		    let url = new URL(this.previewUrl);
+
+		    if (url.searchParams.has("projectname"))
+		    {
+		        let project = url.searchParams.get("projectname");
+		        return project.replace(/^ebookdata-/, "").replace(/\.yaml$/, "");
+		    }
+
+		    if (url.searchParams.has("itempath")) {
+		        let itempath = url.searchParams.get("itempath");
+
+		        // remove trailing "/index" if present
+		        itempath = itempath.replace(/\/index$/, "");
+
+		        let segments = itempath.split("/").filter(Boolean);
+		        let last = segments.pop();
+
+		        return last.replace(/^\d+-/, "");
+		    }
+
+		    return 'bookproject';
+		},
+		filterEbooks(files)
+		{
+		    const regex = /_(\d{8}-\d{4})$/; // matches _YYYYMMDD-HHMM at end of filename
+		    const name = this.getName();
+
+		    let results = files
+		      .filter(file => 
+		        file.info.extension === 'pdf' &&
+		        file.info.filename.includes(name) &&
+		        regex.test(file.info.filename)
+		      )
+		      .map(file => {
+		        const match = file.info.filename.match(regex);
+		        let readableTime = null;
+
+		        if (match) {
+		          const raw = match[1]; // e.g. 20250816-1957
+		          const datePart = raw.substring(0, 8); // 20250816
+		          const timePart = raw.substring(9, 13); // 1957
+
+		          const year = datePart.substring(0, 4);
+		          const month = datePart.substring(4, 6);
+		          const day = datePart.substring(6, 8);
+		          const hour = timePart.substring(0, 2);
+		          const minute = timePart.substring(2, 4);
+
+		          readableTime = `${year}-${month}-${day} ${hour}:${minute}`;
+		        }
+
+		        return {
+		          ...file,
+		          ebookName: file.info.filename.replace(regex, "").replace(/^ebookdata-/, ""), 
+		          ebookTime: readableTime
+		        };
+		      });
+
+		    // sort newest first by ebookTime
+		    results.sort((a, b) => (a.ebookTime < b.ebookTime ? 1 : -1));
+
+		    this.ebooks = results;
+		},
+		toggleAccordion: function(fieldname){
+		    this.accordionState[fieldname] = !this.accordionState[fieldname];
+		},
+		isOpen: function(fieldname){
+			return !!this.accordionState[fieldname];
+		}		
 	}
 });
 
@@ -548,30 +857,38 @@ app.component("ebook-epub", {
 	props: ['errors', 'formdata', 'layouts', 'messageClass', 'message', 'currentproject', 'epubUrl'],
 	data: function(){
 		return {
-			booklayout: { 'customforms': false }
+			booklayout: { 'customforms': false },
+			accordionState: {},
 		}
 	},
 	template: `<div>
 				<form class="w-full my-8">
 					<div v-if="booklayout.epubforms" v-for="(fielddefinition, fieldname) in booklayout.epubforms.fields">
-						<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8" v-if="fielddefinition.type == 'fieldset'">
-							<legend class="text-lg font-medium">{{ fielddefinition.legend }}</legend>
-							<div v-if="fieldname == 'epubidentifier'" class="w-full mt-5 mb-5">Please add one identifier: either an ISBN, UUID or URI. If you add more than one identifiers, then the first will be used and the others will be ignored. Identifiers must be unique. Never change an identifier after you published/distributed a book, otherwise e-readers cannot identify the book anymore.</div>
-							<component v-for="(subfield, subfieldname) in fielddefinition.fields"
-								:key="subfieldname"
-								:is="selectComponent(subfield.type)"
-								:errors="errors"
-								:name="subfieldname"
-								:value="formdata[subfieldname]" 
-								v-bind="subfield">
-								<slot v-if="subfieldname == 'epubidentifieruuid'">
-									<button 
-										class   		= "absolute px-2 py-3 ml-2 text-stone-50 bg-stone-700 hover:bg-stone-900 hover:text-white transition duration-100 cursor-pointer" 
-										style 			= "right:0px; width:200px;"
-										@click.prevent 	= "$emit('generateUuid')" 
-									>Generate UUID</button>
-								</slot>
-							</component>
+						<fieldset class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8" v-if="fielddefinition.type == 'fieldset'" :class="{ 'open': isOpen(fieldname) }">
+							<div @click="toggleAccordion(fieldname)" class="flex justify-between w-full py-2 text-lg font-medium cursor-pointer">
+								<h3>{{ fielddefinition.legend }}</h3> 
+								<span class="mt-2 h-0 w-0 border-x-8 border-x-transparent" :class="isOpen(fieldname) ? 'border-b-8 border-b-black' : 'border-t-8 border-t-black'"></span>
+							</div>
+							<transition name="accordion">
+								<div v-if="isOpen(fieldname)" class="w-full accordion-content flex flex-wrap justify-between">						
+									<div v-if="fieldname == 'epubidentifier'" class="w-full mt-5 mb-5">Please add one identifier: either an ISBN, UUID or URI. If you add more than one identifiers, then the first will be used and the others will be ignored. Identifiers must be unique. Never change an identifier after you published/distributed a book, otherwise e-readers cannot identify the book anymore.</div>
+									<component v-for="(subfield, subfieldname) in fielddefinition.fields"
+										:key="subfieldname"
+										:is="selectComponent(subfield.type)"
+										:errors="errors"
+										:name="subfieldname"
+										:value="formdata[subfieldname]" 
+										v-bind="subfield">
+										<slot v-if="subfieldname == 'epubidentifieruuid'">
+											<button 
+												class   		= "absolute px-2 py-3 ml-2 text-stone-50 bg-stone-700 hover:bg-stone-900 hover:text-white transition duration-100 cursor-pointer" 
+												style 			= "right:0px; width:200px;"
+												@click.prevent 	= "$emit('generateUuid')" 
+											>Generate UUID</button>
+										</slot>
+									</component>
+								</div>
+							</transition>
 						</fieldset>
 						<component v-else
 							:key="fieldname"
@@ -638,6 +955,12 @@ app.component("ebook-epub", {
 		autosize()
 		{
 			autosize(document.querySelector('textarea'));
-		}
+		},
+		toggleAccordion: function(fieldname){
+		    this.accordionState[fieldname] = !this.accordionState[fieldname];
+		},
+		isOpen: function(fieldname){
+			return !!this.accordionState[fieldname];
+		}		
 	}
 });

@@ -10,6 +10,8 @@ use Typemill\Plugin;
 use Typemill\Models\Validation;
 use Typemill\Models\Navigation;
 use Typemill\Models\StorageWrapper;
+use Typemill\Models\License;
+use Typemill\Models\ApiCalls;
 use Typemill\Extensions\ParsedownExtension;
 use Typemill\Events\OnTwigLoaded;
 use Typemill\Events\onMetaDefinitionsLoaded;
@@ -26,6 +28,8 @@ use PHPZip\Zip\File\Zip;
 
 class Ebooks extends Plugin
 {
+	private $ebookerror = false;
+
 	public static function getSubscribedEvents()
 	{
 		return [
@@ -174,6 +178,14 @@ class Ebooks extends Plugin
 				'resource' 		=> 'content', 
 				'privilege' 	=> 'create'
 			],
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/api/v1/kixotepdf', 
+				'name' 			=> 'kixote.pdf', 
+				'class' 		=> 'Plugins\Ebooks\Ebooks:createRemotePdf', 
+				'resource' 		=> 'content', 
+				'privilege' 	=> 'create'
+			],			
 		];
 	}
 
@@ -1099,42 +1111,21 @@ class Ebooks extends Plugin
 	# eBook Generation (pdf-preview / epub)  #
 	##########################################
 
-	# generates the ebook-preview
-	public function ebookPreview(Request $request, Response $response, $args)
+	private function getNavigationForPdf($projectname, $itempath, $ebookdata, $storage)
 	{
-		$projectname 	= $request->getQueryParams()['projectname'] ?? false;
-		$itempath 		= $request->getQueryParams()['itempath'] ?? false;
-		$settings 		= $this->getSettings();
-		$baseurl 		= $this->urlinfo['baseurl'];
-		$dispatcher 	= $this->getDispatcher();
-		$storage 		= new StorageWrapper($settings['storage']);
+		$navigation = false;
 
-		# if it is from the settings
 		if($projectname)
 		{
 			$projectname 	= str_replace('.yaml', '', $projectname);
 			$naviname  		= str_replace('ebookdata', 'navigation', $projectname);
 
-			# get bookdata
-			$ebookdata 		= $this->getPluginYamlData($projectname . '.yaml');
-			if(!$ebookdata)
-			{
-				$response->getBody()->write(json_encode([
-					'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
-				]));
-
-				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-			}
-
 			# get the stored ebook-navigation
 			$navigation 	= $this->getPluginData($naviname . '.txt');
 			if(!$navigation OR trim($navigation) == '')
 			{
-				$response->getBody()->write(json_encode([
-					'message' => 'We did not find a content tree. Please visit the website frontend to generate the tree.'
-				]));
-
-				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+				$this->ebookerror = 'We did not find a content tree. Please visit the website frontend to generate the tree.';
+				return false;
 			}
 
 			$navigation = unserialize($navigation);
@@ -1151,22 +1142,75 @@ class Ebooks extends Plugin
 			$navigation = $this->getPluginData('tmpitem.txt');
 			if(!$navigation OR trim($navigation) == '')
 			{
-				$response->getBody()->write(json_encode([
-					'message' => 'We could not find the navigation for the eBook. Please make sure that you selected some pages for this book.'
-				]));
-
-				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+				$this->ebookerror = 'We could not find the navigation for the eBook. Please make sure that you selected some pages for this book.';
+				return false;
 			}
 
-			$navigation = unserialize($navigation);			
+			$navigation = unserialize($navigation);
 		}
 
+		if(!$navigation)
+		{
+			$this->ebookerror = 'Projectname and itempath are missing.';
+			return false;
+		}
+
+		# skip the base folder if activated
+		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
+		{
+			$navigation = $navigation[0]['folderContent'];
+		}
+
+		return $navigation;
+
+	}
+
+	private function getEbookDataForPdf($projectname, $itempath, $storage)
+	{
+		# if it is from the settings
+		if($projectname)
+		{
+			$projectname 	= str_replace('.yaml', '', $projectname);
+
+			$ebookdata 		= $this->getPluginYamlData($projectname . '.yaml');
+			if(!$ebookdata)
+			{
+				$this->ebookerror =	'We did not find a content tree. Please visit the website frontend to generate the tree.';
+
+				return false;
+			}
+
+			return $ebookdata;
+
+		}
+		elseif($itempath)
+		{
+			# wait for a second to make super sure that the temporary item has been stored by vue-script
+			usleep(200000);
+			
+			# get the metadata from page
+			$meta 		= $storage->getYaml('contentFolder', '', $itempath . '.yaml');
+			$ebookdata 	= isset($meta['ebooks']) ? $meta['ebooks'] : false;
+
+			if(!$ebookdata)
+			{
+				$this->ebookerror = 'We did not find any data for the ebook in the meta-settings of the page';
+				
+				return false;
+			}
+
+			return $ebookdata;
+		}
+
+		$this->ebookerror = 'Projectname and itempath are missing.';
+		return false;
+	}
+
+	private function configureParsedown($baseurl, $dispatcher, $ebookdata)
+	{
 		# setup parsedown with individual settings
 		$parsedown = new ParsedownExtension($baseurl, $settingsForHeadlineAnchors = false, $dispatcher);
-		
-		# disable attributes for images because of bug in pagedjs
-		# $parsedown->withoutImageAttributes();
-		
+				
 		# the default mode is with footnotes, but user can activate endnotes too
 		if(!isset($ebookdata['endnotes']) or !$ebookdata['endnotes'])
 		{
@@ -1184,36 +1228,15 @@ class Ebooks extends Plugin
 		{
 			# only selected shortcodes will be rendered
 			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
-		}
+		}		
 
-		# skip the base folder if activated
-		if(isset($ebookdata['excludebasefolder']) and $ebookdata['excludebasefolder'] and isset($navigation[0]['folderContent']))
-		{
-			$navigation = $navigation[0]['folderContent'];
-		}
+		return $parsedown;
+	}
 
-		# activate sectionNumbers (headline numbers)
-		$sectionNumbers = false;
-		if(isset($ebookdata['toccounter']) && $ebookdata['toccounter'] == 1)
-		{
-			$sectionNumbers = [0,0,0,0,0,0];
-		}
-
-		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
-		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL, $sectionNumbers);
-
-		$toc = false;
-		if(isset($bookcontent['toc']) && !empty($bookcontent['toc']))
-		{
-			$toc = $bookcontent['toc'];
-			unset($bookcontent['toc']);
-		}
-
-		$bookcontent = $this->transformRelativeLinks($bookcontent, $toc, $baseurl);
-
-		# add the thumb index:
-		$thumbindex 	= [];
-
+	private function generateThumbIndex($bookcontent)
+	{
+		$thumbindex = [];
+	
 		foreach($bookcontent as $chapter)
 		{
 			if( isset($chapter['metadata']['thumbindex']['language']) && ($chapter['metadata']['thumbindex']['language'] != 'clear'))
@@ -1227,6 +1250,68 @@ class Ebooks extends Plugin
 			}
 		}
 
+		return $thumbindex;
+	}
+
+	private function initiateSectionNumbers($ebookdata)
+	{
+		if(isset($ebookdata['toccounter']) && $ebookdata['toccounter'] == 1)
+		{
+			return [0,0,0,0,0,0];
+		}
+
+		return false;
+	}
+
+	# generates the ebook-preview
+	public function ebookPreview(Request $request, Response $response, $args)
+	{
+		$projectname 	= $request->getQueryParams()['projectname'] ?? false;
+		$itempath 		= $request->getQueryParams()['itempath'] ?? false;
+		$baseurl 		= $this->urlinfo['baseurl'];
+		$dispatcher 	= $this->getDispatcher();
+		$settings 		= $this->getSettings();
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		$ebookdata 		= $this->getEbookDataForPdf($projectname, $itempath, $storage);
+		if(!$ebookdata)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> $this->ebookerror
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);			
+		}
+
+		$navigation 	= $this->getNavigationForPdf($projectname, $itempath, $ebookdata, $storage);
+		if(!$navigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> $this->ebookerror
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
+		}
+
+		$parsedown 		= $this->configureParsedown($baseurl, $dispatcher, $ebookdata, );
+
+		# activate sectionNumbers (headline numbers)
+		$sectionNumbers = $this->initiateSectionNumbers($ebookdata);
+
+		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL, $sectionNumbers);
+		$toc = false;
+		if(isset($bookcontent['toc']) && !empty($bookcontent['toc']))
+		{
+			$toc = $bookcontent['toc'];
+			unset($bookcontent['toc']);
+		}
+
+		$bookcontent 	= $this->transformRelativeLinks($bookcontent, $toc, $baseurl);
+
+		# add the thumb index:
+		$thumbindex 	= $this->generateThumbIndex($bookcontent);
+
 		# we have to dispatch onTwigLoaded to get javascript from other plugins
 		$dispatcher->dispatch(new OnTwigLoaded(false), 'onTwigLoaded');
 
@@ -1239,13 +1324,12 @@ class Ebooks extends Plugin
 
 		# load customcss
 		$customcss = $storage->checkFile('cacheFolder', '', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
-
 		if($customcss)
 		{
 			$this->container->get('assets')->addCSS($baseurl . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
 		}
 
-		return $twig->render($response, '@booklayouts/index.twig', [
+		$data = [
 			'settings' 		=> $settings, 
 			'base_url' 		=> $baseurl, 			
 			'ebookdata' 	=> $ebookdata, 
@@ -1253,7 +1337,185 @@ class Ebooks extends Plugin
 			'book' 			=> $bookcontent,
 			'toc' 			=> $toc,
 			'thumbindex'	=> $thumbindex
-		]);
+		];
+
+		return $twig->render($response, '@booklayouts/index.twig', $data);
+	}
+
+	public function createRemotePdf(Request $request, Response $response, $args)
+	{
+		$params 		= $request->getParsedBody();
+		$settings 		= $this->getSettings();
+		$auth_url 		= $settings['auth_url'] ?? 'https://service.typemill.net';
+		$kixote_url 	= $settings['kixote_url'] ?? 'https://kixote.typemill.net';
+
+		if($auth_url == 'https://service.typemill.net')
+		{
+			$license 		= new License();
+			$token 			= $license->getToken();
+
+			if(!$token)
+			{
+				$response->getBody()->write(json_encode([
+					'message' 	=> $license->getMessage(),
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(422);			
+			}
+		}
+		else
+		{
+			# individual authenticator, how to handle this? Just an url where you return a token, right? 
+			# So it would be the kixote app with the authentication login and an api key
+		}
+
+		/* Get the book data */
+
+		$projectname 	= $params['projectname'] ?? false;
+		$itempath 		= $params['itempath'] ?? false;
+		$name 			= $params['name'] ?? false;
+		$baseurl 		= $this->urlinfo['baseurl'];
+		$dispatcher 	= $this->getDispatcher();
+		$settings 		= $this->getSettings();
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		$ebookdata 		= $this->getEbookDataForPdf($projectname, $itempath, $storage);
+		if(!$ebookdata)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> $this->ebookerror
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);			
+		}
+
+		$navigation 	= $this->getNavigationForPdf($projectname, $itempath, $ebookdata, $storage);
+		if(!$navigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> $this->ebookerror
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
+		}
+
+		$parsedown 		= $this->configureParsedown($baseurl, $dispatcher, $ebookdata, );
+
+		# activate sectionNumbers (headline numbers)
+		$sectionNumbers = $this->initiateSectionNumbers($ebookdata);
+
+		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL, $sectionNumbers);
+		$toc = false;
+		if(isset($bookcontent['toc']) && !empty($bookcontent['toc']))
+		{
+			$toc = $bookcontent['toc'];
+			unset($bookcontent['toc']);
+		}
+
+		$bookcontent 	= $this->transformRelativeLinks($bookcontent, $toc, $baseurl);
+
+		# add the thumb index:
+		$thumbindex 	= $this->generateThumbIndex($bookcontent);
+
+		# we have to dispatch onTwigLoaded to get javascript from other plugins
+		$dispatcher->dispatch(new OnTwigLoaded(false), 'onTwigLoaded');
+
+		$twig   		= $this->getTwig();
+		$loader 		= $twig->getLoader();
+		$loader->addPath(__DIR__ . '/templates', 'ebooks');
+		$loader->addPath(__DIR__ . '/booklayouts/' . $ebookdata['layout'], 'booklayouts');
+	
+		$booklayouts 	= $this->scanEbooklayouts();
+
+		# load customcss
+		$customcss = $storage->checkFile('cacheFolder', '', 'ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		if($customcss)
+		{
+			$this->container->get('assets')->addCSS($baseurl . '/cache/ebooklayout-' . $ebookdata['layout'] . '-custom.css');
+		}
+
+		$data = [
+			'settings' 		=> $settings, 
+			'base_url' 		=> $baseurl, 			
+			'ebookdata' 	=> $ebookdata, 
+			'booklayout'	=> $booklayouts[$ebookdata['layout']],
+			'book' 			=> $bookcontent,
+			'toc' 			=> $toc,
+			'thumbindex'	=> $thumbindex
+		];
+
+		$html = $twig->fetch('@booklayouts/index.twig', $data);
+
+
+		/* CALL TO KIXOTE WEASYPRINT */
+		
+		$api = new ApiCalls();
+		$api->setTimeout(60);
+
+		if($kixote_url == 'https://kixote.typemill.net')
+		{
+			# let us check if we can authenticate with the token 
+#			$apiResponse = $api->makeGetCall($kixote_url . '/check/', $authHeader = 'Authorization: Bearer ' . $token);
+#			$apiResponse = $api->makeGetCall($kixote_url . '/check/auth', $authHeader = 'Authorization: Bearer ' . $token);
+#			$apiResponse = $api->makeGetCall($kixote_url . '/check/limit', $authHeader = 'Authorization: Bearer ' . $token);
+#			$apiResponse = $api->makeGetCall($kixote_url . '/check/rate', $authHeader = 'Authorization: Bearer ' . $token);
+
+			$metatitle 		= $name . '_' . date('Ymd-Hi');
+
+			$bookdata = [
+			  "html" 					=> $html,
+#			  "css" 					=> "h1 { color: red; }",     	// string or list of strings
+			  "metadata" 				=> ["title" => $metatitle],  		// dictionary
+			  "zoom" 					=> 1.0,                    		// number
+			  "base_url" 				=> $baseurl,					// string
+			  "presentational_hints" 	=> true,               			// boolean
+			  "optimize_size" 			=> ["images", "fonts"],			// list
+			  "filename" 				=> $name . '.pdf'           // string
+			];
+
+			$apiResponse = $api->makePostCall(
+				$kixote_url . '/book/pdf', 
+				$bookdata,
+				$authHeader = 'Authorization: Bearer ' . $token
+			);
+			
+			if(!$apiResponse)
+			{
+				$response->getBody()->write(json_encode([
+					'message' 	=> "call to Kixote server failed",
+					'data'		=> $api->getError()
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
+			}
+
+			$storage 	= new StorageWrapper($settings['storage']);
+			$filefolder = $storage->getFolderPath('fileFolder');
+			$filename 	= $metatitle . '.pdf';
+			$filepath 	= $filefolder . DIRECTORY_SEPARATOR . $filename;
+
+			file_put_contents($filepath, $apiResponse);
+
+			$tokenstats = $api->makeGetCall($kixote_url . '/check/rate', $authHeader = 'Authorization: Bearer ' . $token);
+
+			// build URL for the frontend
+			$fileUrl = '/media/files/' . $filename;
+
+			$response->getBody()->write(json_encode([
+			    'message' 		=> 'PDF successfully generated',
+			    'url'     		=> $fileUrl,
+			    'tokenstats'	=> $tokenstats
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json');
+		}
+
+		$response->getBody()->write(json_encode([
+			'message' 	=> 'Something went wrong',
+		]));
+
+		return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
 	}
 
 	# generates and returns the epub file
@@ -1726,7 +1988,6 @@ class Ebooks extends Plugin
 		exit();
 	}
 
-
 	public function generateContent($book, $navigation, $pathToContent, $parsedown, $ebookdata, $chapterlevel = NULL, $sectionNumbers = false)
 	{
 		$counter 					= isset($book['toc']) ? count($book['toc']) : 0;
@@ -1994,4 +2255,5 @@ class Ebooks extends Plugin
 		}
 		return $flat;
 	}
+
 }

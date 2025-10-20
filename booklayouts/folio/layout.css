@@ -1,0 +1,752 @@
+/* CSS for Paged.js interface */
+/* download from : https://gitlab.pagedmedia.org/tools/pagedjs-documentation/blob/master/ressources/interface-0.1.css */
+ 
+/* Change the look */ 
+:root {
+    --color-background: whitesmoke;
+    --color-pageBox: #666;
+    --color-paper: white;
+    --color-marginBox: transparent;
+}
+
+/* To define how the book look on the screen: */
+@media screen {
+    body {
+        background-color: var(--color-background);
+    }
+
+    .pagedjs_pages {
+        display: flex;
+        width: calc(var(--pagedjs-width) * 2);
+        flex: 0;
+        flex-wrap: wrap;
+        margin: 0 auto;
+    }
+
+    .pagedjs_page {
+        background-color: var(--color-paper);
+        box-shadow: 0 0 0 1px var(--color-pageBox);
+        margin: 0;
+        flex-shrink: 0;
+        flex-grow: 0;
+        margin-top: 10mm;
+    }
+
+    .pagedjs_first_page {
+        margin-left: var(--pagedjs-width);
+    }
+
+    .pagedjs_page:last-of-type {
+        margin-bottom: 10mm;
+    }
+
+    /* show the margin-box */
+
+    .pagedjs_margin-top-left-corner-holder,
+    .pagedjs_margin-top,
+    .pagedjs_margin-top-left,
+    .pagedjs_margin-top-center,
+    .pagedjs_margin-top-right,
+    .pagedjs_margin-top-right-corner-holder,
+    .pagedjs_margin-bottom-left-corner-holder,
+    .pagedjs_margin-bottom,
+    .pagedjs_margin-bottom-left,
+    .pagedjs_margin-bottom-center,
+    .pagedjs_margin-bottom-right,
+    .pagedjs_margin-bottom-right-corner-holder,
+    .pagedjs_margin-right,
+    .pagedjs_margin-right-top,
+    .pagedjs_margin-right-middle,
+    .pagedjs_margin-right-bottom,
+    .pagedjs_margin-left,
+    .pagedjs_margin-left-top,
+    .pagedjs_margin-left-middle,
+    .pagedjs_margin-left-bottom {
+        box-shadow: 0 0 0 1px inset var(--color-marginBox);
+    }
+
+    /* uncomment this part for recto/verso book : ------------------------------------ */
+
+    .pagedjs_pages {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .pagedjs_first_page {
+        margin-left: 0;
+    }
+
+    .pagedjs_page {
+        margin: 0 auto;
+        margin-top: 10mm;
+    } 
+
+    /*--------------------------------------------------------------------------------------*/
+
+
+
+    /* uncomment this par to see the baseline : -------------------------------------------*/
+
+    /* 
+    .pagedjs_pagebox {
+        --pagedjs-baseline: 11px;
+        --pagedjs-baseline-position: -4px;
+        --pagedjs-baseline-color: cyan;
+        background: linear-gradient(var(--color-paper) 0%, var(--color-paper) calc(var(--pagedjs-baseline) - 1px), var(--pagedjs-baseline-color) calc(var(--pagedjs-baseline) - 1px), var(--pagedjs-baseline-color) var(--pagedjs-baseline)), transparent;
+        background-size: 100% var(--pagedjs-baseline);
+        background-repeat: repeat-y;
+        background-position-y: var(--pagedjs-baseline-position);
+    } 
+    */
+
+    /*--------------------------------------------------------------------------------------*/
+}
+
+
+/* FIX HEADER LAYOUT */
+.pagedjs_page .pagedjs_margin-top {
+  display: flex !important;
+  align-items: flex-end !important;
+  padding-bottom: .4cm;
+}
+.pagedjs_page .pagedjs_margin-top-center{
+  display: none!important;
+}
+.pagedjs_page .pagedjs_margin-top-right {
+  border-bottom: .05cm solid;
+  border-color: var(--highlight-color);
+}
+
+/* Make sure that the first element of a page has no margin-top at all, so content always starts at the top of the page 
+.pagedjs_page_content div h1:first-child,
+.pagedjs_page_content div h2:first-child,
+.pagedjs_page_content div h3:first-child,
+.pagedjs_page_content div h4:first-child,
+.pagedjs_page_content div h5:first-child,
+.pagedjs_page_content div h6:first-child,
+.pagedjs_page_content div ul:first-child,
+.pagedjs_page_content div figure:first-child,
+.pagedjs_page_content div blockquote:first-child,
+.pagedjs_page_content div pre:first-child{
+  margin-top: 0;
+}
+*/
+
+/* make sure no paragraph indent at top of a page 
+.pagedjs_page_content div p:first-child{
+  text-indent: 0;
+}
+*/
+
+@font-face {
+  font-family: Fira Sans;
+  font-weight: 400;
+  src: url(fonts/FiraSans-Regular.ttf);
+}
+@font-face {
+  font-family: Fira Sans;
+  font-style: italic;
+  font-weight: 400;
+  src: url(fonts/FiraSans-Italic.ttf);
+}
+@font-face {
+  font-family: Fira Sans;
+  font-weight: 300;
+  src: url(fonts/FiraSans-Light.ttf);
+}
+@font-face {
+  font-family: Fira Sans;
+  font-style: italic;
+  font-weight: 300;
+  src: url(fonts/FiraSans-LightItalic.ttf);
+}
+@font-face {
+  font-family: Fira Sans;
+  font-weight: 700;
+  src: url(fonts/FiraSans-Bold.ttf);
+}
+
+@page {
+
+  size: 210mm 297mm; 
+
+  margin-top: 2cm;
+  margin-right: 2cm;
+  margin-bottom: 2cm;
+  margin-left: 2cm;
+
+  @top-left {
+    background: var(--highlight-color);
+    color: var(--highlight-color-contrast);
+    content: counter(page);
+    font-size: 11pt;
+    height: 1cm;
+    text-align: center;
+    width: 1cm;
+  }
+  @top-center {
+    background: var(--highlight-color);
+    content: '';
+    display: block;
+    height: .05cm;
+    opacity: .5;
+    width: 100%;
+  }
+  @top-right {
+    content: string(heading);
+    font-size: 9pt;
+    height: 1cm;
+    vertical-align: middle;
+    width: 100%;
+  }
+}
+
+@page cover {
+  margin-top: 0cm;
+  margin-right: 0cm;
+  margin-bottom: 0cm;
+  margin-left: 0cm;
+  @top-left { background: none; content: none }
+  @top-center { content: none }
+  @top-right { content: none; border: none }
+}
+@page blank {
+  @top-left { background: none; content: none }
+  @top-center { content: none }
+  @top-right { content: none; border: none; }
+}
+@page no-chapter {
+  @top-left { background: none; content: none }
+  @top-center { content: none }
+  @top-right { content: none; border: none; }
+}
+@page contrast {
+  background: var(--highlight-color);
+  color: var(--highlight-color-contrast);
+  @top-left { background: none; content: none }
+  @top-center { content: none }
+  @top-right { content: none; border: none; }
+}
+
+
+html {
+  font-family: Fira Sans;
+  font-weight: 300;
+  line-height: 1.5;
+  font-size: var(--text-size);
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+body {
+  margin: 0;
+}
+h1,h2,h3,h4,h5,h6{
+  break-after: avoid;
+  break-inside: avoid;
+}
+h1 {
+  font-size: 38pt;
+}
+h2, h3, h4 {
+  color: var(--text-color);
+  font-weight: 400;
+}
+h2 {
+  font-size: 28pt;
+  string-set: heading content();
+}
+h3 {
+  font-weight: 300;
+  font-size: 15pt;
+}
+h4 {
+  font-size: 13pt;
+}
+
+#cover {
+  page: cover;  
+  align-content: space-between;
+  display: flex;
+  flex-wrap: wrap;
+  height: 297mm;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+#cover h1 {
+  page: cover;
+  font-size: 38pt;
+  margin: 5cm 4cm 0 0cm;
+  padding: 1cm 1cm 1cm 2cm;
+  color: var(--highlight-color-contrast);
+  background: var(--highlight-color);
+}
+#cover footer {
+  display: flex;
+  width: 100%;
+  background: var(--highlight-color);
+  color: var(--highlight-color-contrast);
+}
+#cover footer address {
+  flex: 1 50%;
+  padding: 1cm 0cm;
+  margin: 0;
+  white-space: pre-wrap;
+}
+#cover footer address.first {
+  padding-left: 2cm;
+}
+
+
+#imprint{
+  page: no-chapter;
+  break-before: page;
+}
+
+/* TOC */
+
+ul.TOC{
+  display:none; /* hide inline tocs */
+}
+
+#toc{
+  page: no-chapter;
+  break-before: page;
+}
+
+#toc ul {
+  list-style: none;
+  padding-left: 0;
+}
+#toc ul li a {
+  color: inherit;
+  text-decoration-line: inherit;
+}
+#toc ul li a::after {
+  content: target-counter(attr(href), page);
+  float: right;
+  color: var(--highlight-color);
+}
+
+/* TOC: Sub-Level */
+#toc ul li {
+  margin: .25cm 0;
+  padding-top: .25cm;
+  border-top: .25pt solid;
+  border-color: #c1c1c1;
+  box-sizing: border-box;
+}
+#toc ul li::before {
+  content: '• ';
+  color: var(--highlight-color);  
+  font-size: 40pt;
+  line-height: 16pt;
+  vertical-align: bottom;
+}
+
+/* TOC: First Level */
+#toc ul li.toc-element-level-1{
+  font-size: 15pt;
+  font-weight: 500;
+  margin: 3em 0 1em;
+  border-top: none;
+}
+#toc ul li.toc-element-level-1::before {
+  content: '';
+  display: block;
+  height: .08cm;
+  margin-bottom: .25cm;
+  width: 2cm;
+  background: var(--highlight-color);
+}
+#toc ul li.toc-element-level-3 a{
+  font-style: italic;
+}
+#toc ul li.toc-element-level-4 a{
+  font-style: italic;
+}
+#toc ul li.toc-element-level-5 a{
+  font-style: italic;
+}
+
+/* Contrast Page */
+
+section.contrast{
+  page: contrast;
+}
+/* contrast h1 -> no double break */
+section.contrast h1 {
+  break-before: auto !important;
+  page-break-before: auto !important;
+}
+
+/* General Columns Layout */
+
+section.column {
+  columns: 2;
+  column-gap: 1cm;
+  padding-top: 1cm;
+}
+section.column h1, 
+section.column h2, 
+section.column .tm-table, 
+section.column figure, 
+section.column pre{
+  column-span: all;
+}
+section.column h1 {
+  break-before: page;         
+}
+section.column h2, 
+section.column .tm-table, 
+section.column figure, 
+section.column pre{
+  break-before: column; /* optional, ensures new column block starts cleanly */
+  break-after: column;  /* optional, forces resumption of columns afterward */
+}
+img, h2, h3 {
+  break-inside: avoid;
+}
+
+/*
+section.column h1,
+section.column h2,
+section.column .tm-table,
+section.column figure,
+section.column pre {
+  column-span: all;
+}
+section.column h1 {
+  break-before: page;         
+}
+section.column h1 + p,
+section.column h2 + p {
+  break-inside: avoid;         
+  margin-top: 0; 
+}
+*/
+
+section p {
+  hyphens: var(--hyphens);
+  text-align: var(--text-align);
+  orphans: 2;
+  widows: 2;
+}
+section > p:first-of-type,
+section > h3:first-of-type,
+section > h4:first-of-type{
+  margin-top:0;
+  padding-top:0;
+}
+section h1 + *,
+section h2 + *,
+section h3 + *,
+section h4 + *,
+section h5 + *,
+section h6 + * {
+  margin-top: 0;
+}
+
+/*
+** DEFINITION LISTS 
+*/
+
+dl{
+  font-size: .8em;
+  border: 1px solid #ddd;
+  padding: 0.5em;
+  margin: 1em 0;
+}
+dt{
+  float: left;
+  clear: left;
+  width: 100px;
+  font-weight: bold;
+  color: var(--highlight-color);
+}
+dt::after {
+  content: ": ";
+}
+dd {
+  margin: 0 0 0 110px;
+  padding: 0 0 0.5em 0;
+}
+
+/*
+** MEDIA IMAGES AND VIDEOS
+*/
+
+figure {
+  display: block;       /* block for proper sizing */
+  margin: 1em auto;
+  break-inside: avoid;
+  max-width: 100%;      /* constrain to page width */
+}
+figure.left,
+figure.right {
+  width: 50%;
+  margin: 0 1em 1em 0;
+  break-inside: unset;
+  float: left;  /* right figure gets float: right */
+}
+figure.right {
+  float: right;
+  margin: 0 0 1em 1em;
+}
+figcaption {
+  font-size: 0.8em;
+  margin-top: 0.5em;
+  line-height: 1.4em;
+  text-align: center; /* optional */
+}
+img {
+  display: block;
+  width: auto;      /* intrinsic width */
+  max-width: 100%;  /* fit container */
+  height: auto;     /* maintain aspect ratio */
+}
+audio,
+video{
+  display:inline-block;
+}
+audio:not([controls]){
+  display:none;
+  height:0;
+}
+
+/*
+** CODE
+*/
+pre,
+code,
+kbd,
+samp{
+  font-family:monospace, monospace;
+}
+pre,code{
+  background: #333;
+  color:  white;
+  word-break: break-word;  /* long urls might overflow the page, alternative is break-all; */
+}
+pre{
+  margin: 1em 0;
+  padding: 1em;
+  white-space: pre-wrap;
+  font-size: 0.9em; /* makes font size of code blocks 0.8 pre + 0.8 code which is smaller than normal text */
+}
+code{
+  font-size: 0.8em; /* makes monospace font-size equal to normal text */
+  padding: 0 0.5em;
+}
+pre code{
+  padding: 0;
+}
+/* we use this to control page breaks */
+code.language-pagebreak{
+  break-after: page;
+}
+pre>code.language-pagebreak {
+    background: white;
+    position: absolute;
+    left: 0;
+    margin-top: -15px;
+    height: 30px;
+    right: 0;
+    content: " ";
+}
+
+/*
+** TABLES
+*/
+
+table{
+  border-collapse:collapse;
+  font-size: 0.8em;
+  line-height: 1.2;
+  width: 100%;
+  margin: 2em 0;
+}
+tr{
+  page-break-before:avoid;
+  page-break-inside:avoid; 
+  page-break-after:auto;
+}
+thead{
+   display:table-header-group;
+}
+thead th{
+  font-weight: bold;
+  text-align:left;
+}
+thead tr{
+  page-break-before:auto;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+tbody tr{
+  border-bottom: 1px solid #efefef;
+}
+tbody tr:last-child{
+  border-bottom: 1px solid #ccc;
+}
+th, td{
+  padding: 0.6em;
+}
+
+/*
+** HORIZONTAL LINES
+*/
+
+.bookcontent hr{
+  display: none;
+}
+
+
+/*
+** BLOCKQUOTES
+*/
+
+/* pull first line with quotemark to left */
+blockquote {
+  page-break-before: avoid;
+  margin: 1em 0;
+  font-style: italic;
+  line-height: 1.3em;
+  padding-left: 1.3em;
+}
+
+/* use the open quote of the current font */
+blockquote::before {
+  content: open-quote;
+  position: absolute;
+  left: .1em;
+}
+blockquote::after {
+  content: none;
+}
+
+/* "first open" "first closed" "second open" "second closed" */
+blockquote {
+  quotes: "“" "”" "‘" "’";
+}
+
+blockquote em,blockquote cite{
+  font-style:normal;
+}
+blockquote cite{
+  line-height:0;
+  margin-left:0.5em;
+  font-weight:400;
+}
+blockquote cite::before{
+  content:"[";
+  margin-right:0.5ch;
+}
+blockquote cite::after{
+  content:"]";
+  margin-left:0.5ch;
+}
+blockquote cite em{
+  font-style:italic;
+  line-height:0;
+}
+
+/*
+** LINKS
+*/
+a {
+  color: var(--text-color); 
+  background-color:transparent;
+  -webkit-text-decoration-skip:objects;
+}
+
+
+/*
+** NOTICE
+*/
+
+.notice1, .notice2, .notice3, .notice4, .notice5, .notice6 {
+  margin: 1em 0;
+  padding: .5em;
+  border-left: 3em solid;
+  border-right: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  border-botton: 1px solid #ccc;
+  background-color: #ddd;
+  break-inside: avoid;
+}
+.notice1 p, .notice2 p, .notice3 p, .notice4 p, .notice5 p, .notice6 p{
+  text-align: left;
+}
+.notice1::before,.notice2::before,.notice3::before,.notice4::before{
+  position: absolute;
+  left: .3em;
+  font-size: 2em;
+}
+.notice1{
+  border-left-color: black;
+}
+.notice1::before{
+  content: '\26A0';
+  color: white;
+}
+.notice2{
+  border-left-color: #ccc;
+}
+.notice2::before{
+  content: '\26A0';
+  color: black;
+}
+.notice3{
+  border-left-color: #ddd;
+}
+.notice3::before{
+  content:  '\261E';
+  color: black;
+}
+.notice4{
+  border-left-color: #eee;
+}
+.notice4::before{
+  content:  '\2713';
+  color: black;
+}
+
+/*
+** FOOTNOTES
+*/
+
+sup {
+    top: -.5em;
+}
+sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+sup:before{
+  content: '[';
+}
+sup:after{
+  content: ']';
+}
+
+/*
+** SPAN STYLE FOOTNOTES
+*/
+
+span.footnote:first-child{
+    border-top: solid black thin;  
+}
+span.footnote { 
+    float: footnote;
+    padding-top: 4pt;
+    font-size: 0.8em;
+    line-height:  1.1em;
+}
+.footnote::footnote-call {
+  color:  var(--primary-bg-color);
+}
+.footnote::footnote-marker {
+  color:  var(--primary-bg-color);
+}

@@ -1,0 +1,109 @@
+name: Folio
+version: 1.0.0
+description: A two column A4 layout for reports, magazines, or brochures.
+author: Sebastian Schürmanns
+license: MIT
+website: https://trendschau.net
+sizes: A4
+
+customforms:
+  fields:
+    fieldsettitlepage:
+      type: fieldset
+      legend: 'Cover'
+      fields:
+        title:
+          type: text
+          label: 'Title'
+        addressleft:
+          type: textarea
+          label: 'Text in left botton corner'
+        addressright:
+          type: textarea
+          label: 'Text in right botton corner'
+        coverimage:
+          type: image
+          label: 'Upload a cover image'
+          description: 'only jpg or png accepted. The image will be integrated on the cover below the text.'
+    fieldsetimprint:
+      type: fieldset
+      legend: 'Imprint & Preface'
+      fields:      
+        imprint:
+          type: textarea
+          label: 'Text for imprint (use markdown)'
+          description: 'Keep empty to skip the imprint.'
+    fieldsettoc:
+      type: fieldset
+      legend: 'Table of Contents'
+      fields:
+        toc:
+          type: checkbox
+          label: 'Table of contents'
+          checkboxlabel: 'Add an automatically generated table of contents.'
+        toctitle:
+          type: text
+          label: 'Title for the table of contents page'
+        toclevel:
+          type: number
+          label: 'How many headline-levels (1-6) should be included?'
+    fieldsetcolors:
+      type: fieldset
+      legend: 'Colors'
+      fields:
+        textcolor:
+          type: text 
+          label: 'Color of Text'
+          placeholder: '#393939'
+          class: 'w-half'
+        backgroundcolor:
+          type: 'text'
+          label: 'Color of Background'
+          placeholder: '#fff'
+          class: 'w-half'
+        highlightcolor:
+          type: text
+          label: 'Highlight Color'
+          placeholder: '#fbc847'
+          description: 'Used for cover, links, running footer, highlight chapters'
+          class: 'w-half'
+        highlightcolorcontrast:
+          type: text
+          label: 'Highlight Color Contrast'
+          placeholder: '#393939'
+          description: 'E.g. text in highlight color, make high contrast.'
+          class: 'w-half'
+    fieldsettext:
+      type: fieldset
+      legend: 'Text Layout'
+      fields:
+        textsize:
+          type: text 
+          label: 'Basic Font Size'
+          placeholder: '11'
+          description: 'Basic font size, all other font sizes are relative to this value.'
+          class: 'w-full'
+        textalign:
+          type: select
+          label: 'text alignment'
+          options:
+            justify: 'justify'
+            left: 'left'
+        hyphens:
+          type: select
+          label: 'hyphens' 
+          options:
+            auto: 'auto'
+            none: 'none'
+    fieldsetchapters:
+      type: fieldset
+      legend: 'Chapters'
+      fields:
+        contrastchapter:
+          type: checkbox
+          label: 'Contrast Chapters'
+          checkboxlabel: 'Use Separate Page with Contrast Colors for Main Chapters'
+        columnchapter:
+          type: checkbox
+          label: 'Column Chapters'
+          checkboxlabel: 'Use 2-Column-Layout for Main Chapters'

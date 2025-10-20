@@ -1,0 +1,127 @@
+{% set language = ebookdata.language ? ebookdata.language : settings.langattr %}
+{% set coverimage = ebookdata.coverimage ? base_url ~ '/' ~ ebookdata.coverimage : false %}
+<!DOCTYPE html>
+<html lang="{{ language | default('en-gb') }}">
+  <head>
+    <meta charset="UTF-8">
+
+    <title>{{ebookdata.title}}</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description" content="{{ metatabs.meta.description }}" />
+    <meta name="author" content="{{ metatabs.meta.author }}" />
+    <meta name="generator" content="Typemill" />
+
+    <link rel="stylesheet" href="{{ base_url }}/plugins/ebooks/booklayouts/folio/layout.css" />
+    
+    {{ assets.renderCSS() }}
+
+    <style>
+
+      :root {
+        --text-size: {{ ebookdata.textsize ? ebookdata.textsize : '11' }}pt;
+        --text-color: {{ ebookdata.textcolor ? ebookdata.textcolor : '#393939' }};
+        --background-color: {{ ebookdata.backgroundcolor ? ebookdata.backgroundcolor : 'transparent' }};
+        --highlight-color: {{ ebookdata.highlightcolor ? ebookdata.highlightcolor : '#fbc847' }};
+        --highlight-color-contrast: {{ ebookdata.highlightcolorcontrast ? ebookdata.highlightcolorcontrast : '#393939' }};
+        --text-align: {{ ebookdata.textalign ? ebookdata.textalign : 'justify' }};
+        --hyphens: {{ ebookdata.hyphens ? ebookdata.hyphens : 'auto' }};
+      }
+
+      {% if coverimage %}
+        #cover{
+          background: url({{coverimage}}) no-repeat center;
+          background-size: cover;
+        }
+      {% endif %}
+
+    </style>
+
+  </head>
+
+  <body id="ebook" data-ebookdata="{{ ebookdata|json_encode|e('html_attr') }}">
+
+    <article id="cover">
+      <h1>{{ ebookdata.title }}</h1>
+      <footer>
+        <address class="first">{{ ebookdata.addressleft }}</address>
+        <address>{{ ebookdata.addressright }}</address>
+      </footer>
+    </article>
+
+    {% if ebookdata.imprint %}
+      <article id="imprint">
+        <div class="imprint-bottom">
+          {{ markdown(ebookdata.imprint) }}
+        </div>
+      </article>
+    {% endif %}
+
+    {% if ebookdata.toc and toc %}
+
+      <article id="toc" class="tableofcontents">
+        <h1>{{ ebookdata.toctitle }}</h1>
+        <ul id="list-toc-generated">
+          {% for tocitem in toc %}
+            {% if tocitem.level <= ebookdata.toclevel %}
+              <li class="toc-element toc-element-level-{{ tocitem.level }}">
+                <a href="#{{ tocitem.id }}">{{ tocitem.text }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </article>
+
+    {% endif %}
+
+
+    <article class="bookcontent">
+
+      {% for chapter in book %}
+
+        {% if chapter.level == 1 %}
+          
+          <section class="chapter{% if ebookdata.contrastchapter %} contrast{% endif %}{% if ebookdata.columnchapter %} column{% endif %}">
+            {{ chapter.content }}
+          </section>
+
+        {% else %}
+          
+          <section class="subchapter column">
+            {{ chapter.content }}
+          </section>
+
+        {% endif %}
+
+      {% endfor %}
+
+    </article>
+
+    <script>
+      let ebookconfig = document.querySelector('#ebook');
+      ebookdata = JSON.parse(ebookconfig.dataset.ebookdata);
+    </script>
+
+    {% block javascripts %}
+
+      {{ assets.renderJS() }}
+    
+    {% endblock %}
+
+    <script src="{{ base_url }}/plugins/ebooks/public/paged.polyfill.js"></script>
+
+    <script src="{{ base_url }}/plugins/ebooks/public/imagefix.js"></script>
+    
+    {% if ebookdata.hyphens != 'none' %}
+      <script src="{{ base_url }}/plugins/ebooks/public/hyphenfix.js"></script>
+    {% endif %}
+    
+    {% if ebookdata.toc %}
+      <script src="{{ base_url }}/plugins/ebooks/public/paged-toc.js"></script>
+    {% endif %}
+
+    <script src="{{ base_url }}/plugins/ebooks/public/autoscroll.js"></script>
+
+  </body>
+</html>

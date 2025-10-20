@@ -110,8 +110,7 @@ const app = Vue.createApp({
 				self.loadEbookProject();
 			}
 
-			self.previewUrl = data.urlinfo.baseurl + '/tm/ebooks/preview?projectname=' + self.currentproject;
-			self.epubUrl = data.urlinfo.baseurl + '/tm/ebooks/epub?projectname=' + self.currentproject;
+			self.setPreviewUrls();
 		})
 		.catch(function (error)
 		{
@@ -147,9 +146,15 @@ const app = Vue.createApp({
 			this.currentTabComponent = 'ebook-' + tab;
 			this.reset();
 		},
+		setPreviewUrls()
+		{
+			this.previewUrl = data.urlinfo.baseurl + '/tm/ebooks/preview?projectname=' + this.currentproject;
+			this.epubUrl = data.urlinfo.baseurl + '/tm/ebooks/epub?projectname=' + this.currentproject;
+		},
 		setCurrentProject(projectname)
 		{
 			this.currentproject = projectname;
+			this.setPreviewUrls();
 			this.reset();
 			this.loadEbookProject();
 		},
@@ -174,6 +179,7 @@ const app = Vue.createApp({
 				/* use the first layout in folder as the default layout and store it in formData */
 				var defaultlayout = Object.keys(self.layoutData)[0];
 				self.formData = { 'layout': defaultlayout };
+				self.setPreviewUrls();
 			})
 			.catch(function (error)
 			{
@@ -213,6 +219,7 @@ const app = Vue.createApp({
 						if(ebookproject == self.currentproject)
 						{
 							self.currentproject = self.ebookprojects[0];
+							self.setPreviewUrls();
 							self.loadEbookProject();
 						}
 						break;
@@ -258,6 +265,8 @@ const app = Vue.createApp({
 				self.formData.activeshortcodes = Array.isArray(self.formData.activeshortcodes)
 				    ? self.formData.activeshortcodes
 				    : [];
+
+				self.setPreviewUrls();
 
 				self.loadEbookNavi(self.currentproject);
 			})

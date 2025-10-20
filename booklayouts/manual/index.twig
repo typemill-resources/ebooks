@@ -31,14 +31,26 @@
 			{% if ebookdata.hideemptypages %}
 			
 				/* remove empty pages */
-				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				.imprint,
+				.tableofcontents, 
+				.bookcontent, 
+				.chapter, 
+				.subchapter, 
+				.bookcontent h1, 
+				.blurb {
 				    break-before: page; /* page, right, left, recto, verso */
 				}
 
 			{% else %}
 
 				/* add page breaks */
-				.tableofcontents, .bookcontent, .chapter, .subchapter, .bookcontent h1, .blurb {
+				.imprint,
+				.tableofcontents, 
+				.bookcontent, 
+				.chapter, 
+				.subchapter, 
+				.bookcontent h1, 
+				.blurb {
 				    break-before: right; /* page, left, recto, verso */
 				}
 			
@@ -108,7 +120,6 @@
 
 		<div class="cover">
 			{% if not ebookdata.coverimageonly %}
-				<div class="cover-top"></div>
 				<div class="cover-title">
 					<h1 class="cover-headline">{{ ebookdata.title }}</h1>
 					<h2 class="cover-subtitle">{{ ebookdata.subtitle }}</h2>
@@ -142,7 +153,7 @@
 					{% for tocitem in toc %}
 						{% if tocitem.level <= ebookdata.toclevel %}
 							<li class="toc-element toc-element-level-{{ tocitem.level }}">
-								<a href="#{{ tocitem.id }}">{{ tocitem.text }}</a>
+								<a href="#{{ tocitem.id }}"><span>{{ tocitem.text }}</span></a>
 							</li>
 						{% endif %}
 					{% endfor %}
@@ -188,12 +199,16 @@
 
 			<div class="blurb">
 				<div class="cover-top"></div>
-				<div class="cover-title"></div>
+				<div class="cover-title">
+					<div class="blurb-text">{{ markdown(ebookdata.blurb) }}</div>
+				</div>
 				<div class="cover-bottom">
 					{% if ebookdata.logo != '' %}
 						<img class="logo" src="{{ base_url }}/{{ ebookdata.logo }}">				
+					{% else %}
+						<p class="cover-author">{{ ebookdata.author }}</p>
 					{% endif %}
-					<div class="blurb-text">{{ markdown(ebookdata.blurb) }}</div>		
+					<p class="cover-edition">{{ ebookdata.edition }}</p>		
 				</div>
 			</div>
 		
@@ -211,29 +226,6 @@
 		{% endblock %}
 
 		<script src="{{ base_url }}/plugins/ebooks/public/paged.polyfill.js"></script>
-		<script>
-			/*
-			class handlers extends Paged.Handler {
-				constructor(chunker, polisher, caller) {
-				    super(chunker, polisher, caller);
-				}
-
-				beforeParsed(content){
-					
-					if(ebookdata.toc){
-						createToc({
-						    content: 		content,
-						    tocElement: 	'#toc',
-						    tocLevels: 		ebookdata.toclevel,
-						    tocCounter: 	ebookdata.toccounter,
-						    headlineArea:	'.bookcontent',
-						});
-					}
-				}
-			}
-			Paged.registerHandlers(handlers);
-			*/
-		</script>
 
 		<script src="{{ base_url }}/plugins/ebooks/public/imagefix.js"></script>
 		
