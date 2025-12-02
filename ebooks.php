@@ -432,6 +432,16 @@ class Ebooks extends Plugin
 	public function getEbookProjects(Request $request, Response $response, $args)
 	{
 		$settings 		= $this->getSettings();
+		$navigation 	= new Navigation();
+		$webprojects 	= $navigation->getAllProjects($settings);
+		if (
+			!$webprojects OR 
+			!is_array($webprojects) OR 
+			count($webprojects) <= 1
+		)
+		{
+			$webprojects = false;
+		}
 
 		$folderName 	= DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'ebooks';
 		$folder 		= $settings['rootPath'] . $folderName;
@@ -451,7 +461,7 @@ class Ebooks extends Plugin
 			# create a default project
 			$storage 		= new StorageWrapper($settings['storage']);
 			$ebookdata 		= $storage->writeFile('dataFolder', 'ebooks', 'ebookdata-firstebook.yaml', '');
-			$navigation 	= $storage->writeFile('dataFolder', 'ebooks', 'navigation-firstebook.txt', '');
+			$ebooknavi 		= $storage->writeFile('dataFolder', 'ebooks', 'navigation-firstebook.txt', '');
 			$folderContent 	= array_diff(scandir($folder), array('..', '.'));		
 		}
 
@@ -466,7 +476,8 @@ class Ebooks extends Plugin
 
 		$response->getBody()->write(json_encode([
 			'ebookprojects' => $ebookprojects,
-			'dominstalled' => $this->checkDom()
+			'webprojects' 	=> $webprojects,
+			'dominstalled' 	=> $this->checkDom()
 		]));
 
 		return $response->withHeader('Content-Type', 'application/json');
@@ -681,6 +692,7 @@ class Ebooks extends Plugin
 		$data['disableshortcodes'] 	= $params['data']['disableshortcodes'] ?? false;
 		$data['activeshortcodes'] 	= $params['data']['activeshortcodes'] ?? false;
 		$data['downgradeheadlines'] = $params['data']['downgradeheadlines'] ?? false;
+		$data['webproject'] 		= $params['data']['webproject'] ?? false;
 
 		# store
 		$projectname 	= str_replace('.yaml', '', $projectname);
@@ -760,12 +772,23 @@ class Ebooks extends Plugin
 	# gets the ebook navigation from data folder or the general page navigation
 	public function getEbookNewDraftNavi(Request $request, Response $response, $args)
 	{
+		$webproject 	= $request->getQueryParams()['webproject'] ?? false;
+
 		$navigation 	= new Navigation();
 		$urlinfo 		= $this->urlinfo;
 		$settings 		= $this->getSettings();
 		$langattr 		= $settings['langattr'];
 
+		if($webproject)
+		{
+			$navigation->setProject($settings, $webproject);
+		}
+
 		$draftNavigation = $navigation->getFullDraftNavigation($urlinfo, $langattr);
+
+		$home = $navigation->getHomepageItem($urlinfo['baseurl']);
+
+		array_unshift($draftNavigation, $home);
 
 		if(!$draftNavigation)
 		{
@@ -791,18 +814,52 @@ class Ebooks extends Plugin
 	# gets the stored ebook-data from page yaml for the ebook-plugin in page tab. We have to do it separately because fields are stripped out in tab.
 	public function getEbookTabData(Request $request, Response $response, $args)
 	{
+		$url 			= $request->getQueryParams()['url'];
 		$itempath 		= $request->getQueryParams()['itempath'];
 		$settings 		= $this->getSettings();
 		$storage 		= new StorageWrapper($settings['storage']);
+		$urlinfo 		= $this->urlinfo;
+		$langattr 		= $settings['langattr'];
+		$navigation 	= false;
 
-		if($itempath == '/index')
+		$navimodel 		= new Navigation();
+		$navimodel->setProject($settings, $url);
+		$webproject 	= $navimodel->getProject();
+
+		$projecthome 	= false;
+		if($webproject)
 		{
+			$projecthome = '_' . $webproject . '/index';
+		}
+
+		if(
+			trim($itempath, '/') == 'index' OR 
+			trim($itempath, '/') === $projecthome 
+		)
+		{
+			$navigation = $navimodel->getFullDraftNavigation($urlinfo, $langattr);
+
+			$home = $navimodel->getHomepageItem($urlinfo['baseurl']);
+
+			if(!$navigation or !$home)
+			{
+				$response->getBody()->write(json_encode([
+					'message' => 'We could not load the content navigation or the home item.'
+				]));
+
+				return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+			}
+
+			array_unshift($navigation, $home);
+
+			/*
 			$response->getBody()->write(json_encode([
 				'home' 		=> true, 
 				'message' 	=> "The homepage does not support the ebook generation. Please go to the subpages or use the ebook tab in the settings if you want to create an ebook from the whole website.",
 			]));
 
 			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
+			*/
 		}
 
 		$meta = $storage->getYaml('contentFolder', '', $itempath . '.yaml');
@@ -815,6 +872,7 @@ class Ebooks extends Plugin
 		$response->getBody()->write(json_encode([
 			'formdata' 		=> $formdata,
 			'layoutdata' 	=> $booklayouts,
+			'navigation' 	=> $navigation,
 			'dominstalled'  => $this->checkDom()
 		]));
 
@@ -894,7 +952,7 @@ class Ebooks extends Plugin
 		$data['content'] 			= $params['data']['content'] ?? false;
 
 		# get the metadata from page
-		$meta = $storage->getYaml('contentFolder', '', $itempath . '.yaml');
+		$meta = $storage->getYaml('contentFolder', '', $item['pathWithoutType'] . '.yaml');
 
 		# add the tab-data for ebooks
 		$meta['ebooks'] = $data;
@@ -1067,7 +1125,7 @@ class Ebooks extends Plugin
 					}
 				}
 
-				if($item['elementType'] == 'folder')
+				if($item['elementType'] == 'folder' && isset($item['folderContent']) && !empty($item['folderContent']))
 				{
 					$headlines = $this->generateArrayOfHeadlineElements($headlines, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1 );
 				}
@@ -1146,7 +1204,7 @@ class Ebooks extends Plugin
 				return false;
 			}
 
-			$navigation = unserialize($navigation);
+			$navigation = unserialize($navigation);			
 		}
 
 		if(!$navigation)
@@ -1997,7 +2055,7 @@ class Ebooks extends Plugin
 
 		foreach($navigation as $item)
 		{
-			if($item['status'] == "published")
+			if($item['status'] == "published" or $item)
 			{
 				# if page or folder is excluded from book content
 				if(!isset($item['include']) OR $item['include'] != true)
@@ -2131,7 +2189,7 @@ class Ebooks extends Plugin
 
 				$book[] = ['item' => $item, 'level' => $chapterlevel, 'content' => $chapterHTML, 'metadata' => $meta];
 
-				if($item['elementType'] == 'folder')
+				if($item['elementType'] == 'folder' && isset($item['folderContent']) && !empty($item['folderContent']))
 				{
 					$book 	= $this->generateContent($book, $item['folderContent'], $pathToContent, $parsedown, $ebookdata, $chapterlevel + 1, $sectionNumbers );
 				}

@@ -2,7 +2,7 @@ app.component('tab-ebooks', {
 	props: ['item', 'formData', 'formDefinitions', 'saved', 'errors', 'message', 'messageClass'],
 	template: `<section class="dark:bg-stone-700 dark:text-stone-200">
 					<h1 class="text-3xl font-bold mb-4">eBook Studio</h1>
-					<div v-if="home">
+					<div v-if="false">
 						<p class="font-bold py-3">Welcome the eBook studio of Typemill.</p>
 						<p class="py-3">The homepage does not support eBook generation, but you can generate eBooks from all other folders and pages. If you want to create (multiple) eBook-projects with all pages, then use the eBook-feature in the settings-area.</p>
 						<p class="py-3">Happy publishing!</p>
@@ -17,7 +17,7 @@ app.component('tab-ebooks', {
 								>{{ $filters.translate(tab) }}</button>
 							</li>
 						</ul>
-						<div>
+						<div v-if="dataLoaded">
 							<component
 								:is 				= "currentTabComponent"
 								:errors 			= "formErrors"
@@ -49,8 +49,9 @@ app.component('tab-ebooks', {
 			tabs: ["content", "pdf", "epub"],
 			currentTab: "content",
 			currentTabComponent: "ebook-content",
+			dataLoaded: false,
 
-			navigation: {}, 
+			navigation: [], 
 			layoutData: {}, /* holds all the different eBook layouts */
 			formData: {}, /* holds the input data for the forms */
 			formErrors: {},
@@ -92,6 +93,16 @@ app.component('tab-ebooks', {
 			self.formData 		= ebookdata['formdata'];
 			self.layoutData 	= ebookdata['layoutdata'];
 
+			/* only if it is a homepage, the navigation is send */
+			if(ebookdata['navigation'])
+			{
+				self.navigation = ebookdata['navigation'];
+			}
+			else
+			{
+				self.navigation = [self.item];
+			}
+
 			self.formData.activeshortcodes = Array.isArray(self.formData.activeshortcodes)
 			    ? self.formData.activeshortcodes
 			    : [];
@@ -103,8 +114,9 @@ app.component('tab-ebooks', {
 				var defaultlayout = Object.keys(self.layoutData)[0];
 				self.formData = { 'layout': defaultlayout };
 
-				/* use the default item for content tree */
+				/* use the default item for content tree 
 				self.navigation = [self.item];
+				*/
 			}
 			else if(self.formData.content && Object.keys(self.formData.content).length > 0)
 			{
@@ -152,11 +164,13 @@ app.component('tab-ebooks', {
 			}
 		});
 
+/*
 		if (navigator.userAgent.indexOf('Chrome') == -1 || parseFloat(navigator.userAgent.substring(navigator.userAgent.indexOf('Chrome') + 7).split(' ')[0]) <= 88)
 		{
 			this.message = 'For optimal results of the pdf-preview we recommend the browser chrome version 88 (minimum).';
 			this.messagecolor = 'bg-tm-red';
 		}
+*/
 	},
 	methods: {
 		activateTab(tab)
@@ -230,6 +244,11 @@ app.component('tab-ebooks', {
 		{
 			/* store the item inside array for compatibility with navigation structure */
 			var storeitem = [this.item];
+			/* only if it is a homepage, the navigation is send */
+			if(this.navigation)
+			{
+				var storeitem = this.navigation;
+			}
 
 			self = this;
 
@@ -304,7 +323,11 @@ app.component('tab-ebooks', {
 					}
 
 					/* check if published, check if something in folder */
-					if(navigation[i].elementType == "folder")
+					if (
+						navigation[i].elementType === "folder" &&
+						Array.isArray(navigation[i].folderContent) &&
+						navigation[i].folderContent.length > 0
+					)
 					{
 						/* use empty array by default, so all sub-pages will be excluded */
 						var selectedFolder = [];
@@ -333,7 +356,11 @@ app.component('tab-ebooks', {
 					item.name = navigation[i].name; 
 
 					/* check if something in folder */
-					if(navigation[i].elementType == "folder")
+					if (
+						navigation[i].elementType === "folder" &&
+						Array.isArray(navigation[i].folderContent) &&
+						navigation[i].folderContent.length > 0
+					)
 					{
 						item.folderContent = this.extractSelectedContent(navigation[i].folderContent,[]);
 					}

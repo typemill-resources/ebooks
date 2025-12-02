@@ -1,5 +1,5 @@
 app.component("ebook-projects", {
-	props: ['errors', 'formdata', 'layouts', 'ebookprojects', 'currentproject'],
+	props: ['errors', 'formdata', 'layouts', 'webprojects', 'currentwebproject', 'ebookprojects', 'currentproject'],
 	data: function(){
 		return {
 			projectname: '',
@@ -9,8 +9,9 @@ app.component("ebook-projects", {
 	},
 	template: `<div class="ebookcover">
 				<form class="w-full">
+
 					<fieldset v-if="ebookprojects" class="flex flex-wrap justify-between border-2 border-stone-200 p-4 my-8">
-						<legend class="text-lg font-medium">Select a Project</legend>
+						<legend class="text-lg font-medium">Select an eBook-Project</legend>
 						<div class="py-3 w-full">
 							<div v-for="ebookproject in ebookprojects" class="w-full relative my-1 p-2 border border-stone-300">
 								<label class="inline-flex items-start">
@@ -55,45 +56,63 @@ app.component("ebook-projects", {
 				</form>
 			  </div>`,
 	methods: {
+		getProjectFileName()
+		{
+			let name = 'ebookdata-';
+
+		  	name = name + this.projectname + '.yaml';
+
+		  	return name;
+		},
 		readableProject(ebookproject)
 		{
-			if(ebookproject == 'ebookdata.yaml')
-			{
-				return 'default project';
-			}
-			var readablename = ebookproject.replace(".yaml", "");
-			return readablename.replace("ebookdata-", ""); 
+		  	if (ebookproject === 'ebookdata.yaml')
+		  	{
+		    	return 'default project';
+		  	}
+
+		  	let name = ebookproject
+		    	.replace('.yaml', '')
+		    	.replace(/^ebookdata-/, '');
+
+		  	return name;
 		},
 		createProject: function()
 		{
-			this.$emit('createProject', 'ebookdata-' + this.projectname + '.yaml');
+			let name = this.getProjectFileName();
+			this.$emit('createProject', name);
 			this.projectname = '';
 		},
 		checkProjectName: function()
 		{
-			this.projectnameerror = false;
-			this.disabled = 'disabled';
+			let name = this.projectname.trim();
 
-			if(this.projectname.length == 0)
+			this.projectnameerror = false;
+			this.disabled = 'disabled';			
+
+			if (!name) return;
+
+  			if (name.length < 3 || name.length > 20)
 			{
+			    this.projectnameerror = "Must be between 3–20 characters.";
+			    return;
+			}
+
+			if (!/^[a-z-]+$/.test(name))
+			{
+			    this.projectnameerror = "Only characters a–z and - allowed.";
+			    return;
+			}
+
+			name = this.getProjectFileName();
+
+			if(this.ebookprojects.indexOf(name) !== -1)
+			{
+				this.projectnameerror = "This projectname already exists";
 				return;
 			}
-			else if(this.projectname.length < 3 || this.projectname.length > 20)
-			{
-				this.projectnameerror = "Must be between 3 - 20 characters.";
-			}
-			else if(this.ebookprojects.indexOf('ebookdata-' + this.projectname + '.yaml') !== -1)
-			{
-				this.projectnameerror = "This projectname already exists";				
-			}
-			else if(/^[a-z\-]*$/gm.test(this.projectname))
-			{
-				this.disabled = false;
-			}
-			else
-			{
-				this.projectnameerror = 'Only characters a-z and - allowed.'
-			}
+
+			this.disabled = false;
 		},
 		deleteProject: function(ebookproject)
 		{
@@ -104,14 +123,14 @@ app.component("ebook-projects", {
 
 
 app.component("ebook-content", {
-	props: ['navigation', 'errors', 'shortcodes', 'formdata', 'layouts', 'messageClass', 'message'],
+	props: ['navigation', 'errors', 'shortcodes', 'webprojects', 'currentwebproject', 'formdata', 'layouts', 'messageClass', 'message'],
 	data: function(){
 		return {
 			booklayout: { 'customforms': false },
 			headlines: false,
 			shortcodeOpen: false,
 		}
-	},	
+	},
 	template: `<div>
 				<form class="w-full my-8">
 				<div class="flex flex-wrap justify-between">
@@ -159,9 +178,25 @@ app.component("ebook-content", {
 					<fieldset class="lg:w-half border-2 border-stone-200 p-4">
 						<legend class="text-lg font-medium">Select pages from your website</legend>
 						<div>
+							<div v-if="webprojects" class="py-2 w-full">
+								<select
+									v-model="formdata.webproject" 
+									class="w-full p-3 border border-stone-300 bg-white"
+									@change="$emit('changeWebproject', $event.target.value)"
+								>
+									<option 
+										v-for="webproject in webprojects" 
+										:key="webproject.id" 
+										:value="webproject.id"
+										:selected="webproject.id === currentwebproject.id"
+									>
+										{{ webproject.label }}
+									</option>
+								</select>
+							</div>
 							<button 
 								@click.prevent = "$emit('resetNavigation')" 
-								class = "p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
+								class = "w-full p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
 							>reset/refresh navigation</button>
 							<div class="pl-6 mt-5" v-if="basefolder()">
 								<label class="block mb-1 font-medium">
@@ -330,9 +365,10 @@ app.component("list", {
 
 			  </ul>`,
 	computed: {
-		publishedItems: function () 
+		publishedItems() 
 		{
-			if(this.navigation.filter !== undefined)
+
+			if(Array.isArray(this.navigation) && this.navigation.filter)
 			{
 				return this.navigation.filter(function (item)
 				{

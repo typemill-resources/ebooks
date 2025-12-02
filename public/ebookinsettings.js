@@ -19,6 +19,8 @@ const app = Vue.createApp({
 									:formdata 			= "formData"
 									:layouts 			= "layoutData"
 									:navigation 		= "navigation"
+									:webprojects 		= "webprojects"
+									:currentwebproject 	= "currentwebproject"
 									:ebookprojects 		= "ebookprojects"
 									:currentproject 	= "currentproject"
 									:message  			= "message"
@@ -27,6 +29,7 @@ const app = Vue.createApp({
 									:epubUrl 			= "epubUrl"	
 									:shortcodes  		= "shortcodes"							    
 									@change-project 	= "setCurrentProject"
+									@change-webproject 	= "setWebProject"
 									@create-project 	= "createEbookProject"
 									@delete-project 	= "deleteEbookProject"
 									@save-project		= "storeEbookData"
@@ -49,6 +52,8 @@ const app = Vue.createApp({
 			formErrors: {},
 			ebookprojects: ['ebookdata.yaml'],
 			currentproject: false,
+			webprojects: {},
+			currentwebproject: false,
 			shortcodes: false,
 			message: '',
 			messageClass: '',
@@ -100,8 +105,14 @@ const app = Vue.createApp({
 		})
 		.then(function (response)
 		{
-			var ebookprojects = response.data.ebookprojects;
+			var webprojects = response.data.webprojects;
+			if(Array.isArray(webprojects) && webprojects.length > 0)
+			{
+				self.webprojects = webprojects;
+				self.setWebProject();
+			}
 
+			var ebookprojects = response.data.ebookprojects;
 			if(Array.isArray(ebookprojects) && ebookprojects.length > 0)
 			{
 				/* activate and load the first project */
@@ -152,11 +163,38 @@ const app = Vue.createApp({
 			this.epubUrl = data.urlinfo.baseurl + '/tm/ebooks/epub?projectname=' + this.currentproject;
 		},
 		setCurrentProject(projectname)
-		{
+		{			
 			this.currentproject = projectname;
 			this.setPreviewUrls();
 			this.reset();
 			this.loadEbookProject();
+		},
+		setWebProject(webprojectid = false)
+		{
+		  	if (!this.webprojects || !this.webprojects.length)
+		  	{
+		    	return false;
+		  	}
+
+		  	if (!webprojectid)
+		  	{
+			    // Find project with base = true
+			    const base = this.webprojects.find(p => p.base);
+			    if(base)
+			    {
+			    	this.currentwebproject = base;
+			    }
+			}
+			else
+			{
+			    // Find project with matching id
+			    const selected = this.webprojects.find(p => p.id === webprojectid);
+			    if (selected)
+			    {
+			    	this.currentwebproject = selected;
+			    	this.resetNavigation();
+			    }
+		  	}
 		},
 		createEbookProject(projectname)
 		{
@@ -255,6 +293,10 @@ const app = Vue.createApp({
 				if(ebookdata['formdata'])
 				{
 					self.formData = ebookdata['formdata'];
+					if(self.formData.webproject)
+					{
+						self.setWebProject(self.formData.webproject);
+					}
 				}
 				else
 				{
@@ -287,7 +329,7 @@ const app = Vue.createApp({
 			tmaxios.get('/api/v1/ebooknavi',{
 				params: {
 					'url':	data.urlinfo.route,
-					'projectname': 	this.currentproject 
+					'projectname': 	this.currentproject, 
 				}
 			})
 			.then(function (response){
@@ -305,7 +347,7 @@ const app = Vue.createApp({
 				}
 			});
 		},
-		resetNavigation: function()
+		resetNavigation()
 		{
 			var self = this;
 
@@ -313,6 +355,7 @@ const app = Vue.createApp({
 			tmaxios.get('/api/v1/ebooknewdraftnavi',{
 				params: {
 					'url':	data.urlinfo.route,
+					'webproject': this.currentwebproject?.id
 				}
 			})
 			.then(function (response) {
@@ -329,7 +372,7 @@ const app = Vue.createApp({
 					self.formErrors = error.response.data.errors;
 				}
 			});
-		},		
+		},
 		storeEbookData(css)
 		{
 			this.reset();
@@ -340,7 +383,7 @@ const app = Vue.createApp({
 				'url':			data.urlinfo.route,
 				'data': 		this.formData,
 				'navigation': 	this.navigation,
-				'projectname': 	this.currentproject,
+				'projectname': 	this.currentproject
 			})
 			.then(function (response) {
 				self.messageClass = "bg-teal-500";
