@@ -708,10 +708,11 @@ ul.TOC{
 }
 .cover-title {
   height: 222mm;
-  padding: 20mm; 
+  padding-top: 20mm;
   background-color: var(--primary-cover-bg-color);
   color: var(--primary-cover-ft-color);
   box-sizing: border-box;
+  overflow: hidden;
 }
 .cover-bottom {
   display: flex;
@@ -729,6 +730,8 @@ h1.cover-headline {
   font-size: 30pt;
   line-height: 35pt;
   margin: 0 0 10px 0;
+  padding-left: 20mm;
+  padding-right: 20mm;
 }
 
 h2.cover-subtitle {
@@ -736,6 +739,8 @@ h2.cover-subtitle {
   line-height: 20pt;
   font-weight: 300;
   margin: 10px 0 40px 0;
+  padding-left: 20mm;
+  padding-right: 20mm;
 }
 
 .cover-bottom p {

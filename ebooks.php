@@ -1584,10 +1584,10 @@ class Ebooks extends Plugin
 			ob_end_flush();
 		}
 
-		error_reporting(E_ALL | E_STRICT);
-		ini_set('error_reporting', E_ALL | E_STRICT);
-		ini_set('display_errors', 0);
-		
+		ini_set('error_reporting', E_ALL);
+		ini_set('display_errors', '0');
+
+/*		
 		$projectname 	= $request->getQueryParams()['projectname'];
 		$itempath 		= $request->getQueryParams()['itempath'];
 		$settings 		= $this->getSettings();
@@ -1646,6 +1646,34 @@ class Ebooks extends Plugin
 
 			$navigation = unserialize($navigation);			
 		}
+*/
+		$projectname 	= $request->getQueryParams()['projectname'] ?? false;
+		$itempath 		= $request->getQueryParams()['itempath'] ?? false;
+		$baseurl 		= $this->urlinfo['baseurl'];
+		$dispatcher 	= $this->getDispatcher();
+		$settings 		= $this->getSettings();
+		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
+		$storage 		= new StorageWrapper($settings['storage']);
+
+		$ebookdata 		= $this->getEbookDataForPdf($projectname, $itempath, $storage);
+		if(!$ebookdata)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> $this->ebookerror
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);			
+		}
+
+		$navigation 	= $this->getNavigationForPdf($projectname, $itempath, $ebookdata, $storage);
+		if(!$navigation)
+		{
+			$response->getBody()->write(json_encode([
+				'message' 	=> $this->ebookerror
+			]));
+
+			return $response->withHeader('Content-Type', 'application/json')->withStatus(422);
+		}
 
 		# setup parsedown with individual settings
 		$parsedown = new ParsedownExtension($baseurl);
@@ -1664,14 +1692,12 @@ class Ebooks extends Plugin
 			$parsedown->setAllowedShortcodes($ebookdata['activeshortcodes']);
 		}
 
-		$pathToContent	= $settings['rootPath'] . DIRECTORY_SEPARATOR . 'content';
 		$bookcontent 	= $this->generateContent([], $navigation, $pathToContent, $parsedown, $ebookdata);
-
+		unset($bookcontent['toc']);
 
 		##############
 		# START EPUB #
 		##############
-
 
 		# setting timezone for time functions used for logging to work properly
 		date_default_timezone_set('Europe/Berlin');
