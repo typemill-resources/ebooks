@@ -1,5 +1,15 @@
 # PHP ePub generator
 
+> **Typemill Fork:** This is a fork of the original PHPePub library, maintained for [Typemill](https://typemill.net). It is compatible with **PHP 8.2 to 8.5**.
+
+## About Typemill
+
+[Typemill](https://typemill.net) is a lightweight CMS for creating software guides, product documentation, and user manuals. This fork is used for the **ebook plugin for Typemill**, which allows you to create ePub and PDF publications from the content of a Typemill website.
+
+If you are looking for a flexible and lightweight publishing solution for websites, PDF, and ePub in PHP, check out [Typemill.net](https://typemill.net).
+
+## About PHPePub
+
 PHPePub allows a php script to generate ePub Electronic books on the fly, and send them to the user as downloads.
 
 PHPePub support most of the ePub 2.01 specification, and enough of the new ePub3 specification to make valid ePub 3 books as well.
@@ -43,7 +53,7 @@ Once composer is installed you can create the `composer.json` file to import thi
 {
     "require": {
         "trendschau/phpepub": "^4.0.3",
-        "php": ">=5.3.0"
+        "php": ">=8.2"
     }
 }
 ```

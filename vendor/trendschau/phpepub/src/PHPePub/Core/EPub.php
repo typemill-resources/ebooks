@@ -366,7 +366,7 @@ class EPub {
      */
     function findIdAttributes($chapterData) {
         switch ($this->htmlFormat) {
-            case EPub::FORMAT_HTML5;
+            case EPub::FORMAT_HTML5:
                 $html5 = new HTML5();
                 $xmlDoc = $html5->loadHTML($chapterData);
                 break;
@@ -437,7 +437,7 @@ class EPub {
             $doc = StringHelper::removeComments($doc);
 
             switch ($this->htmlFormat) {
-                case EPub::FORMAT_HTML5;
+                case EPub::FORMAT_HTML5:
                     $html5 = new HTML5();
                     $xmlDoc = $html5->loadHTML($doc);
                     break;
@@ -464,12 +464,14 @@ class EPub {
             $bodyNode = $xmlDoc->getElementsByTagName("body");
 
             $htmlNS = "";
-            for ($index = 0; $index < $htmlNode->item(0)->attributes->length; $index++) {
-                $nodeName = $htmlNode->item(0)->attributes->item($index)->nodeName;
-                $nodeValue = $htmlNode->item(0)->attributes->item($index)->nodeValue;
+            if ($htmlNode->item(0) !== null) {
+                for ($index = 0; $index < $htmlNode->item(0)->attributes->length; $index++) {
+                    $nodeName = $htmlNode->item(0)->attributes->item($index)->nodeName;
+                    $nodeValue = $htmlNode->item(0)->attributes->item($index)->nodeValue;
 
-                if ($nodeName != "xmlns") {
-                    $htmlNS .= " $nodeName=\"$nodeValue\"";
+                    if ($nodeName != "xmlns") {
+                        $htmlNS .= " $nodeName=\"$nodeValue\"";
+                    }
                 }
             }
 
@@ -484,8 +486,12 @@ class EPub {
                 . "   \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
                 . "<html xmlns=\"http://www.w3.org/1999/xhtml\"" . $htmlNS . ">\n</html>\n");
             $html = $xml2Doc->getElementsByTagName("html")->item(0);
-            $html->appendChild($xml2Doc->importNode($headNode->item(0), true));
-            $html->appendChild($xml2Doc->importNode($bodyNode->item(0), true));
+            if ($headNode->item(0) !== null) {
+                $html->appendChild($xml2Doc->importNode($headNode->item(0), true));
+            }
+            if ($bodyNode->item(0) !== null) {
+                $html->appendChild($xml2Doc->importNode($bodyNode->item(0), true));
+            }
 
             // force pretty printing and correct formatting, should not be needed, but it is.
             $xml->loadXML($xml2Doc->saveXML());

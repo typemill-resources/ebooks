@@ -129,6 +129,7 @@ app.component("ebook-content", {
 			booklayout: { 'customforms': false },
 			headlines: false,
 			shortcodeOpen: false,
+			selectAll: false,
 		}
 	},
 	template: `<div>
@@ -196,10 +197,10 @@ app.component("ebook-content", {
 							</div>
 							<button 
 								@click.prevent = "$emit('resetNavigation')" 
-								class = "w-full p-3 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
+								class = "w-full p-3 mb-5 my-1 bg-stone-700 hover:bg-stone-900 text-white cursor-pointer transition duration-100"
 							>reset/refresh navigation</button>
-							<div class="pl-6 mt-5" v-if="basefolder()">
-								<label class="block mb-1 font-medium">
+							<div class="pl-6" v-if="basefolder()">
+								<label class="block font-medium">
 									<input 
 										type 	= "checkbox" 
 										name 	= "excludebasefolder" 
@@ -208,7 +209,17 @@ app.component("ebook-content", {
 									/>
 									<span class="ml-2 text-sm">Exclude the base folder from eBook</span>
 								</label>
-								<hr>
+							</div>
+							<div class="pl-6">
+								<label class="block mb-1 font-medium">
+									<input 
+										type 	= "checkbox" 
+										v-model = "selectAll"
+										@change = "toggleSelectAll"
+									/>
+									<span class="ml-2 text-sm">Select all pages</span>
+								</label>
+								<hr class="mt-3">
 							</div>
 							<div class="py-3">
 								<list :navigation="navigation"></list>
@@ -313,6 +324,30 @@ app.component("ebook-content", {
 			if(this.navigation.length == 1 && this.navigation[0].folderContent)
 			{
 				return true;
+			}
+		},
+		toggleSelectAll()
+		{
+			this.setIncludeAll(this.navigation, this.selectAll);
+			this.headlinepreview();
+		},
+		setIncludeAll(navigation, value)
+		{
+			if(!Array.isArray(navigation))
+			{
+				return;
+			}
+
+			for(let item of navigation)
+			{
+				if(item.status == "published" && !item.disabled)
+				{
+					item.include = value;
+				}
+				if(item.folderContent && item.folderContent.length > 0)
+				{
+					this.setIncludeAll(item.folderContent, value);
+				}
 			}
 		},
 		headlinepreview()

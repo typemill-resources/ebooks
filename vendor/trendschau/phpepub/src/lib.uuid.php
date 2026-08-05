@@ -500,7 +500,7 @@ class UUID {
    throw new UUIDException("Secure random number generator is not available.",2002);
   if (!is_object(self::$store)) {
    try {
-    call_user_func_array(array("self","initStorage"),func_gets_args());
+     call_user_func_array(array("self","initStorage"),func_get_args());
    } catch(Exception $e) {
     throw new UUIDStorageException("Stable storage not available.", 2003, $e);
    }

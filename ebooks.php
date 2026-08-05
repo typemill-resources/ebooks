@@ -16,6 +16,7 @@ use Typemill\Extensions\ParsedownExtension;
 use Typemill\Events\OnTwigLoaded;
 use Typemill\Events\onMetaDefinitionsLoaded;
 use Typemill\Events\onSystemnaviLoaded;
+use Typemill\Events\OnExportHtmlLoaded;
 use PHPePub\Core\EPub;
 use PHPePub\Core\Logger;
 use PHPePub\Core\Structure\OPF\DublinCore;
@@ -1505,6 +1506,8 @@ class Ebooks extends Plugin
 
 		$html = $twig->fetch('@booklayouts/index.twig', $data);
 
+		# allow plugins (PlantUML, Mermaid, Math...) to generate static assets
+		$html = $this->prepareExportHtml($html, [], $baseurl);
 
 		/* CALL TO KIXOTE WEASYPRINT */
 		
@@ -1758,7 +1761,7 @@ class Ebooks extends Plugin
 
 		if(isset($ebookdata['epubauthorfirstname']) && $ebookdata['epubauthorfirstname'] != '' && isset($ebookdata['epubauthorlastname']) && $ebookdata['epubauthorlastname'] != '')
 		{
-			$book->setAuthor($ebookdata['epubauthorfirstname'] . ' ' . $ebookdata['epubauthorlasttname'], $ebookdata['epubauthorlasttname'] . ', ' . $ebookdata['epubauthorfirstname']);
+			$book->setAuthor($ebookdata['epubauthorfirstname'] . ' ' . $ebookdata['epubauthorlastname'], $ebookdata['epubauthorlastname'] . ', ' . $ebookdata['epubauthorfirstname']);
 		}
 
 		if(isset($ebookdata['epubpublishername']) && $ebookdata['epubpublishername'] != '')
@@ -1988,7 +1991,10 @@ class Ebooks extends Plugin
 			}
 			$filename = $filename . implode("", $chapNumArray) . ".xhtml";
 
-			$chapterHtml = $content_start . $chapter['content'] . $bookEnd;
+			# allow plugins (PlantUML, Mermaid, Math...) to generate static assets
+			$chapterContent = $this->prepareExportHtml($chapter['content'], $chapter['item'] ?? [], $baseurl);
+
+			$chapterHtml = $content_start . $chapterContent . $bookEnd;
 
 			if($prefixNumber)
 			{
@@ -2225,6 +2231,36 @@ class Ebooks extends Plugin
 		return $book;
 	} 
 
+	/**
+	 * Prepare HTML for export by allowing plugins to generate static assets.
+	 *
+	 * Dispatches onExportHtmlLoaded with the page HTML and context.
+	 *
+	 * @param string $html     The HTML to prepare
+	 * @param array  $item     The current page item (for page-relative context)
+	 * @param string $baseurl  The base URL
+	 * @return string Export-safe HTML
+	 */
+	private function prepareExportHtml(string $html, array $item = [], string $baseurl = ''): string
+	{
+		$event = new OnExportHtmlLoaded([
+			'html'     => $html,
+			'item'     => $item,
+			'base_url' => $baseurl
+		]);
+
+		$dispatcher = $this->getDispatcher();
+		$dispatcher->dispatch($event, 'onExportHtmlLoaded');
+
+		$data = $event->getData();
+		if (is_array($data))
+		{
+			return $data['html'] ?? $html;
+		}
+
+		return $data;
+	}
+
 	private function transformRelativeLinks($bookcontent, $toc, $baseurl)
 	{
 		$tocindex = [];
@@ -2314,7 +2350,7 @@ class Ebooks extends Plugin
 	    {
 			$refKeyPathArray 	= explode(".", $refpageinfo['keyPath']);
 			$refitem 			= $navigation->getItemWithKeyPath($draftNavigation, $refKeyPathArray);
-			if($refîtem)
+			if($refitem)
 			{
 				$filepath 		= $refitem->path;
 			}
